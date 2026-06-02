@@ -29,7 +29,7 @@ import { useEngineSubscriptions } from "@/hooks/useEngineSubscriptions";
 import { useRebindCapture } from "@/hooks/useRebindCapture";
 
 import "./App.css";
-import "./styles/neomorphism.css";
+import "./styles/neumorphism.css";
 import "./components/GameArena.css";
 
 export default function App() {

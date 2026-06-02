@@ -127,12 +127,16 @@ export class InterfaceSFX {
     if (this.crowdVictoryPlayer && this.crowdVictoryPlayer.state === "started") {
       try {
         this.crowdVictoryPlayer.stop();
-      } catch {}
+      } catch (err) {
+        void err;
+      }
     }
     if (this.crowdDefeatPlayer && this.crowdDefeatPlayer.state === "started") {
       try {
         this.crowdDefeatPlayer.stop();
-      } catch {}
+      } catch (err) {
+        void err;
+      }
     }
   }
 }

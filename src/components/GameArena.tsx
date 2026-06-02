@@ -339,16 +339,16 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
           <div className="vignette-overlay" />
 
           {gameResult !== "PLAYING" && stagger >= 1 && (
-            <div className="gameover-overlay">
+            <div className="absolute inset-0 bg-black/94 backdrop-blur-md flex flex-col items-center justify-center z-[99] p-3 sm:p-6 animate-overlay-fade-in opacity-0 will-change-opacity">
               <canvas id="confetti-canvas" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1 }} />
               <AnimatePresence>
                 <motion.div
                   layout
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className={`gameover-box neo-elevated ${gameResult === "GAMEOVER" ? "defeat-border" : "victory-border"}`}
+                  className={`flex flex-col items-center justify-center p-4 max-w-[440px] w-[90%] text-center neo-elevated border-2 transition-all duration-300 rounded-[20px] bg-[#0c0e12]/96 max-h-[750px]:p-6 max-h-[560px]:p-3 max-[768px]:p-6 max-[380px]:p-3 ${gameResult === "GAMEOVER" ? "border-red-500/35 shadow-[0_0_30px_rgba(239,68,68,0.15),_inset_0_0_20px_rgba(239,68,68,0.1)]" : "border-green-500/35 shadow-[0_0_30px_rgba(34,197,94,0.15),_inset_0_0_20px_rgba(34,197,94,0.1)]"}`}
                   transition={{ type: "spring", stiffness: 220, damping: 26 }}
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 2 }}
+                  style={{ position: "relative", zIndex: 2 }}
                 >
                   <AnimatePresence mode="wait">
                     {stagger >= 2 && (
@@ -357,27 +357,27 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                         initial={{ opacity: 0, y: -20, scale: 0.8 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                        className="flex-col-center"
+                        className="flex flex-col items-center justify-center"
                       >
                         {gameResult === "GAMEOVER" ? (
-                          <div className="flex-col-center">
+                          <div className="flex flex-col items-center justify-center">
                             <Skull
                               size={64}
-                              className="defeat-icon-anim gameover-icon"
+                              className="defeat-icon-anim w-16 h-16 mb-4 max-h-[750px]:w-11 max-h-[750px]:h-11 max-h-[750px]:mb-2 max-h-[560px]:w-8 max-h-[560px]:h-8 max-h-[560px]:mb-1 max-[768px]:w-11 max-[768px]:h-11 max-[768px]:mb-2 max-[380px]:w-8 max-[380px]:h-8 max-[380px]:mb-1"
                               style={{ color: "var(--signal-red)" }}
                             />
-                            <h1 className="defeat-title-anim" style={{ color: "var(--signal-red)" }}>
+                            <h1 className="defeat-title-anim text-3xl font-bold leading-none max-[768px]:text-2xl max-h-[750px]:text-2xl max-[380px]:text-lg max-h-[560px]:text-lg" style={{ color: "var(--signal-red)" }}>
                               DEFEATED
                             </h1>
                           </div>
                         ) : (
-                          <div className="flex-col-center">
+                          <div className="flex flex-col items-center justify-center">
                             <Trophy
                               size={64}
-                              className="victory-icon-anim gameover-icon"
+                              className="victory-icon-anim w-16 h-16 mb-4 max-h-[750px]:w-11 max-h-[750px]:h-11 max-h-[750px]:mb-2 max-h-[560px]:w-8 max-h-[560px]:h-8 max-h-[560px]:mb-1 max-[768px]:w-11 max-[768px]:h-11 max-[768px]:mb-2 max-[380px]:w-8 max-[380px]:h-8 max-[380px]:mb-1"
                               style={{ color: "var(--signal-green)" }}
                             />
-                            <h1 className="victory-title-anim" style={{ color: "var(--signal-green)" }}>
+                            <h1 className="victory-title-anim text-3xl font-bold leading-none max-[768px]:text-2xl max-h-[750px]:text-2xl max-[380px]:text-lg max-h-[560px]:text-lg" style={{ color: "var(--signal-green)" }}>
                               VICTORY
                             </h1>
                           </div>
@@ -393,23 +393,22 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                         initial={{ opacity: 0, height: 0, y: 15 }}
                         animate={{ opacity: 1, height: "auto", y: 0 }}
                         transition={{ type: "spring", stiffness: 220, damping: 24 }}
-                        className="stat-card-anim gameover-stat-card w-full"
-                        style={{ overflow: "hidden" }}
+                        className="w-full mt-6 p-4 max-h-[750px]:mt-3 max-h-[750px]:p-2 max-h-[750px]:gap-1 max-h-[560px]:mt-2 max-h-[560px]:p-1 bg-[#07080b]/60 border border-white/3 rounded-lg flex flex-col gap-2.5 max-[768px]:mt-3 max-[768px]:p-2 max-[768px]:gap-1.5 max-[380px]:mt-2 max-[380px]:p-1.5 max-[380px]:gap-1 overflow-hidden"
                       >
-                        <div className="gameover-stat-title-row">
+                        <div className="flex items-center gap-2 justify-center text-slate-400">
                           <BarChart2 size={14} />
-                          <span className="gameover-stat-title">
+                          <span className="text-[11px] font-bold tracking-widest uppercase">
                             SAVE SLOT PERFORMANCE
                           </span>
                         </div>
                         <div style={{ height: "1px", background: "rgba(255,255,255,0.04)", width: "100%" }} />
-                        <div className="gameover-stat-row">
-                          <span className="gameover-stat-label">TOTAL WINS</span>
-                          <span className="gameover-stat-value gameover-stat-win">{displayWins}</span>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-slate-600 font-bold tracking-wider max-[768px]:text-[11px] max-h-[750px]:text-[11px] max-[380px]:text-[10px] max-h-[560px]:text-[10px]">TOTAL WINS</span>
+                          <span className="text-lg font-bold font-mono max-[768px]:text-sm max-h-[750px]:text-sm max-[380px]:text-xs max-h-[560px]:text-xs text-green-500">{displayWins}</span>
                         </div>
-                        <div className="gameover-stat-row">
-                          <span className="gameover-stat-label">TOTAL LOSSES</span>
-                          <span className="gameover-stat-value gameover-stat-loss">{displayLosses}</span>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-slate-600 font-bold tracking-wider max-[768px]:text-[11px] max-h-[750px]:text-[11px] max-[380px]:text-[10px] max-h-[560px]:text-[10px]">TOTAL LOSSES</span>
+                          <span className="text-lg font-bold font-mono max-[768px]:text-sm max-h-[750px]:text-sm max-[380px]:text-xs max-h-[560px]:text-xs text-red-500">{displayLosses}</span>
                         </div>
                       </motion.div>
                     )}
@@ -424,9 +423,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                         transition={{ type: "spring", stiffness: 220, damping: 22, delay: 0.3 }}
                         style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
                       >
-                        <div className="gameover-divider" />
+                        <div className="h-px w-[60px] bg-white/8 my-6 max-h-[750px]:my-3 max-h-[560px]:my-2 max-[768px]:my-3 max-[380px]:my-2" />
 
-                        <div className="gameover-btn-container">
+                        <div className="flex flex-row gap-4 w-full justify-center max-[768px]:gap-2.5 max-h-[750px]:gap-2.5 max-[380px]:gap-2 max-h-[560px]:gap-2">
                           <button
                             onClick={() => {
                               resetGameSession();
@@ -436,7 +435,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                               playHoverTick();
                               setMenuIndex(0);
                             }}
-                            className={`neo-btn gameover-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+                            className={`neo-btn flex-1 !p-2 sm:!p-3 md:!p-4 !text-[11px] sm:!text-xs md:!text-sm !rounded-md md:!rounded-lg flex items-center justify-center !gap-1.5 sm:!gap-2 !tracking-wider !h-auto !min-h-0 ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
                             style={
                               gameResult === "GAMEOVER" && menuIndex === 0
                                 ? {
@@ -448,7 +447,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                             }
                           >
                             <span
-                              className="gameover-inline-arrow"
+                              className="inline-block font-mono font-bold animate-pulse text-sm max-[768px]:text-xs max-h-[750px]:text-xs max-[380px]:text-[11px] max-h-[560px]:text-[11px]"
                               style={{
                                 marginRight: "6px",
                                 visibility: menuIndex === 0 ? "visible" : "hidden",
@@ -460,7 +459,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                             <RotateCcw size={16} style={{ flexShrink: 0 }} />
                             RETRY
                             <span
-                              className="gameover-inline-arrow"
+                              className="inline-block font-mono font-bold animate-pulse text-sm max-[768px]:text-xs max-h-[750px]:text-xs max-[380px]:text-[11px] max-h-[560px]:text-[11px]"
                               style={{
                                 marginLeft: "6px",
                                 visibility: menuIndex === 0 ? "visible" : "hidden",
@@ -476,7 +475,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                               playHoverTick();
                               setMenuIndex(1);
                             }}
-                            className={`neo-btn gameover-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+                            className={`neo-btn flex-1 !p-2 sm:!p-3 md:!p-4 !text-[11px] sm:!text-xs md:!text-sm !rounded-md md:!rounded-lg flex items-center justify-center !gap-1.5 sm:!gap-2 !tracking-wider !h-auto !min-h-0 ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
                             style={
                               gameResult === "GAMEOVER" && menuIndex === 1
                                 ? {
@@ -488,7 +487,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                             }
                           >
                             <span
-                              className="gameover-inline-arrow"
+                              className="inline-block font-mono font-bold animate-pulse text-sm max-[768px]:text-xs max-h-[750px]:text-xs max-[380px]:text-[11px] max-h-[560px]:text-[11px]"
                               style={{
                                 marginRight: "6px",
                                 visibility: menuIndex === 1 ? "visible" : "hidden",
@@ -500,7 +499,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                             <Home size={16} style={{ flexShrink: 0 }} />
                             MENU
                             <span
-                              className="gameover-inline-arrow"
+                              className="inline-block font-mono font-bold animate-pulse text-sm max-[768px]:text-xs max-h-[750px]:text-xs max-[380px]:text-[11px] max-h-[560px]:text-[11px]"
                               style={{
                                 marginLeft: "6px",
                                 visibility: menuIndex === 1 ? "visible" : "hidden",

@@ -1,3 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-overlay-fade-in: overlay-fade-in 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  
+  @keyframes overlay-fade-in {
+    0% {
+      opacity: 0;
+      backdrop-filter: blur(0px);
+    }
+    100% {
+      opacity: 1;
+      backdrop-filter: blur(12px);
+    }
+  }
+}
+
 :root {
   --void-bg: #07080b;
   --surface-bg: #0c0e12;
