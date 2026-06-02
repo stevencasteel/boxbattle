@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DXVfUjlH.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BiXkyGpT.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1869,9 +1869,11 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
 
           // Constant celebratory streamers (downward rain) centering around the main jets, behind the modal
           let rainIndex = 0;
+          const victoryColors = ["#22c55e", "#4ade80", "#86efac", "#ffffff"];
           const rainIntervalId = setInterval(() => {
             for (let k = 0; k < 24; k++) {
               const xCoord = 0.32 + ((rainIndex + k) % 8) * 0.05 + (Math.random() - 0.5) * 0.03;
+              const randomColor = victoryColors[Math.floor(Math.random() * victoryColors.length)];
               myConfetti({
                 particleCount: 1,
                 angle: 270 + (Math.random() - 0.5) * 10,
@@ -1883,7 +1885,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   y: 0.55,
                   x: Math.max(0.01, Math.min(0.99, xCoord))
                 },
-                colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
+                colors: [randomColor]
               });
             }
             rainIndex = (rainIndex + 1) % 8;
@@ -1897,11 +1899,13 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
         } else if (gameResult === "GAMEOVER") {
           let laneIndex = 0;
           const NUM_LANES = 8;
+          const defeatColors = ["#ef4444", "#dc2626", "#b91c1c", "#991b1b", "#7f1d1d"];
           
           const intervalId = setInterval(() => {
-            for (let k = 0; k < 15; k++) {
+            for (let k = 0; k < 30; k++) {
               const currentLane = (laneIndex + k) % NUM_LANES;
               const xCoord = (currentLane / (NUM_LANES - 1)) * 0.9 + 0.05 + (Math.random() - 0.5) * 0.05;
+              const randomColor = defeatColors[Math.floor(Math.random() * defeatColors.length)];
               
               myConfetti({
                 particleCount: 1,
@@ -1912,15 +1916,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                 gravity: 0.85,
                 scalar: 0.65 + Math.random() * 0.3,
                 origin: { 
-                  y: 0.0,
+                  y: -0.15,
                   x: Math.max(0.01, Math.min(0.99, xCoord)) 
                 },
-                colors: [
-                  "#ef4444",
-                  "#991b1b",
-                  "#374151",
-                  "#27272a"
-                ]
+                colors: [randomColor]
               });
             }
             laneIndex = (laneIndex + 3) % NUM_LANES;
