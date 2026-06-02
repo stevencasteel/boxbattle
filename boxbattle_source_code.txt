@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/2/2026, 3:56:32 AM
+ [SYSTEM] Generated: 6/2/2026, 3:18:19 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2609,58 +2609,115 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
   }, [retryCount, currentScreen]);
 
   useEffect(() => {
-    if (gameResult === "PLAYING" || stagger < 2) return;
+    if (gameResult === "PLAYING") return;
 
-    const confettiCanvas = document.getElementById("confetti-canvas") as HTMLCanvasElement | null;
-    if (confettiCanvas) {
-      const myConfetti = confetti.create(confettiCanvas, { resize: true, useWorker: true });
+    let cleanupFn: (() => void) | undefined = undefined;
 
-      if (gameResult === "VICTORY") {
-        myConfetti({
-          particleCount: 120,
-          spread: 80,
-          origin: { y: 0.55 },
-          colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
-        });
-      } else if (gameResult === "GAMEOVER") {
-        let laneIndex = 0;
-        const NUM_LANES = 8;
-        
-        const intervalId = setInterval(() => {
-          for (let k = 0; k < 15; k++) {
-            const currentLane = (laneIndex + k) % NUM_LANES;
-            const xCoord = (currentLane / (NUM_LANES - 1)) * 0.9 + 0.05 + (Math.random() - 0.5) * 0.05;
-            
+    const delayTimeout = setTimeout(() => {
+      const confettiCanvas = document.getElementById("confetti-canvas") as HTMLCanvasElement | null;
+      if (confettiCanvas) {
+        const myConfetti = confetti.create(confettiCanvas, { resize: true, useWorker: true });
+
+        if (gameResult === "VICTORY") {
+          const fireConfetti = () => {
             myConfetti({
-              particleCount: 1,
-              angle: 270 + (Math.random() - 0.5) * 10,
-              spread: 15,
-              startVelocity: 14 + Math.random() * 8,
-              decay: 0.95,
-              gravity: 0.85,
-              scalar: 0.65 + Math.random() * 0.3,
-              origin: { 
-                y: 0.0,
-                x: Math.max(0.01, Math.min(0.99, xCoord)) 
-              },
-              colors: [
-                "#ef4444",
-                "#991b1b",
-                "#374151",
-                "#27272a"
-              ]
+              particleCount: 180,
+              spread: 80,
+              origin: { y: 0.55, x: 0.5 },
+              colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
             });
-          }
-          laneIndex = (laneIndex + 3) % NUM_LANES;
-        }, 120);
+            myConfetti({
+              particleCount: 100,
+              spread: 45,
+              angle: 135,
+              origin: { y: 0.55, x: 0.5 },
+              colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
+            });
+            myConfetti({
+              particleCount: 100,
+              spread: 45,
+              angle: 45,
+              origin: { y: 0.55, x: 0.5 },
+              colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
+            });
+          };
 
-        return () => {
-          clearInterval(intervalId);
-          myConfetti.reset();
-        };
+          fireConfetti();
+          const intervalId = setInterval(fireConfetti, 5000);
+
+          // Constant celebratory streamers (downward rain) centering around the main jets, behind the modal
+          let rainIndex = 0;
+          const rainIntervalId = setInterval(() => {
+            for (let k = 0; k < 6; k++) {
+              const xCoord = 0.3 + ((rainIndex + k) % 5) * 0.1 + (Math.random() - 0.5) * 0.05;
+              myConfetti({
+                particleCount: 1,
+                angle: 270 + (Math.random() - 0.5) * 10,
+                spread: 15,
+                startVelocity: 14 + Math.random() * 8,
+                decay: 0.95,
+                gravity: 0.85,
+                scalar: 0.65 + Math.random() * 0.3,
+                origin: {
+                  y: 0.55,
+                  x: Math.max(0.01, Math.min(0.99, xCoord))
+                },
+                colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff", "#eab308"]
+              });
+            }
+            rainIndex = (rainIndex + 1) % 5;
+          }, 120);
+
+          cleanupFn = () => {
+            clearInterval(intervalId);
+            clearInterval(rainIntervalId);
+            myConfetti.reset();
+          };
+        } else if (gameResult === "GAMEOVER") {
+          let laneIndex = 0;
+          const NUM_LANES = 8;
+          
+          const intervalId = setInterval(() => {
+            for (let k = 0; k < 15; k++) {
+              const currentLane = (laneIndex + k) % NUM_LANES;
+              const xCoord = (currentLane / (NUM_LANES - 1)) * 0.9 + 0.05 + (Math.random() - 0.5) * 0.05;
+              
+              myConfetti({
+                particleCount: 1,
+                angle: 270 + (Math.random() - 0.5) * 10,
+                spread: 15,
+                startVelocity: 14 + Math.random() * 8,
+                decay: 0.95,
+                gravity: 0.85,
+                scalar: 0.65 + Math.random() * 0.3,
+                origin: { 
+                  y: 0.0,
+                  x: Math.max(0.01, Math.min(0.99, xCoord)) 
+                },
+                colors: [
+                  "#ef4444",
+                  "#991b1b",
+                  "#374151",
+                  "#27272a"
+                ]
+              });
+            }
+            laneIndex = (laneIndex + 3) % NUM_LANES;
+          }, 120);
+
+          cleanupFn = () => {
+            clearInterval(intervalId);
+            myConfetti.reset();
+          };
+        }
       }
-    }
-  }, [gameResult, stagger]);
+    }, 750);
+
+    return () => {
+      clearTimeout(delayTimeout);
+      if (cleanupFn) cleanupFn();
+    };
+  }, [gameResult]);
 
   return (
     <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
