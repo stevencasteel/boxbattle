@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BeSaYRoj.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CMI4w585.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -190,7 +190,44 @@ export default defineConfig([
     },
   },
 ]);
-`,"README.md":"# BOX BATTLE\n\nMega Man / Hollow Knight battle arena prototype.\n\nPorted over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand using Gemini 3.5 Flash\n\nPlay the game here:\n👉 **[GitHub.io](https://stevencasteel.github.io/boxbattle/)**\n👉 **[Itch.io](https://stevencasteel.itch.io/boxbattle)**\n\n---\n\n## Player Controls\n\n- **Move Left / Right**: `Left Arrow` / `Right Arrow` or `A` / `D`\n- **Look / Move Up**: `Up Arrow` or `W`\n- **Crouch / Move Down**: `Down Arrow` or `S`\n- **Jump**: `X` or `.` (Period) or `Space`\n- **Melee Attack**: `C` or `,` (Comma)\n- **Dash**: `Z` or `/` (Slash)\n- **Determination Heal**: Hold `Move Down` + Press `Jump` (Requires 1 active Heal Charge)\n\n_Key bindings are fully customizable inside the Options menu._\n\n---\n\n## Technical Architecture\n\n- **Presentation & UI**: React 19, TypeScript 6, Vite 8, Zustand 5\n- **Physics Simulation**: Custom 60Hz Semi-Implicit Euler accumulator loop with swept collision checks and corner-nudging\n- **Sound Design**: Pure procedural waveform synthesis utilizing native Web Audio API oscillators, filters, and envelope gains (zero external binary audio assets)\n","src/App.css":`.cabinet-outer {
+`,"README.md":`# BOX BATTLE
+
+Mega Man / Hollow Knight battle arena prototype.
+
+Ported over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand using Gemini 3.5 Flash
+
+Play the game here:
+👉 **[GitHub.io](https://stevencasteel.github.io/boxbattle/)**
+👉 **[Itch.io](https://stevencasteel.itch.io/boxbattle)**
+
+---
+
+## Player Controls
+
+- **Move Left / Right**: \`Left Arrow\` / \`Right Arrow\` or \`A\` / \`D\`
+- **Look / Move Up**: \`Up Arrow\` or \`W\`
+- **Crouch / Move Down**: \`Down Arrow\` or \`S\`
+- **Jump**: \`X\` or \`.\` (Period) or \`Space\`
+- **Melee Attack**: \`C\` or \`,\` (Comma)
+- **Dash**: \`Z\` or \`/\` (Slash)
+- **Determination Heal**: Hold \`Move Down\` + Press \`Jump\` (Requires 1 active Heal Charge)
+
+_Key bindings are fully customizable inside the Options menu._
+
+---
+
+## Technical Architecture
+
+- **Presentation & UI**: React 19, TypeScript 6, Vite 8, Zustand 5
+- **Physics Simulation**: Custom 60Hz Semi-Implicit Euler accumulator loop with swept collision checks and corner-nudging
+- **Sound Design**: Pure procedural waveform synthesis utilizing native Web Audio API oscillators, filters, and envelope gains (zero external binary audio assets)
+
+---
+
+Personal Website:
+
+https://www.stevencasteel.com/
+`,"src/App.css":`.cabinet-outer {
   position: relative;
   width: min(95vw, 81.2vh);
   height: min(111vw, 95vh);

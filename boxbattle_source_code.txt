@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/2/2026, 10:41:42 PM
+ [SYSTEM] Generated: 6/2/2026, 10:56:01 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -266,6 +266,12 @@ _Key bindings are fully customizable inside the Options menu._
 - **Presentation & UI**: React 19, TypeScript 6, Vite 8, Zustand 5
 - **Physics Simulation**: Custom 60Hz Semi-Implicit Euler accumulator loop with swept collision checks and corner-nudging
 - **Sound Design**: Pure procedural waveform synthesis utilizing native Web Audio API oscillators, filters, and envelope gains (zero external binary audio assets)
+
+---
+
+Personal Website:
+
+https://www.stevencasteel.com/
 
 
 
