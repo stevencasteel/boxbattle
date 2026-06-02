@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/27/2026, 9:04:37 PM
+ [SYSTEM] Generated: 6/2/2026, 3:56:32 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -18,6 +18,9 @@
 │   └── TODO.txt
 ├── node_modules/ (contents skipped)
 ├── public/
+│   ├── sfx/
+│   │   ├── crowd_defeat.mp3
+│   │   └── crowd_victory.mp3
 │   ├── boxbattle_cover.jpg
 │   ├── boxbattle_cover.png
 │   ├── boxbattle_folder_icon.png
@@ -159,7 +162,7 @@
 │   │   ├── useGameStore.ts
 │   │   └── useTutorialStore.ts
 │   ├── styles/
-│   │   └── neomorphism.css
+│   │   └── neumorphism.css
 │   ├── App.css
 │   ├── App.tsx
 │   ├── index.css
@@ -637,16 +640,20 @@ export default defineConfig([
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{js,ts,html,json,md}\""
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.0",
+    "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.39.0",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-syntax-highlighter": "^15.6.1",
+    "tailwindcss": "^4.3.0",
     "tone": "^15.1.22",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -656,10 +663,10 @@ export default defineConfig([
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "prettier": "^3.2.5",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12",
-    "prettier": "^3.2.5"
+    "vite": "^8.0.12"
   }
 }
 
@@ -1661,7 +1668,7 @@ import { useEngineSubscriptions } from "@/hooks/useEngineSubscriptions";
 import { useRebindCapture } from "@/hooks/useRebindCapture";
 
 import "./App.css";
-import "./styles/neomorphism.css";
+import "./styles/neumorphism.css";
 import "./components/GameArena.css";
 
 export default function App() {
@@ -2113,237 +2120,6 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   flex-shrink: 0;
 }
 
-.gameover-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.94);
-  backdrop-filter: blur(12px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 99;
-  padding: clamp(12px, 3vmin, 24px);
-  box-sizing: border-box;
-  animation: overlay-fade-in 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-  opacity: 0;
-  will-change: opacity;
-}
-
-@keyframes overlay-fade-in {
-  0% {
-    opacity: 0;
-    backdrop-filter: blur(0px);
-  }
-  100% {
-    opacity: 1;
-    backdrop-filter: blur(12px);
-  }
-}
-
-.gameover-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(16px, 4.5vmin, 40px);
-  border-radius: 20px;
-  background: rgba(12, 14, 18, 0.96);
-  max-width: 440px;
-  width: 90%;
-  box-sizing: border-box;
-  text-align: center;
-}
-
-.gameover-box.victory-border {
-  border: 2px solid rgba(34, 197, 94, 0.35);
-  box-shadow: 0 0 30px rgba(34, 197, 94, 0.15), inset 0 0 20px rgba(34, 197, 94, 0.1);
-}
-
-.gameover-box.defeat-border {
-  border: 2px solid rgba(239, 68, 68, 0.35);
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.15), inset 0 0 20px rgba(239, 68, 68, 0.1);
-}
-
-.gameover-icon {
-  width: clamp(40px, 8vmin, 64px) !important;
-  height: clamp(40px, 8vmin, 64px) !important;
-  margin-bottom: clamp(8px, 2vmin, 16px) !important;
-}
-
-.gameover-stat-card {
-  width: 100%;
-  margin-top: clamp(10px, 2.5vmin, 24px);
-  padding: clamp(10px, 2vmin, 16px) clamp(12px, 2.5vmin, 20px);
-  background: rgba(7, 8, 11, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(6px, 1.5vmin, 10px);
-  box-sizing: border-box;
-}
-
-.gameover-stat-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-  color: #718096;
-}
-
-.gameover-stat-title {
-  font-size: 11px;
-  font-weight: bold;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-}
-
-.gameover-stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.gameover-stat-label {
-  font-size: 12px;
-  color: #4a5568;
-  font-weight: bold;
-  letter-spacing: 0.1em;
-}
-
-.gameover-stat-value {
-  font-size: 18px;
-  font-weight: bold;
-  font-family: monospace;
-}
-
-.gameover-stat-win {
-  color: var(--signal-green);
-}
-
-.gameover-stat-loss {
-  color: var(--signal-red);
-}
-
-.gameover-divider {
-  height: 1px;
-  width: 60px;
-  background: rgba(255, 255, 255, 0.08);
-  margin: clamp(12px, 2.5vmin, 24px) 0;
-}
-
-.gameover-btn-container {
-  display: flex;
-  flex-direction: row;
-  gap: clamp(10px, 2vmin, 16px);
-  width: 100%;
-  justify-content: center;
-}
-
-.neo-btn.gameover-btn {
-  flex: 1;
-  padding: clamp(10px, 2vmin, 16px) clamp(12px, 2.5vmin, 20px);
-  font-size: clamp(11px, 1.5vmin, 14px);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  letter-spacing: 0.1em;
-  height: auto;
-  min-height: 0;
-}
-
-.gameover-inline-arrow {
-  display: inline-block;
-  font-family: monospace;
-  font-weight: bold;
-  animation: arrow-blink 0.4s infinite alternate;
-  font-size: clamp(10px, 1.3vmin, 14px);
-  line-height: 1;
-}
-
-@media (max-width: 768px), (max-height: 750px) {
-  .gameover-box {
-    padding: clamp(12px, 3.5vmin, 24px);
-    width: 90%;
-    max-width: 360px;
-    border-radius: 14px;
-  }
-  .gameover-icon {
-    width: 44px !important;
-    height: 44px !important;
-    margin-bottom: 8px !important;
-  }
-  .victory-title-anim,
-  .defeat-title-anim {
-    font-size: 1.8rem;
-  }
-  .gameover-stat-card {
-    margin-top: 12px;
-    padding: 8px 12px;
-    gap: 6px;
-  }
-  .gameover-stat-label {
-    font-size: 11px;
-  }
-  .gameover-stat-value {
-    font-size: 15px;
-  }
-  .gameover-divider {
-    margin: 12px 0;
-  }
-  .gameover-btn-container {
-    gap: 10px;
-  }
-  .neo-btn.gameover-btn {
-    padding: 10px 14px;
-    font-size: 12px;
-    border-radius: 8px;
-  }
-}
-
-@media (max-width: 380px), (max-height: 560px) {
-  .gameover-box {
-    padding: 12px;
-    width: 95%;
-    max-width: 320px;
-  }
-  .gameover-icon {
-    width: 32px !important;
-    height: 32px !important;
-    margin-bottom: 4px !important;
-  }
-  .victory-title-anim,
-  .defeat-title-anim {
-    font-size: 1.4rem;
-  }
-  .gameover-stat-card {
-    margin-top: 8px;
-    padding: 6px 10px;
-    gap: 4px;
-  }
-  .gameover-stat-label {
-    font-size: 10px;
-  }
-  .gameover-stat-value {
-    font-size: 13px;
-  }
-  .gameover-divider {
-    margin: 8px 0;
-  }
-  .gameover-btn-container {
-    flex-direction: row;
-    gap: 8px;
-  }
-  .neo-btn.gameover-btn {
-    padding: 8px 10px;
-    font-size: 11px;
-    letter-spacing: 0.05em;
-  }
-}
-
 .dialogue-console {
   width: 100%;
   height: 8.5vmin;
@@ -2581,6 +2357,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 
 ● ./src/components/GameArena.tsx
 ────────────────────────────────────────────────────
+import confetti from "canvas-confetti";
 import "./GameArena.css";
 import { useEffect, useRef, useState } from "react";
 import { Engine } from "@/core/Engine";
@@ -2747,8 +2524,14 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.2 });
       if (gameResult === "VICTORY") {
         soundSynth.playHealComplete();
+        if (soundSynth.playCrowdVictory) {
+          soundSynth.playCrowdVictory();
+        }
       } else {
         soundSynth.playHealCancel();
+        if (soundSynth.playCrowdDefeat) {
+          soundSynth.playCrowdDefeat();
+        }
       }
     }, 750);
 
@@ -2805,7 +2588,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       }, 900);
 
       tickTimeoutRef.current = startTickTimeout;
-    }, 5200);
+    }, 1500);
 
     return () => {
       clearTimeout(t1);
@@ -2824,6 +2607,60 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       engineRef.current?.reset();
     }
   }, [retryCount, currentScreen]);
+
+  useEffect(() => {
+    if (gameResult === "PLAYING" || stagger < 2) return;
+
+    const confettiCanvas = document.getElementById("confetti-canvas") as HTMLCanvasElement | null;
+    if (confettiCanvas) {
+      const myConfetti = confetti.create(confettiCanvas, { resize: true, useWorker: true });
+
+      if (gameResult === "VICTORY") {
+        myConfetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.55 },
+          colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
+        });
+      } else if (gameResult === "GAMEOVER") {
+        let laneIndex = 0;
+        const NUM_LANES = 8;
+        
+        const intervalId = setInterval(() => {
+          for (let k = 0; k < 15; k++) {
+            const currentLane = (laneIndex + k) % NUM_LANES;
+            const xCoord = (currentLane / (NUM_LANES - 1)) * 0.9 + 0.05 + (Math.random() - 0.5) * 0.05;
+            
+            myConfetti({
+              particleCount: 1,
+              angle: 270 + (Math.random() - 0.5) * 10,
+              spread: 15,
+              startVelocity: 14 + Math.random() * 8,
+              decay: 0.95,
+              gravity: 0.85,
+              scalar: 0.65 + Math.random() * 0.3,
+              origin: { 
+                y: 0.0,
+                x: Math.max(0.01, Math.min(0.99, xCoord)) 
+              },
+              colors: [
+                "#ef4444",
+                "#991b1b",
+                "#374151",
+                "#27272a"
+              ]
+            });
+          }
+          laneIndex = (laneIndex + 3) % NUM_LANES;
+        }, 120);
+
+        return () => {
+          clearInterval(intervalId);
+          myConfetti.reset();
+        };
+      }
+    }
+  }, [gameResult, stagger]);
 
   return (
     <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
@@ -2861,15 +2698,16 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
           <div className="vignette-overlay" />
 
           {gameResult !== "PLAYING" && stagger >= 1 && (
-            <div className="gameover-overlay">
+            <div className="absolute inset-0 bg-black/94 backdrop-blur-md flex flex-col items-center justify-center z-[99] p-3 sm:p-6 animate-overlay-fade-in opacity-0 will-change-opacity">
+              <canvas id="confetti-canvas" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1 }} />
               <AnimatePresence>
                 <motion.div
                   layout
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className={`gameover-box neo-elevated ${gameResult === "GAMEOVER" ? "defeat-border" : "victory-border"}`}
+                  className={`flex flex-col items-center justify-center p-4 max-w-[440px] w-[90%] text-center neo-elevated border-2 transition-all duration-300 rounded-[20px] bg-[#0c0e12]/96 max-h-[750px]:p-6 max-h-[560px]:p-3 max-[768px]:p-6 max-[380px]:p-3 ${gameResult === "GAMEOVER" ? "border-red-500/35 shadow-[0_0_30px_rgba(239,68,68,0.15),_inset_0_0_20px_rgba(239,68,68,0.1)]" : "border-green-500/35 shadow-[0_0_30px_rgba(34,197,94,0.15),_inset_0_0_20px_rgba(34,197,94,0.1)]"}`}
                   transition={{ type: "spring", stiffness: 220, damping: 26 }}
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+                  style={{ position: "relative", zIndex: 2 }}
                 >
                   <AnimatePresence mode="wait">
                     {stagger >= 2 && (
@@ -2878,27 +2716,27 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                         initial={{ opacity: 0, y: -20, scale: 0.8 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                        className="flex-col-center"
+                        className="flex flex-col items-center justify-center"
                       >
                         {gameResult === "GAMEOVER" ? (
-                          <div className="flex-col-center">
+                          <div className="flex flex-col items-center justify-center">
                             <Skull
                               size={64}
-                              className="defeat-icon-anim gameover-icon"
+                              className="defeat-icon-anim w-16 h-16 mb-4 max-h-[750px]:w-11 max-h-[750px]:h-11 max-h-[750px]:mb-2 max-h-[560px]:w-8 max-h-[560px]:h-8 max-h-[560px]:mb-1 max-[768px]:w-11 max-[768px]:h-11 max-[768px]:mb-2 max-[380px]:w-8 max-[380px]:h-8 max-[380px]:mb-1"
                               style={{ color: "var(--signal-red)" }}
                             />
-                            <h1 className="defeat-title-anim" style={{ color: "var(--signal-red)" }}>
+                            <h1 className="defeat-title-anim text-3xl font-bold leading-none max-[768px]:text-2xl max-h-[750px]:text-2xl max-[380px]:text-lg max-h-[560px]:text-lg" style={{ color: "var(--signal-red)" }}>
                               DEFEATED
                             </h1>
                           </div>
                         ) : (
-                          <div className="flex-col-center">
+                          <div className="flex flex-col items-center justify-center">
                             <Trophy
                               size={64}
-                              className="victory-icon-anim gameover-icon"
+                              className="victory-icon-anim w-16 h-16 mb-4 max-h-[750px]:w-11 max-h-[750px]:h-11 max-h-[750px]:mb-2 max-h-[560px]:w-8 max-h-[560px]:h-8 max-h-[560px]:mb-1 max-[768px]:w-11 max-[768px]:h-11 max-[768px]:mb-2 max-[380px]:w-8 max-[380px]:h-8 max-[380px]:mb-1"
                               style={{ color: "var(--signal-green)" }}
                             />
-                            <h1 className="victory-title-anim" style={{ color: "var(--signal-green)" }}>
+                            <h1 className="victory-title-anim text-3xl font-bold leading-none max-[768px]:text-2xl max-h-[750px]:text-2xl max-[380px]:text-lg max-h-[560px]:text-lg" style={{ color: "var(--signal-green)" }}>
                               VICTORY
                             </h1>
                           </div>
@@ -2914,23 +2752,22 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                         initial={{ opacity: 0, height: 0, y: 15 }}
                         animate={{ opacity: 1, height: "auto", y: 0 }}
                         transition={{ type: "spring", stiffness: 220, damping: 24 }}
-                        className="stat-card-anim gameover-stat-card w-full"
-                        style={{ overflow: "hidden" }}
+                        className="w-full mt-6 p-4 max-h-[750px]:mt-3 max-h-[750px]:p-2 max-h-[750px]:gap-1 max-h-[560px]:mt-2 max-h-[560px]:p-1 bg-[#07080b]/60 border border-white/3 rounded-lg flex flex-col gap-2.5 max-[768px]:mt-3 max-[768px]:p-2 max-[768px]:gap-1.5 max-[380px]:mt-2 max-[380px]:p-1.5 max-[380px]:gap-1 overflow-hidden"
                       >
-                        <div className="gameover-stat-title-row">
+                        <div className="flex items-center gap-2 justify-center text-slate-400">
                           <BarChart2 size={14} />
-                          <span className="gameover-stat-title">
+                          <span className="text-[11px] font-bold tracking-widest uppercase">
                             SAVE SLOT PERFORMANCE
                           </span>
                         </div>
                         <div style={{ height: "1px", background: "rgba(255,255,255,0.04)", width: "100%" }} />
-                        <div className="gameover-stat-row">
-                          <span className="gameover-stat-label">TOTAL WINS</span>
-                          <span className="gameover-stat-value gameover-stat-win">{displayWins}</span>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-slate-600 font-bold tracking-wider max-[768px]:text-[11px] max-h-[750px]:text-[11px] max-[380px]:text-[10px] max-h-[560px]:text-[10px]">TOTAL WINS</span>
+                          <span className="text-lg font-bold font-mono max-[768px]:text-sm max-h-[750px]:text-sm max-[380px]:text-xs max-h-[560px]:text-xs text-green-500">{displayWins}</span>
                         </div>
-                        <div className="gameover-stat-row">
-                          <span className="gameover-stat-label">TOTAL LOSSES</span>
-                          <span className="gameover-stat-value gameover-stat-loss">{displayLosses}</span>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-slate-600 font-bold tracking-wider max-[768px]:text-[11px] max-h-[750px]:text-[11px] max-[380px]:text-[10px] max-h-[560px]:text-[10px]">TOTAL LOSSES</span>
+                          <span className="text-lg font-bold font-mono max-[768px]:text-sm max-h-[750px]:text-sm max-[380px]:text-xs max-h-[560px]:text-xs text-red-500">{displayLosses}</span>
                         </div>
                       </motion.div>
                     )}
@@ -2945,9 +2782,9 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                         transition={{ type: "spring", stiffness: 220, damping: 22, delay: 0.3 }}
                         style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
                       >
-                        <div className="gameover-divider" />
+                        <div className="h-px w-[60px] bg-white/8 my-6 max-h-[750px]:my-3 max-h-[560px]:my-2 max-[768px]:my-3 max-[380px]:my-2" />
 
-                        <div className="gameover-btn-container">
+                        <div className="flex flex-row gap-4 w-full justify-center max-[768px]:gap-2.5 max-h-[750px]:gap-2.5 max-[380px]:gap-2 max-h-[560px]:gap-2">
                           <button
                             onClick={() => {
                               resetGameSession();
@@ -2957,7 +2794,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                               playHoverTick();
                               setMenuIndex(0);
                             }}
-                            className={`neo-btn gameover-btn ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
+                            className={`neo-btn flex-1 !p-2 sm:!p-3 md:!p-4 !text-[11px] sm:!text-xs md:!text-sm !rounded-md md:!rounded-lg flex items-center justify-center !gap-1.5 sm:!gap-2 !tracking-wider !h-auto !min-h-0 ${menuIndex === 0 ? "neo-btn-focused" : ""}`}
                             style={
                               gameResult === "GAMEOVER" && menuIndex === 0
                                 ? {
@@ -2969,7 +2806,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                             }
                           >
                             <span
-                              className="gameover-inline-arrow"
+                              className="inline-block font-mono font-bold animate-pulse text-sm max-[768px]:text-xs max-h-[750px]:text-xs max-[380px]:text-[11px] max-h-[560px]:text-[11px]"
                               style={{
                                 marginRight: "6px",
                                 visibility: menuIndex === 0 ? "visible" : "hidden",
@@ -2981,7 +2818,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                             <RotateCcw size={16} style={{ flexShrink: 0 }} />
                             RETRY
                             <span
-                              className="gameover-inline-arrow"
+                              className="inline-block font-mono font-bold animate-pulse text-sm max-[768px]:text-xs max-h-[750px]:text-xs max-[380px]:text-[11px] max-h-[560px]:text-[11px]"
                               style={{
                                 marginLeft: "6px",
                                 visibility: menuIndex === 0 ? "visible" : "hidden",
@@ -2997,7 +2834,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                               playHoverTick();
                               setMenuIndex(1);
                             }}
-                            className={`neo-btn gameover-btn ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
+                            className={`neo-btn flex-1 !p-2 sm:!p-3 md:!p-4 !text-[11px] sm:!text-xs md:!text-sm !rounded-md md:!rounded-lg flex items-center justify-center !gap-1.5 sm:!gap-2 !tracking-wider !h-auto !min-h-0 ${menuIndex === 1 ? "neo-btn-focused" : ""}`}
                             style={
                               gameResult === "GAMEOVER" && menuIndex === 1
                                 ? {
@@ -3009,7 +2846,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                             }
                           >
                             <span
-                              className="gameover-inline-arrow"
+                              className="inline-block font-mono font-bold animate-pulse text-sm max-[768px]:text-xs max-h-[750px]:text-xs max-[380px]:text-[11px] max-h-[560px]:text-[11px]"
                               style={{
                                 marginRight: "6px",
                                 visibility: menuIndex === 1 ? "visible" : "hidden",
@@ -3021,7 +2858,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                             <Home size={16} style={{ flexShrink: 0 }} />
                             MENU
                             <span
-                              className="gameover-inline-arrow"
+                              className="inline-block font-mono font-bold animate-pulse text-sm max-[768px]:text-xs max-h-[750px]:text-xs max-[380px]:text-[11px] max-h-[560px]:text-[11px]"
                               style={{
                                 marginLeft: "6px",
                                 visibility: menuIndex === 1 ? "visible" : "hidden",
@@ -6793,7 +6630,6 @@ export class BattleDirector {
           {
             triggerTime: 2.0,
             action: () => {
-              this.events.publish("GAME_OVER", undefined);
               this.events.publish("RECORD_LOSS", undefined);
             },
           },
@@ -6816,6 +6652,7 @@ export class BattleDirector {
             triggerTime: 7.2,
             action: () => {
               this.events.publish("CLEAR_DIALOGUES", undefined);
+              this.events.publish("GAME_OVER", undefined);
               this.onBattleEnd();
             },
           },
@@ -6831,7 +6668,6 @@ export class BattleDirector {
           {
             triggerTime: 2.0,
             action: () => {
-              this.events.publish("VICTORY", undefined);
               this.events.publish("RECORD_WIN", undefined);
             },
           },
@@ -6854,6 +6690,7 @@ export class BattleDirector {
             triggerTime: 7.2,
             action: () => {
               this.events.publish("CLEAR_DIALOGUES", undefined);
+              this.events.publish("VICTORY", undefined);
               this.onBattleEnd();
             },
           },
@@ -7184,6 +7021,9 @@ export class Engine {
     this.world.minions = [];
     this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
 
+    if (this.world.audio.stopCrowdSounds) {
+      this.world.audio.stopCrowdSounds();
+    }
     this.entityResetService.resetPlayer(this.player, this.levelConfig.playerStart, 1);
     this.entityResetService.resetBoss(this.boss, this.levelConfig.bossStart, -1);
     this.boss.currentPhase = 1;
@@ -8200,6 +8040,9 @@ export interface IAudioManager {
   playMenuConfirm(): void;
   playMenuBack(): void;
   playSelectTick(): void;
+  stopCrowdSounds?(): void;
+  playCrowdVictory?(): void;
+  playCrowdDefeat?(): void;
 }
 
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
@@ -9386,6 +9229,15 @@ class SoundSynth {
 
   public playDialogueTick(speaker: "player" | "boss", char: string): void {
     this.sfx.playDialogueTick(speaker, char);
+  }
+  public playCrowdVictory(): void {
+    this.sfx.playCrowdVictory();
+  }
+  public playCrowdDefeat(): void {
+    this.sfx.playCrowdDefeat();
+  }
+  public stopCrowdSounds(): void {
+    this.sfx.stopCrowdSounds();
   }
 
   public fadeOutMusic(duration?: number): void {
@@ -10639,6 +10491,15 @@ export class SFXManager {
   public playDialogueTick(speaker: "player" | "boss", char: string) {
     this.interfaceSFX.playDialogueTick(speaker, char);
   }
+  public playCrowdVictory() {
+    this.interfaceSFX.playCrowdVictory();
+  }
+  public playCrowdDefeat() {
+    this.interfaceSFX.playCrowdDefeat();
+  }
+  public stopCrowdSounds() {
+    this.interfaceSFX.stopCrowdSounds();
+  }
 }
 
 
@@ -10890,6 +10751,8 @@ export class InterfaceSFX {
   private dialogueSynthPlayer!: Tone.PolySynth;
   private dialogueSynthBoss!: Tone.PolySynth;
   private menuSynth!: Tone.Synth;
+  private crowdVictoryPlayer?: Tone.Player;
+  private crowdDefeatPlayer?: Tone.Player;
 
   constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
     this.helper = helper;
@@ -10918,6 +10781,18 @@ export class InterfaceSFX {
 
     this.dialogueSynthPlayer.maxPolyphony = 16;
     this.dialogueSynthBoss.maxPolyphony = 16;
+
+    this.crowdVictoryPlayer = new Tone.Player({
+      url: "./sfx/crowd_victory.mp3",
+      autostart: false,
+      loop: false
+    }).connect(sfxGain);
+
+    this.crowdDefeatPlayer = new Tone.Player({
+      url: "./sfx/crowd_defeat.mp3",
+      autostart: false,
+      loop: false
+    }).connect(sfxGain);
   }
 
   public playSelectTick() {
@@ -10965,6 +10840,43 @@ export class InterfaceSFX {
         this.dialogueSynthBoss.triggerAttackRelease(freq, "24n", now);
       }
     });
+  }
+
+  public playCrowdVictory() {
+    if (this.crowdVictoryPlayer && this.crowdVictoryPlayer.loaded) {
+      try {
+        this.crowdVictoryPlayer.start();
+      } catch (err) {
+        console.warn("Crowd victory playback error:", err);
+      }
+    }
+  }
+
+  public playCrowdDefeat() {
+    if (this.crowdDefeatPlayer && this.crowdDefeatPlayer.loaded) {
+      try {
+        this.crowdDefeatPlayer.start();
+      } catch (err) {
+        console.warn("Crowd defeat playback error:", err);
+      }
+    }
+  }
+
+  public stopCrowdSounds() {
+    if (this.crowdVictoryPlayer && this.crowdVictoryPlayer.state === "started") {
+      try {
+        this.crowdVictoryPlayer.stop();
+      } catch (err) {
+        void err;
+      }
+    }
+    if (this.crowdDefeatPlayer && this.crowdDefeatPlayer.state === "started") {
+      try {
+        this.crowdDefeatPlayer.stop();
+      } catch (err) {
+        void err;
+      }
+    }
   }
 }
 
@@ -17512,6 +17424,23 @@ export function useSourceViewKeyboard({
 
 ● ./src/index.css
 ────────────────────────────────────────────────────
+@import "tailwindcss";
+
+@theme {
+  --animate-overlay-fade-in: overlay-fade-in 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  
+  @keyframes overlay-fade-in {
+    0% {
+      opacity: 0;
+      backdrop-filter: blur(0px);
+    }
+    100% {
+      opacity: 1;
+      backdrop-filter: blur(12px);
+    }
+  }
+}
+
 :root {
   --void-bg: #07080b;
   --surface-bg: #0c0e12;
@@ -17881,7 +17810,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 
 
 
-● ./src/styles/neomorphism.css
+● ./src/styles/neumorphism.css
 ────────────────────────────────────────────────────
 .neo-elevated {
   background: var(--surface-elevated);
@@ -18632,10 +18561,11 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 ────────────────────────────────────────────────────
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   base: "./",
   resolve: {
     alias: {
