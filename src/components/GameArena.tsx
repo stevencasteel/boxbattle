@@ -262,20 +262,20 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
         if (gameResult === "VICTORY") {
           const fireConfetti = () => {
             myConfetti({
-              particleCount: 180,
+              particleCount: 360,
               spread: 80,
               origin: { y: 0.55, x: 0.5 },
               colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
             });
             myConfetti({
-              particleCount: 100,
+              particleCount: 200,
               spread: 45,
               angle: 135,
               origin: { y: 0.55, x: 0.5 },
               colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
             });
             myConfetti({
-              particleCount: 100,
+              particleCount: 200,
               spread: 45,
               angle: 45,
               origin: { y: 0.55, x: 0.5 },
@@ -284,13 +284,13 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
           };
 
           fireConfetti();
-          const intervalId = setInterval(fireConfetti, 5000);
+          const intervalId = setInterval(fireConfetti, 3000);
 
           // Constant celebratory streamers (downward rain) centering around the main jets, behind the modal
           let rainIndex = 0;
           const rainIntervalId = setInterval(() => {
-            for (let k = 0; k < 6; k++) {
-              const xCoord = 0.3 + ((rainIndex + k) % 5) * 0.1 + (Math.random() - 0.5) * 0.05;
+            for (let k = 0; k < 24; k++) {
+              const xCoord = 0.32 + ((rainIndex + k) % 8) * 0.05 + (Math.random() - 0.5) * 0.03;
               myConfetti({
                 particleCount: 1,
                 angle: 270 + (Math.random() - 0.5) * 10,
@@ -306,7 +306,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                 colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff", "#eab308"]
               });
             }
-            rainIndex = (rainIndex + 1) % 5;
+            rainIndex = (rainIndex + 1) % 8;
           }, 120);
 
           cleanupFn = () => {
