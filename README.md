@@ -12,24 +12,12 @@ Play the game here:
 
 ## Player Controls
 
-### Default Preset (Preset 1)
-
-- **Move Left / Right**: `A` / `D` or `Left Arrow` / `Right Arrow`
-- **Look / Move Up**: `W` or `Up Arrow`
-- **Crouch / Move Down**: `S` or `Down Arrow`
-- **Jump**: `Space` or `X`
-- **Melee Attack**: `C`
-- **Dash**: `Z`
-- **Determination Heal**: Hold `Move Down` + Press `Jump` (Requires 1 active Heal Charge)
-
-### Alternate Preset (Preset 2)
-
-- **Move Left / Right**: `A` / `D`
-- **Look / Move Up**: `W`
-- **Crouch / Move Down**: `S`
-- **Jump**: `.` (Period)
-- **Melee Attack**: `,` (Comma)
-- **Dash**: `/` (Slash)
+- **Move Left / Right**: `Left Arrow` / `Right Arrow` or `A` / `D`
+- **Look / Move Up**: `Up Arrow` or `W`
+- **Crouch / Move Down**: `Down Arrow` or `S`
+- **Jump**: `X` or `.` (Period) or `Space`
+- **Melee Attack**: `C` or `,` (Comma)
+- **Dash**: `Z` or `/` (Slash)
 - **Determination Heal**: Hold `Move Down` + Press `Jump` (Requires 1 active Heal Charge)
 
 _Key bindings are fully customizable inside the Options menu._
