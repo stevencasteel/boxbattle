@@ -137,6 +137,9 @@ export class Engine {
     this.world.minions = [];
     this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
 
+    if (this.world.audio.stopCrowdSounds) {
+      this.world.audio.stopCrowdSounds();
+    }
     this.entityResetService.resetPlayer(this.player, this.levelConfig.playerStart, 1);
     this.entityResetService.resetBoss(this.boss, this.levelConfig.bossStart, -1);
     this.boss.currentPhase = 1;

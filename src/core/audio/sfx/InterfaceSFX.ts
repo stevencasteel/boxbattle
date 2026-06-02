@@ -12,6 +12,8 @@ export class InterfaceSFX {
   private dialogueSynthPlayer!: Tone.PolySynth;
   private dialogueSynthBoss!: Tone.PolySynth;
   private menuSynth!: Tone.Synth;
+  private crowdVictoryPlayer?: Tone.Player;
+  private crowdDefeatPlayer?: Tone.Player;
 
   constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
     this.helper = helper;
@@ -40,6 +42,18 @@ export class InterfaceSFX {
 
     this.dialogueSynthPlayer.maxPolyphony = 16;
     this.dialogueSynthBoss.maxPolyphony = 16;
+
+    this.crowdVictoryPlayer = new Tone.Player({
+      url: "./sfx/crowd_victory.mp3",
+      autostart: false,
+      loop: false
+    }).connect(sfxGain);
+
+    this.crowdDefeatPlayer = new Tone.Player({
+      url: "./sfx/crowd_defeat.mp3",
+      autostart: false,
+      loop: false
+    }).connect(sfxGain);
   }
 
   public playSelectTick() {
@@ -87,5 +101,38 @@ export class InterfaceSFX {
         this.dialogueSynthBoss.triggerAttackRelease(freq, "24n", now);
       }
     });
+  }
+
+  public playCrowdVictory() {
+    if (this.crowdVictoryPlayer && this.crowdVictoryPlayer.loaded) {
+      try {
+        this.crowdVictoryPlayer.start();
+      } catch (err) {
+        console.warn("Crowd victory playback error:", err);
+      }
+    }
+  }
+
+  public playCrowdDefeat() {
+    if (this.crowdDefeatPlayer && this.crowdDefeatPlayer.loaded) {
+      try {
+        this.crowdDefeatPlayer.start();
+      } catch (err) {
+        console.warn("Crowd defeat playback error:", err);
+      }
+    }
+  }
+
+  public stopCrowdSounds() {
+    if (this.crowdVictoryPlayer && this.crowdVictoryPlayer.state === "started") {
+      try {
+        this.crowdVictoryPlayer.stop();
+      } catch {}
+    }
+    if (this.crowdDefeatPlayer && this.crowdDefeatPlayer.state === "started") {
+      try {
+        this.crowdDefeatPlayer.stop();
+      } catch {}
+    }
   }
 }

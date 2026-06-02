@@ -1,3 +1,4 @@
+import confetti from "canvas-confetti";
 import "./GameArena.css";
 import { useEffect, useRef, useState } from "react";
 import { Engine } from "@/core/Engine";
@@ -164,8 +165,14 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.2 });
       if (gameResult === "VICTORY") {
         soundSynth.playHealComplete();
+        if (soundSynth.playCrowdVictory) {
+          soundSynth.playCrowdVictory();
+        }
       } else {
         soundSynth.playHealCancel();
+        if (soundSynth.playCrowdDefeat) {
+          soundSynth.playCrowdDefeat();
+        }
       }
     }, 750);
 
@@ -222,7 +229,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       }, 900);
 
       tickTimeoutRef.current = startTickTimeout;
-    }, 5200);
+    }, 1500);
 
     return () => {
       clearTimeout(t1);
@@ -241,6 +248,60 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       engineRef.current?.reset();
     }
   }, [retryCount, currentScreen]);
+
+  useEffect(() => {
+    if (gameResult === "PLAYING" || stagger < 2) return;
+
+    const confettiCanvas = document.getElementById("confetti-canvas") as HTMLCanvasElement | null;
+    if (confettiCanvas) {
+      const myConfetti = confetti.create(confettiCanvas, { resize: true, useWorker: true });
+
+      if (gameResult === "VICTORY") {
+        myConfetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.55 },
+          colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
+        });
+      } else if (gameResult === "GAMEOVER") {
+        let laneIndex = 0;
+        const NUM_LANES = 8;
+        
+        const intervalId = setInterval(() => {
+          for (let k = 0; k < 15; k++) {
+            const currentLane = (laneIndex + k) % NUM_LANES;
+            const xCoord = (currentLane / (NUM_LANES - 1)) * 0.9 + 0.05 + (Math.random() - 0.5) * 0.05;
+            
+            myConfetti({
+              particleCount: 1,
+              angle: 270 + (Math.random() - 0.5) * 10,
+              spread: 15,
+              startVelocity: 14 + Math.random() * 8,
+              decay: 0.95,
+              gravity: 0.85,
+              scalar: 0.65 + Math.random() * 0.3,
+              origin: { 
+                y: 0.0,
+                x: Math.max(0.01, Math.min(0.99, xCoord)) 
+              },
+              colors: [
+                "#ef4444",
+                "#991b1b",
+                "#374151",
+                "#27272a"
+              ]
+            });
+          }
+          laneIndex = (laneIndex + 3) % NUM_LANES;
+        }, 120);
+
+        return () => {
+          clearInterval(intervalId);
+          myConfetti.reset();
+        };
+      }
+    }
+  }, [gameResult, stagger]);
 
   return (
     <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
@@ -279,6 +340,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
 
           {gameResult !== "PLAYING" && stagger >= 1 && (
             <div className="gameover-overlay">
+              <canvas id="confetti-canvas" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1 }} />
               <AnimatePresence>
                 <motion.div
                   layout
@@ -286,7 +348,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   animate={{ scale: 1, opacity: 1 }}
                   className={`gameover-box neo-elevated ${gameResult === "GAMEOVER" ? "defeat-border" : "victory-border"}`}
                   transition={{ type: "spring", stiffness: 220, damping: 26 }}
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 2 }}
                 >
                   <AnimatePresence mode="wait">
                     {stagger >= 2 && (

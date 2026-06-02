@@ -78,7 +78,6 @@ export class BattleDirector {
           {
             triggerTime: 2.0,
             action: () => {
-              this.events.publish("GAME_OVER", undefined);
               this.events.publish("RECORD_LOSS", undefined);
             },
           },
@@ -101,6 +100,7 @@ export class BattleDirector {
             triggerTime: 7.2,
             action: () => {
               this.events.publish("CLEAR_DIALOGUES", undefined);
+              this.events.publish("GAME_OVER", undefined);
               this.onBattleEnd();
             },
           },
@@ -116,7 +116,6 @@ export class BattleDirector {
           {
             triggerTime: 2.0,
             action: () => {
-              this.events.publish("VICTORY", undefined);
               this.events.publish("RECORD_WIN", undefined);
             },
           },
@@ -139,6 +138,7 @@ export class BattleDirector {
             triggerTime: 7.2,
             action: () => {
               this.events.publish("CLEAR_DIALOGUES", undefined);
+              this.events.publish("VICTORY", undefined);
               this.onBattleEnd();
             },
           },

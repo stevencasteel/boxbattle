@@ -93,4 +93,13 @@ export class SFXManager {
   public playDialogueTick(speaker: "player" | "boss", char: string) {
     this.interfaceSFX.playDialogueTick(speaker, char);
   }
+  public playCrowdVictory() {
+    this.interfaceSFX.playCrowdVictory();
+  }
+  public playCrowdDefeat() {
+    this.interfaceSFX.playCrowdDefeat();
+  }
+  public stopCrowdSounds() {
+    this.interfaceSFX.stopCrowdSounds();
+  }
 }

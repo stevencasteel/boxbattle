@@ -238,6 +238,9 @@ export interface IAudioManager {
   playMenuConfirm(): void;
   playMenuBack(): void;
   playSelectTick(): void;
+  stopCrowdSounds?(): void;
+  playCrowdVictory?(): void;
+  playCrowdDefeat?(): void;
 }
 
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";

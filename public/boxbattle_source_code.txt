@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 5/27/2026, 4:01:43 PM
+ [SYSTEM] Generated: 6/1/2026, 10:30:18 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -19,6 +19,9 @@
 │   └── TODO.txt
 ├── node_modules/ (contents skipped)
 ├── public/
+│   ├── sfx/
+│   │   ├── crowd_defeat.mp3
+│   │   └── crowd_victory.mp3
 │   ├── boxbattle_cover.jpg
 │   ├── boxbattle_cover.png
 │   ├── boxbattle_folder_icon.png
@@ -639,6 +642,7 @@ export default defineConfig([
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{js,ts,html,json,md}\""
   },
   "dependencies": {
+    "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.39.0",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
@@ -649,6 +653,7 @@ export default defineConfig([
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -658,13 +663,12 @@ export default defineConfig([
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "prettier": "^3.2.5",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12",
-    "prettier": "^3.2.5"
+    "vite": "^8.0.12"
   }
 }
-
 
 
 ● ./scripts/create_source_context.command
@@ -2583,6 +2587,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 
 ● ./src/components/GameArena.tsx
 ────────────────────────────────────────────────────
+import confetti from "canvas-confetti";
 import "./GameArena.css";
 import { useEffect, useRef, useState } from "react";
 import { Engine } from "@/core/Engine";
@@ -2749,8 +2754,14 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       eventBroker.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.2 });
       if (gameResult === "VICTORY") {
         soundSynth.playHealComplete();
+        if (soundSynth.playCrowdVictory) {
+          soundSynth.playCrowdVictory();
+        }
       } else {
         soundSynth.playHealCancel();
+        if (soundSynth.playCrowdDefeat) {
+          soundSynth.playCrowdDefeat();
+        }
       }
     }, 750);
 
@@ -2807,7 +2818,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       }, 900);
 
       tickTimeoutRef.current = startTickTimeout;
-    }, 5200);
+    }, 1500);
 
     return () => {
       clearTimeout(t1);
@@ -2826,6 +2837,60 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
       engineRef.current?.reset();
     }
   }, [retryCount, currentScreen]);
+
+  useEffect(() => {
+    if (gameResult === "PLAYING" || stagger < 2) return;
+
+    const confettiCanvas = document.getElementById("confetti-canvas") as HTMLCanvasElement | null;
+    if (confettiCanvas) {
+      const myConfetti = confetti.create(confettiCanvas, { resize: true, useWorker: true });
+
+      if (gameResult === "VICTORY") {
+        myConfetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.55 },
+          colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
+        });
+      } else if (gameResult === "GAMEOVER") {
+        let laneIndex = 0;
+        const NUM_LANES = 8;
+        
+        const intervalId = setInterval(() => {
+          for (let k = 0; k < 15; k++) {
+            const currentLane = (laneIndex + k) % NUM_LANES;
+            const xCoord = (currentLane / (NUM_LANES - 1)) * 0.9 + 0.05 + (Math.random() - 0.5) * 0.05;
+            
+            myConfetti({
+              particleCount: 1,
+              angle: 270 + (Math.random() - 0.5) * 10,
+              spread: 15,
+              startVelocity: 14 + Math.random() * 8,
+              decay: 0.95,
+              gravity: 0.85,
+              scalar: 0.65 + Math.random() * 0.3,
+              origin: { 
+                y: 0.0,
+                x: Math.max(0.01, Math.min(0.99, xCoord)) 
+              },
+              colors: [
+                "#ef4444",
+                "#991b1b",
+                "#374151",
+                "#27272a"
+              ]
+            });
+          }
+          laneIndex = (laneIndex + 3) % NUM_LANES;
+        }, 120);
+
+        return () => {
+          clearInterval(intervalId);
+          myConfetti.reset();
+        };
+      }
+    }
+  }, [gameResult, stagger]);
 
   return (
     <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
@@ -2864,6 +2929,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
 
           {gameResult !== "PLAYING" && stagger >= 1 && (
             <div className="gameover-overlay">
+              <canvas id="confetti-canvas" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1 }} />
               <AnimatePresence>
                 <motion.div
                   layout
@@ -2871,7 +2937,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   animate={{ scale: 1, opacity: 1 }}
                   className={`gameover-box neo-elevated ${gameResult === "GAMEOVER" ? "defeat-border" : "victory-border"}`}
                   transition={{ type: "spring", stiffness: 220, damping: 26 }}
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 2 }}
                 >
                   <AnimatePresence mode="wait">
                     {stagger >= 2 && (
@@ -6795,7 +6861,6 @@ export class BattleDirector {
           {
             triggerTime: 2.0,
             action: () => {
-              this.events.publish("GAME_OVER", undefined);
               this.events.publish("RECORD_LOSS", undefined);
             },
           },
@@ -6818,6 +6883,7 @@ export class BattleDirector {
             triggerTime: 7.2,
             action: () => {
               this.events.publish("CLEAR_DIALOGUES", undefined);
+              this.events.publish("GAME_OVER", undefined);
               this.onBattleEnd();
             },
           },
@@ -6833,7 +6899,6 @@ export class BattleDirector {
           {
             triggerTime: 2.0,
             action: () => {
-              this.events.publish("VICTORY", undefined);
               this.events.publish("RECORD_WIN", undefined);
             },
           },
@@ -6856,6 +6921,7 @@ export class BattleDirector {
             triggerTime: 7.2,
             action: () => {
               this.events.publish("CLEAR_DIALOGUES", undefined);
+              this.events.publish("VICTORY", undefined);
               this.onBattleEnd();
             },
           },
@@ -7186,6 +7252,9 @@ export class Engine {
     this.world.minions = [];
     this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
 
+    if (this.world.audio.stopCrowdSounds) {
+      this.world.audio.stopCrowdSounds();
+    }
     this.entityResetService.resetPlayer(this.player, this.levelConfig.playerStart, 1);
     this.entityResetService.resetBoss(this.boss, this.levelConfig.bossStart, -1);
     this.boss.currentPhase = 1;
@@ -8202,6 +8271,9 @@ export interface IAudioManager {
   playMenuConfirm(): void;
   playMenuBack(): void;
   playSelectTick(): void;
+  stopCrowdSounds?(): void;
+  playCrowdVictory?(): void;
+  playCrowdDefeat?(): void;
 }
 
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
@@ -9388,6 +9460,15 @@ class SoundSynth {
 
   public playDialogueTick(speaker: "player" | "boss", char: string): void {
     this.sfx.playDialogueTick(speaker, char);
+  }
+  public playCrowdVictory(): void {
+    this.sfx.playCrowdVictory();
+  }
+  public playCrowdDefeat(): void {
+    this.sfx.playCrowdDefeat();
+  }
+  public stopCrowdSounds(): void {
+    this.sfx.stopCrowdSounds();
   }
 
   public fadeOutMusic(duration?: number): void {
@@ -10641,6 +10722,15 @@ export class SFXManager {
   public playDialogueTick(speaker: "player" | "boss", char: string) {
     this.interfaceSFX.playDialogueTick(speaker, char);
   }
+  public playCrowdVictory() {
+    this.interfaceSFX.playCrowdVictory();
+  }
+  public playCrowdDefeat() {
+    this.interfaceSFX.playCrowdDefeat();
+  }
+  public stopCrowdSounds() {
+    this.interfaceSFX.stopCrowdSounds();
+  }
 }
 
 
@@ -10892,6 +10982,8 @@ export class InterfaceSFX {
   private dialogueSynthPlayer!: Tone.PolySynth;
   private dialogueSynthBoss!: Tone.PolySynth;
   private menuSynth!: Tone.Synth;
+  private crowdVictoryPlayer?: Tone.Player;
+  private crowdDefeatPlayer?: Tone.Player;
 
   constructor(ctxManager: AudioContextManager, helper: SFXHelper) {
     this.helper = helper;
@@ -10920,6 +11012,18 @@ export class InterfaceSFX {
 
     this.dialogueSynthPlayer.maxPolyphony = 16;
     this.dialogueSynthBoss.maxPolyphony = 16;
+
+    this.crowdVictoryPlayer = new Tone.Player({
+      url: "./sfx/crowd_victory.mp3",
+      autostart: false,
+      loop: false
+    }).connect(sfxGain);
+
+    this.crowdDefeatPlayer = new Tone.Player({
+      url: "./sfx/crowd_defeat.mp3",
+      autostart: false,
+      loop: false
+    }).connect(sfxGain);
   }
 
   public playSelectTick() {
@@ -10967,6 +11071,39 @@ export class InterfaceSFX {
         this.dialogueSynthBoss.triggerAttackRelease(freq, "24n", now);
       }
     });
+  }
+
+  public playCrowdVictory() {
+    if (this.crowdVictoryPlayer && this.crowdVictoryPlayer.loaded) {
+      try {
+        this.crowdVictoryPlayer.start();
+      } catch (err) {
+        console.warn("Crowd victory playback error:", err);
+      }
+    }
+  }
+
+  public playCrowdDefeat() {
+    if (this.crowdDefeatPlayer && this.crowdDefeatPlayer.loaded) {
+      try {
+        this.crowdDefeatPlayer.start();
+      } catch (err) {
+        console.warn("Crowd defeat playback error:", err);
+      }
+    }
+  }
+
+  public stopCrowdSounds() {
+    if (this.crowdVictoryPlayer && this.crowdVictoryPlayer.state === "started") {
+      try {
+        this.crowdVictoryPlayer.stop();
+      } catch {}
+    }
+    if (this.crowdDefeatPlayer && this.crowdDefeatPlayer.state === "started") {
+      try {
+        this.crowdDefeatPlayer.stop();
+      } catch {}
+    }
   }
 }
 

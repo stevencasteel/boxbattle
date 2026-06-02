@@ -202,6 +202,15 @@ class SoundSynth {
   public playDialogueTick(speaker: "player" | "boss", char: string): void {
     this.sfx.playDialogueTick(speaker, char);
   }
+  public playCrowdVictory(): void {
+    this.sfx.playCrowdVictory();
+  }
+  public playCrowdDefeat(): void {
+    this.sfx.playCrowdDefeat();
+  }
+  public stopCrowdSounds(): void {
+    this.sfx.stopCrowdSounds();
+  }
 
   public fadeOutMusic(duration?: number): void {
     this.music.fadeOutMusic(duration);
