@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-lGOTh3YV.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DXVfUjlH.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1879,12 +1879,11 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                 startVelocity: 14 + Math.random() * 8,
                 decay: 0.95,
                 gravity: 0.85,
-                scalar: 0.65 + Math.random() * 0.3,
                 origin: {
                   y: 0.55,
                   x: Math.max(0.01, Math.min(0.99, xCoord))
                 },
-                colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff", "#eab308"]
+                colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
               });
             }
             rainIndex = (rainIndex + 1) % 8;
