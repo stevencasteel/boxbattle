@@ -2,10 +2,11 @@
 
 Mega Man / Hollow Knight battle arena prototype.
 
-Ported over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand
+Ported over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand using Gemini 3.5 Flash
 
-Play the live build here:
-👉 **[Live Demo](https://stevencasteel.github.io/BOX-BATTLE/)**
+Play the game here:
+👉 **[GitHub.io](https://stevencasteel.github.io/boxbattle/)**
+👉 **[Itch.io](https://stevencasteel.itch.io/boxbattle)**
 
 ---
 
@@ -40,9 +41,3 @@ _Key bindings are fully customizable inside the Options menu._
 - **Presentation & UI**: React 19, TypeScript 6, Vite 8, Zustand 5
 - **Physics Simulation**: Custom 60Hz Semi-Implicit Euler accumulator loop with swept collision checks and corner-nudging
 - **Sound Design**: Pure procedural waveform synthesis utilizing native Web Audio API oscillators, filters, and envelope gains (zero external binary audio assets)
-
----
-
-## Creator
-
-Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.5.
