@@ -298,12 +298,11 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                 startVelocity: 14 + Math.random() * 8,
                 decay: 0.95,
                 gravity: 0.85,
-                scalar: 0.65 + Math.random() * 0.3,
                 origin: {
                   y: 0.55,
                   x: Math.max(0.01, Math.min(0.99, xCoord))
                 },
-                colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff", "#eab308"]
+                colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
               });
             }
             rainIndex = (rainIndex + 1) % 8;

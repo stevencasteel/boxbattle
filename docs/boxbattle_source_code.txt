@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/2/2026, 10:26:04 AM
+ [SYSTEM] Generated: 6/2/2026, 10:28:51 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2664,7 +2664,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   y: 0.55,
                   x: Math.max(0.01, Math.min(0.99, xCoord))
                 },
-                colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff", "#eab308"]
+                colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
               });
             }
             rainIndex = (rainIndex + 1) % 8;
