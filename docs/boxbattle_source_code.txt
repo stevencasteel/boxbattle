@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/5/2026, 3:08:14 PM
+ [SYSTEM] Generated: 6/5/2026, 3:21:34 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2026,7 +2026,9 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   contain: layout style paint;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-height: 0;
+  align-self: center;
 }
 
 .game-viewport-container.viewport-mobile {
@@ -2944,6 +2946,9 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 ────────────────────────────────────────────────────
 .cabinet-status-panel {
   width: 100%;
+  height: 8.5vmin;
+  min-height: 64px;
+  max-height: 96px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2982,7 +2987,9 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   contain: layout style paint;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-height: 0;
+  align-self: center;
 }
 
 .dialogue-console {
