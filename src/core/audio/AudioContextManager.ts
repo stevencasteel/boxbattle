@@ -40,6 +40,18 @@ export class AudioContextManager {
     }
   }
 
+  public suspendContext() {
+    if (this.initialized && Tone.getContext().state === "running") {
+      Tone.getContext().suspend();
+    }
+  }
+
+  public suspendContext() {
+    if (this.initialized && Tone.getContext().state === "running") {
+      Tone.getContext().suspend();
+    }
+  }
+
   public resumeContext(force = false) {
     if (force) {
       this.hasUserGestured = true;

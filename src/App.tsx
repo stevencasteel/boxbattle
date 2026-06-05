@@ -63,6 +63,82 @@ export default function App() {
 
   const [rebindTarget, setRebindTarget] = useState<{ action: Action; index: number } | null>(null);
 
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data && e.data.type === "boxbattle-pause") {
+        soundSynth.suspendContext();
+        if (useSessionStore.getState().currentScreen === "PLAYING") {
+          const pauseEvent = new KeyboardEvent("keydown", { code: "KeyP" });
+          window.dispatchEvent(pauseEvent);
+        }
+      } else if (e.data && e.data.type === "boxbattle-resume") {
+        soundSynth.resumeContext(true);
+      }
+    };
+
+    const handleBlur = () => {
+      soundSynth.suspendContext();
+      if (useSessionStore.getState().currentScreen === "PLAYING") {
+        const pauseEvent = new KeyboardEvent("keydown", { code: "KeyP" });
+        window.dispatchEvent(pauseEvent);
+      }
+    };
+
+    const handleFocus = () => {
+      if (useSessionStore.getState().currentScreen === "PLAYING") {
+        soundSynth.resumeContext(true);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data && e.data.type === "boxbattle-pause") {
+        soundSynth.suspendContext();
+        if (useSessionStore.getState().currentScreen === "PLAYING") {
+          const pauseEvent = new KeyboardEvent("keydown", { code: "KeyP" });
+          window.dispatchEvent(pauseEvent);
+        }
+      } else if (e.data && e.data.type === "boxbattle-resume") {
+        soundSynth.resumeContext(true);
+      }
+    };
+
+    const handleBlur = () => {
+      soundSynth.suspendContext();
+      if (useSessionStore.getState().currentScreen === "PLAYING") {
+        const pauseEvent = new KeyboardEvent("keydown", { code: "KeyP" });
+        window.dispatchEvent(pauseEvent);
+      }
+    };
+
+    const handleFocus = () => {
+      if (useSessionStore.getState().currentScreen === "PLAYING") {
+        soundSynth.resumeContext(true);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
+
   const [isTouchDevice] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       return window.matchMedia("(pointer: coarse)").matches;

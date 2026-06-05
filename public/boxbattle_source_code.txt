@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/2/2026, 10:36:48 AM
+ [SYSTEM] Generated: 6/5/2026, 2:34:27 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -14,6 +14,7 @@
 ├── docs/
 │   ├── AI_INSTRUCTIONS.txt
 │   ├── boxbattle_source_code.txt
+│   ├── BOXBATTLE_SYSTEMS_ARCHITECTURE.txt
 │   ├── DESIGN_EXCLUSIONS.txt
 │   ├── MUSIC_ARCHITECTURE.txt
 │   └── TODO.txt
@@ -30,6 +31,16 @@
 │   ├── favicon.svg
 │   ├── icons.svg
 │   └── source_code_manifest.json
+├── raw_assets/
+│   └── branding/
+│       ├── boxbattle_cover.jpg
+│       ├── boxbattle_trailer.mp4
+│       ├── ChatGPT Image May 24, 2026, 04_48_38 PM.png
+│       ├── ChatGPT Image May 24, 2026, 04_52_57 PM.png
+│       ├── ChatGPT Image May 24, 2026, 09_16_21 PM.png
+│       ├── Gemini_Generated_Image_9g0sim9g0sim9g0s.png
+│       ├── May 24, 2026, 04_51_39 PM.png
+│       └── May 24, 2026, 04_51_42 PM.png
 ├── scripts/
 │   ├── create_source_context.command
 │   ├── create_source_context.js
@@ -173,6 +184,7 @@
 ├── index.html
 ├── package-lock.json
 ├── package.json
+├── patch_silk_confetti.js
 ├── README.md
 ├── tsconfig.app.json
 ├── tsconfig.json
@@ -241,33 +253,22 @@ jobs:
 
 Mega Man / Hollow Knight battle arena prototype.
 
-Ported over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand
+Ported over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand using Gemini 3.5 Flash
 
-Play the live build here:
-👉 **[Live Demo](https://stevencasteel.github.io/BOX-BATTLE/)**
+Play the game here:
+👉 **[GitHub.io](https://stevencasteel.github.io/boxbattle/)**
+👉 **[Itch.io](https://stevencasteel.itch.io/boxbattle)**
 
 ---
 
 ## Player Controls
 
-### Default Preset (Preset 1)
-
-- **Move Left / Right**: `A` / `D` or `Left Arrow` / `Right Arrow`
-- **Look / Move Up**: `W` or `Up Arrow`
-- **Crouch / Move Down**: `S` or `Down Arrow`
-- **Jump**: `Space` or `X`
-- **Melee Attack**: `C`
-- **Dash**: `Z`
-- **Determination Heal**: Hold `Move Down` + Press `Jump` (Requires 1 active Heal Charge)
-
-### Alternate Preset (Preset 2)
-
-- **Move Left / Right**: `A` / `D`
-- **Look / Move Up**: `W`
-- **Crouch / Move Down**: `S`
-- **Jump**: `.` (Period)
-- **Melee Attack**: `,` (Comma)
-- **Dash**: `/` (Slash)
+- **Move Left / Right**: `Left Arrow` / `Right Arrow` or `A` / `D`
+- **Look / Move Up**: `Up Arrow` or `W`
+- **Crouch / Move Down**: `Down Arrow` or `S`
+- **Jump**: `X` or `.` (Period) or `Space`
+- **Melee Attack**: `C` or `,` (Comma)
+- **Dash**: `Z` or `/` (Slash)
 - **Determination Heal**: Hold `Move Down` + Press `Jump` (Requires 1 active Heal Charge)
 
 _Key bindings are fully customizable inside the Options menu._
@@ -279,12 +280,6 @@ _Key bindings are fully customizable inside the Options menu._
 - **Presentation & UI**: React 19, TypeScript 6, Vite 8, Zustand 5
 - **Physics Simulation**: Custom 60Hz Semi-Implicit Euler accumulator loop with swept collision checks and corner-nudging
 - **Sound Design**: Pure procedural waveform synthesis utilizing native Web Audio API oscillators, filters, and envelope gains (zero external binary audio assets)
-
----
-
-## Creator
-
-Built by **[Steven Casteel](https://www.stevencasteel.com)** and Gemini Flash 3.5.
 
 
 
@@ -438,6 +433,701 @@ protocol based on scope:
      Validate all TypeScript compilations and bundler configurations after any 
      file updates before concluding:
        npm run build
+
+
+
+● ./docs/BOXBATTLE_SYSTEMS_ARCHITECTURE.txt
+────────────────────────────────────────────────────
+===========================================================================
+  BOX BATTLE ENGINE WEB
+  Systems Architecture & Technical Specification
+===========================================================================
+
+───────────────────────────────────────────────────────────────────────────────
+TABLE OF CONTENTS
+───────────────────────────────────────────────────────────────────────────────
+
+1.  Runtime Stack and Configuration Boundary
+2.  Boot, First-Gesture, and App Initialization
+3.  World, Entity, and Component Architecture
+4.  Main Loop, Fixed-Step Simulation, and Projection
+5.  Physics World and Collision Broad Phase
+6.  Input Mapping and Control Surface
+7.  Player Traversal and Combat Mechanics
+8.  Projectile Ownership and Combat Resolution
+9.  Boss AI, Phase Gates, and Cinematic Escalation
+10. Minions, Spawners, and Spawn-Cage Presentation
+11. Camera, Shake, and Hit-Stop
+12. Rendering Pipeline and Visual Effects
+13. Procedural Audio and Audio Lifecycle
+14. Save Data, Settings, and Validation
+15. Build, Manifest Generation, and Deployment
+
+───────────────────────────────────────────────────────────────────────────────
+1. RUNTIME STACK AND CONFIGURATION BOUNDARY
+───────────────────────────────────────────────────────────────────────────────
+
+Primary application stack:
+- React 19
+- TypeScript 6
+- Zustand 5
+- Vite 8
+- HTML5 Canvas for gameplay rendering
+- Framer Motion for UI transitions
+- canvas-confetti for end-of-match overlays
+- lucide-react for iconography
+- Web Audio API for procedural sound synthesis
+
+The repository also includes Tone.js as a dependency, but the codebase and README
+describe audio as procedurally synthesized through Web Audio primitives rather
+than relying on binary music or sound assets.
+
+Canonical configuration lives in `src/core/Units.ts`. The important runtime
+constants are:
+
+Gameplay
+- PLAYER_MAX_HP = 5
+- BOSS_MAX_HP = 38
+- BOSS_PHASE_2_HP_PCT = 0.70
+- BOSS_PHASE_3_HP_PCT = 0.40
+
+Player motion
+- PLAYER_MOVE_SPEED = 450
+- PLAYER_JUMP_FORCE = 680
+- PLAYER_WALL_SLIDE_SPEED = 120
+- PLAYER_DASH_SPEED = 1400
+- PLAYER_ACCEL = 12.0
+- PLAYER_DECEL = 16.0
+
+Boss and minions
+- BOSS_PATROL_SPEED_BASE = 200
+- BOSS_LUNGE_SPEED_BASE = 1200
+- BOSS_ACCEL = 6.0
+- BOSS_DECEL = 8.0
+- MINION_ACCEL = 5.0
+- MINION_DECEL = 7.0
+
+Combat and timing
+- PLAYER_MELEE_DAMAGE_BASE = 1
+- PLAYER_MELEE_DAMAGE_CLOSE = 5
+- PLAYER_FIREBALL_DAMAGE_LVL1 = 1
+- PLAYER_FIREBALL_DAMAGE_LVL2 = 3
+- HAZARD_SPIKE_DAMAGE = 1
+- ENEMY_CONTACT_DAMAGE = 1
+- BOSS_LUNGE_DAMAGE = 2
+- DASH_DURATION = 0.15
+- DASH_COOLDOWN = 0.50
+- HEAL_DURATION = 2.0
+- CHARGE_LVL1_TIME = 0.35
+- CHARGE_LVL2_TIME = 1.12
+
+World and physics
+- WORLD_SIZE = 1250
+- WORLD_HALF_SIZE = 625
+- SPATIAL_GRID_CELL_SIZE = 250
+- CCD_STEP_LIMIT_DEFAULT = 6
+- CCD_STEP_LIMIT_PROJECTILE = 5
+- GROUND_DETECTION_OFFSET = 1
+- CORNER_NUDGE_MAX_OVERLAP = 6
+- BROAD_PHASE_PADDING_STANDARD = 12
+- BROAD_PHASE_PADDING_LARGE = 24
+
+Combat geometry
+- MELEE_MAX_REACH = 95
+- MELEE_CLOSE_RANGE_THRESHOLD = 75
+- MELEE_SIDE_OFFSET = 35
+- MELEE_VERTICAL_OFFSET = 35
+- MELEE_SWEEP_INNER_RADIUS = 25
+- PLAYER_WALL_JUMP_X_VELOCITY = 1650
+- BOSS_WALL_REBOUND_VELOCITY = 350
+- POGO_HITBOX_WIDTH = 90
+- POGO_HITBOX_HEIGHT = 44.5
+- POGO_HITBOX_Y_OFFSET = 40
+- POGO_HITBOX_X_OFFSET = -45
+
+The document-level rule is simple:
+- core simulation is deterministic and fixed-step
+- presentation is projected from simulation state
+- persistent settings are validated before being reloaded
+- audio remains gesture-gated in the browser
+
+───────────────────────────────────────────────────────────────────────────────
+2. BOOT, FIRST-GESTURE, AND APP INITIALIZATION
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/main.tsx`
+- `src/App.tsx`
+- `src/hooks/useBootSequence.ts`
+- `src/hooks/useFirstGesture.ts`
+- `src/components/GameArena.tsx`
+
+Startup begins in `main.tsx`, which mounts the React root in `StrictMode`.
+The app then moves through its own boot logic before the gameplay engine is
+allowed to run.
+
+Core initialization responsibilities:
+- mount the application shell
+- restore save and settings state
+- attach the current input map
+- wait for the first user gesture before starting audio playback
+- construct the engine only when the canvas is available
+
+The browser audio gate is important. Audio cannot reliably start until a user
+gesture occurs, so the app uses a first-interaction hook to unlock playback and
+then initialize the procedural audio graph.
+
+Typical startup sequence:
+
+[React root mounts]
+        |
+        v
+[App shell and menu state render]
+        |
+        v
+[Boot / save / settings initialization]
+        |
+        v
+[first pointer or keyboard gesture]
+        |
+        v
+[audio graph initializes]
+        |
+        v
+[engine starts and gameplay canvas becomes active]
+
+This architecture keeps menus responsive while avoiding autoplay restrictions.
+
+───────────────────────────────────────────────────────────────────────────────
+3. WORLD, ENTITY, AND COMPONENT ARCHITECTURE
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/core/World.ts`
+- `src/core/Interfaces.ts`
+- `src/entities/BaseEntity.ts`
+- `src/entities/components/*`
+- `src/entities/Player.ts`
+- `src/entities/Boss.ts`
+- `src/entities/Projectile.ts`
+- `src/entities/BaseMinion.ts`
+
+The engine uses a component-oriented entity architecture:
+- `World` owns the simulation surfaces and services
+- entities encapsulate identity, transform, and behavior
+- components hold discrete capabilities such as health, physics, melee, dash,
+  fireball, and input reception
+
+World-level responsibilities:
+- store the player, boss, and active minions
+- provide the physics world
+- provide the event bus
+- provide the audio interface
+- provide the input interface
+- manage the projectile pool
+
+Entity state is kept mostly off React. The simulation layer updates entities
+directly, while a projection system copies only the necessary high-level state
+into the UI store.
+
+Primary entity categories:
+- player: movement, combat, heal charge, determination
+- boss: phase-based AI, projectile logic, cinematic transitions
+- projectile: pooled owner-specific shot with damage and lifespan
+- minions: lightweight enemy actors with distinct movement and attack patterns
+- spawners: fixed points that instantiate minions during a battle
+
+Components are used to separate behavior from identity. The codebase includes
+component types such as:
+- `PhysicsComponent`
+- `HealthComponent`
+- `MeleeComponent`
+- `DashComponent`
+- `FireballComponent`
+- `HealComponent`
+- `InputReceiverComponent`
+
+This keeps the architecture modular without requiring a full ECS framework.
+
+───────────────────────────────────────────────────────────────────────────────
+4. MAIN LOOP, FIXED-STEP SIMULATION, AND PROJECTION
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/core/GameLoop.ts`
+- `src/core/Engine.ts`
+- `src/core/StateProjectionSystem.ts`
+- `src/core/SimulationSystems.ts`
+
+The runtime loop uses requestAnimationFrame for display cadence, but simulation
+is normalized around a fixed update step.
+
+Observed loop behavior:
+- frame delta is measured from the previous RAF tick
+- delta is clamped to prevent runaway stalls
+- the engine advances simulation using a 60 Hz canonical step
+- the render pass follows the update pass
+- visibility changes stop and restart the loop
+
+The `GameLoop` class clamps very large frame deltas to 0.1 seconds. The `Engine`
+maintains a fixed-step accumulator internally and runs at 1/60 second
+simulation slices.
+
+A useful mental model:
+
+[RAF tick]
+   -> measure dt
+   -> clamp dt
+   -> advance world state
+   -> render current frame
+
+State projection is intentionally narrow. The `StateProjectionSystem` only
+pushes changes that matter to the UI:
+- player HP
+- boss HP
+- healing charges
+- determination counter
+
+It also tracks a crisis timer. When the player's HP drops to 1 from a higher
+value, the system triggers a crisis window of 0.45 seconds. That timer can be
+used by presentation code to intensify effects or slow the game flow.
+
+The result is a split between:
+- authoritative simulation state in the engine
+- derived presentation state in Zustand
+
+───────────────────────────────────────────────────────────────────────────────
+5. PHYSICS WORLD AND COLLISION BROAD PHASE
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/core/PhysicsWorld.ts`
+- `src/core/Interfaces.ts`
+- `src/core/Units.ts`
+
+Static geometry is partitioned into three indexed collections:
+- solids
+- one-way platforms
+- hazards
+
+Each group is stored in its own spatial hash grid. The cell size is 250 pixels,
+matching `UNITS.SPATIAL_GRID_CELL_SIZE`.
+
+Bucket keys are generated with:
+- `key = (cy << 16) | cx`
+
+That layout supports fast broad-phase lookup without full pairwise scanning.
+
+The broad-phase pipeline is:
+1. compute the query AABB
+2. map the AABB into grid cells
+3. collect candidate rectangles from the matching buckets
+4. perform narrow-phase overlap checks only on the candidates
+
+This is applied separately for:
+- solid walls and floors
+- one-way platforms
+- hazards
+
+The engine also uses conservative movement handling for fast actors:
+- swept collision stepping for dashes and projectiles
+- a small corner-nudge allowance so the player does not snag on lip edges
+- platform logic that only resolves one-way surfaces when the actor is moving
+  downward and approaching from above
+
+The architecture is designed to keep collision cost low while preserving the
+feel of a fast arcade fighter.
+
+───────────────────────────────────────────────────────────────────────────────
+6. INPUT MAPPING AND CONTROL SURFACE
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/core/InputProvider.ts`
+- `src/core/SettingsManager.ts`
+- `src/core/menuNavigation.ts`
+- `src/store/useGameStore.ts`
+
+The input layer supports:
+- keyboard
+- gamepad
+- configurable key maps
+- a pause edge trigger on `KeyP`
+
+Canonical actions:
+- MOVE_LEFT
+- MOVE_RIGHT
+- MOVE_UP
+- MOVE_DOWN
+- JUMP
+- ATTACK
+- DASH
+
+Default presets:
+- Default 1: arrow keys plus A/D/W/S, Space/X, C, Z
+- Default 2: A/D/W/S, Period, Comma, Slash
+- Custom: user-rebound map saved in settings
+
+Menu navigation reuses the same action map. Confirm and back behavior are
+resolved through helper logic rather than hard-coded key names.
+
+Persistence details:
+- the current settings blob is stored under `box_battle_config`
+- validation is schema-based and tolerant of malformed or partial data
+- a failed validation falls back to safe defaults
+
+This keeps the game playable even if localStorage is corrupted or stale.
+
+───────────────────────────────────────────────────────────────────────────────
+7. PLAYER TRAVERSAL AND COMBAT MECHANICS
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/entities/Player.ts`
+- `src/entities/handlers/PlayerInputHandler.ts`
+- `src/entities/handlers/PlayerCombatHandler.ts`
+- `src/entities/components/DashComponent.ts`
+- `src/entities/components/MeleeComponent.ts`
+- `src/entities/components/FireballComponent.ts`
+- `src/entities/components/HealComponent.ts`
+
+The player controller is tuned for responsive arcade movement rather than
+physically literal motion.
+
+Traversal features:
+- horizontal acceleration and deceleration
+- jump handling
+- wall-slide behavior
+- wall jump rebound
+- dash with duration and cooldown
+- coyote timing and jump buffering
+- optional double-jump behavior if enabled by the current ability state
+
+The common movement pattern is:
+- read the input state
+- compute target horizontal speed
+- apply acceleration or friction
+- resolve physics and collision constraints
+- project the result into renderable state
+
+Combat features:
+- horizontal melee sweep
+- upward melee sweep
+- downward pogo strike
+- projectile firing with charge tiers
+- healing charge / determination mechanics
+
+Melee resolution is range-sensitive:
+- the close-range sweet spot rewards precision with higher damage
+- the normal sweep deals baseline damage
+- the downward strike has its own hitbox geometry and rebound behavior
+
+Determination and healing:
+- successful hits contribute to a counter used for healing
+- the heal action is a timed channel
+- the channel consumes a charge and restores health on completion
+- interruption occurs if the player takes damage during the channel
+
+The design strongly favors readable player feedback:
+- hit sparks
+- screen shake
+- brief hit-stop windows
+- deterministic collision responses
+
+───────────────────────────────────────────────────────────────────────────────
+8. PROJECTILE OWNERSHIP AND COMBAT RESOLUTION
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/entities/Projectile.ts`
+- `src/entities/ProjectileStrategy.ts`
+- `src/core/ObjectPool.ts`
+- `src/core/World.ts`
+
+Projectiles are pooled rather than instantiated and destroyed repeatedly.
+That reduces garbage generation and keeps hot-path performance stable.
+
+Ownership model:
+- player-owned projectiles
+- boss-owned projectiles
+
+The owner determines:
+- valid collision targets
+- visual treatment
+- whether projectile clash behavior is allowed
+- base damage and movement behavior
+
+Projectile lifecycle:
+- spawn from the world’s projectile pool
+- travel for a finite lifespan
+- collide with valid targets or surfaces
+- return to the pool when spent
+
+The codebase treats projectiles as a generic combat primitive, but the
+strategy layer keeps boss shots and player shots distinct in behavior and
+presentation.
+
+───────────────────────────────────────────────────────────────────────────────
+9. BOSS AI, PHASE GATES, AND CINEMATIC ESCALATION
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/entities/Boss.ts`
+- `src/entities/BossStates.ts`
+- `src/core/BattleDirector.ts`
+- `src/core/CinematicSystem.ts`
+
+The boss is phase-driven. The battle director watches the boss HP and triggers
+narrative or mechanical shifts when threshold conditions are crossed.
+
+Phase gates:
+- Phase 1: above 70% HP
+- Phase 2: 70% to 40% HP
+- Phase 3: below 40% HP
+
+Observed escalation behavior:
+- first boss damage can trigger introductory dialogue
+- phase 2 publishes a phase-shift event and unlocks more aggressive attacks
+- phase 3 publishes another phase-shift event and pushes final-stand behavior
+
+The boss’s movement and attack selection are state-machine driven:
+- patrol or cooldown states
+- telegraph state
+- lunge or attack state
+- post-impact recovery state
+
+The battle director is also responsible for kicking off cinematic handling when
+the boss dies or the match ends. That keeps victory/defeat presentation out of
+the low-level combat code.
+
+Relevant constants from the configuration layer include:
+- BOSS_PATROL_SPEED_BASE = 200
+- BOSS_LUNGE_SPEED_BASE = 1200
+- BOSS_WALL_REBOUND_VELOCITY = 350
+- BOSS_LUNGE_DAMAGE = 2
+
+The important architectural point is that AI decides intent, while physics and
+collision decide outcome.
+
+───────────────────────────────────────────────────────────────────────────────
+10. MINIONS, SPAWNERS, AND SPAWN-CAGE PRESENTATION
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/entities/BaseMinion.ts`
+- `src/entities/TurretMinion.ts`
+- `src/entities/LancerMinion.ts`
+- `src/entities/FlyerMinion.ts`
+- `src/entities/Spawner.ts`
+- `src/core/visuals/MinionVisuals.ts`
+
+The minion system is composed of a few distinct archetypes:
+- TurretMinion: stationary ranged pressure
+- LancerMinion: patrol and lunge behavior
+- FlyerMinion: oscillating vertical or aerial pressure
+
+Spawners place minions at fixed encounter points defined by level data.
+
+Spawn presentation:
+- newly spawned minions can be held in a brief non-collidable window
+- a stylized cage effect is rendered during that window
+- the cage uses segmented wireframe geometry and squash-style deformation
+
+This effect is cosmetic and communicates spawn timing to the player. It is not
+a separate gameplay entity.
+
+The minion architecture is intentionally lighter than the boss architecture. The
+goal is readable encounter pressure rather than fully independent AI systems for
+every enemy type.
+
+───────────────────────────────────────────────────────────────────────────────
+11. CAMERA, SHAKE, AND HIT-STOP
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/core/Camera.ts`
+- `src/core/CinematicSystem.ts`
+
+The game does not use camera panning or camera zoom as part of its core
+presentation. The screen stays fixed and readable, with motion delivered through
+impact feedback instead.
+
+Camera-related behavior includes:
+- screen shake / tremor
+- directional shake for strong impacts
+- decay over time
+- event-driven intensity changes
+
+High-impact events can also trigger hit-stop windows. Those pauses help sell
+combat weight and make high-value attacks feel more forceful.
+
+The architecture separates:
+- steady view framing
+- transient shake effects
+- cinematic freeze or slow-down effects
+
+That separation prevents the presentation layer from turning into a hidden
+source of simulation logic.
+
+───────────────────────────────────────────────────────────────────────────────
+12. RENDERING PIPELINE AND VISUAL EFFECTS
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/core/WorldRenderer.ts`
+- `src/core/EntityRenderer.ts`
+- `src/core/ParticleRenderer.ts`
+- `src/core/StaticMapRenderer.ts`
+- `src/core/effects/CinematicDeathRenderer.ts`
+- `src/core/effects/PlayerFxRenderer.ts`
+
+Rendering is canvas-first and procedurally driven.
+
+Primary render responsibilities:
+- draw static map geometry
+- draw entities
+- draw particles
+- draw cinematic overlays
+- draw UI-adjacent world effects
+
+Renderer structure:
+- `WorldRenderer` orchestrates the frame
+- `StaticMapRenderer` caches and draws static geometry
+- `EntityRenderer` draws actors and their visual transforms
+- `ParticleRenderer` handles sparks, rings, dust, and blast events
+
+Visual styles:
+- squash and stretch on key impacts
+- glow and gradient effects
+- procedural rings and sparks
+- transient trails and impact flashes
+
+The renderer favors a low-allocation strategy. Reusable objects and pools are
+used where practical so the hot loop stays stable under action-heavy scenes.
+
+───────────────────────────────────────────────────────────────────────────────
+13. PROCEDURAL AUDIO AND AUDIO LIFECYCLE
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/core/SoundSynth.ts`
+- `src/core/audio/AudioContextManager.ts`
+- `src/core/audio/MusicSequencer.ts`
+- `src/core/audio/SFXManager.ts`
+- `src/core/audio/DroneManager.ts`
+- `src/core/audio/sfx/*`
+- `docs/MUSIC_ARCHITECTURE.txt`
+
+Audio is procedural rather than asset-driven:
+- oscillators
+- filters
+- envelope shaping
+- gain staging
+- transport or lifecycle control
+
+The audio pipeline is gesture-gated by the browser. Once unlocked, the app
+initializes the audio graph and then plays the appropriate menu or gameplay
+music.
+
+Observed audio architecture:
+- separate gain paths for music and SFX
+- cabinet-style filtering on the output chain
+- limiter protection on the final output
+- dynamic pitch scaling for combo feedback
+- procedural drones for healing and charge states
+
+The music architecture document describes C Dorian pitch ratios and combo-linked
+pitch stepping. That is consistent with the current procedural design: hit
+confirms can be tied to a repeatable, musically coherent scale chain.
+
+Important practical rule:
+- do not depend on heavy binary audio assets for core gameplay feedback
+- generate the important sounds in code
+
+───────────────────────────────────────────────────────────────────────────────
+14. SAVE DATA, SETTINGS, AND VALIDATION
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `src/core/SaveManager.ts`
+- `src/core/SettingsManager.ts`
+- `src/core/schemas.ts`
+- `src/store/useGameStore.ts`
+
+Save slots:
+- three slots are stored in localStorage
+- slot data includes wins, losses, and empty state
+- copying and erasing slots are supported operations
+
+Save storage key:
+- `box_battle_save_slots`
+
+Settings storage key:
+- `box_battle_config`
+
+Validation is explicit and defensive:
+- save slot values are sanitized to non-negative integers
+- audio settings are clamped or replaced with fallbacks
+- key maps are validated against the required action list
+
+The UI store separates:
+- session state
+- gameplay state
+- screen state
+- result state
+
+That separation keeps the menu system from mutating core simulation logic
+directly.
+
+The main screens visible in the store-level state are:
+- TITLE
+- SAVE_SELECT
+- OPTIONS
+- SOUND
+- CONTROLS
+- CREDITS
+- SOURCE_VIEW
+- PLAYING
+
+The title flow and result flow are handled through store state and screen route
+helpers, not through hard-wired page changes.
+
+───────────────────────────────────────────────────────────────────────────────
+15. BUILD, MANIFEST GENERATION, AND DEPLOYMENT
+───────────────────────────────────────────────────────────────────────────────
+
+Relevant files:
+- `package.json`
+- `scripts/generate_manifest.js`
+- `scripts/create_source_context.js`
+- `.github/workflows/deploy.yml`
+
+Development scripts:
+- `npm run dev`
+- `npm run build`
+- `npm run lint`
+- `npm run preview`
+
+Pre-dev and pre-build hooks:
+- generate the source manifest
+- generate the consolidated source context file
+
+The build pipeline is:
+1. lint
+2. TypeScript compile
+3. Vite production bundle
+
+Deployment automation:
+- push to `main`
+- build in GitHub Actions
+- deploy to GitHub Pages
+- push the same build artifact to Itch.io via Butler
+
+The manifest generation workflow is also part of the project’s documentation
+story. It allows the source code to be flattened into a single searchable context
+document for AI-assisted debugging and review.
+
+
 
 
 
@@ -671,6 +1361,141 @@ export default defineConfig([
     "vite": "^8.0.12"
   }
 }
+
+
+
+● ./patch_silk_confetti.js
+────────────────────────────────────────────────────
+import fs from 'fs';
+
+let content = fs.readFileSync('src/ui/hud/HudOverlay.tsx', 'utf8');
+
+const startMarker = `useEffect(() => {
+    if (overlayVisible) {
+      const confettiCanvas = document.getElementById("confetti-canvas") as HTMLCanvasElement | null;`;
+
+const endMarker = `}, [overlayVisible, overlayTitle]);`;
+
+const startIndex = content.indexOf(startMarker);
+const endIndex = content.indexOf(endMarker, startIndex);
+
+if (startIndex === -1 || endIndex === -1) {
+  console.error("Failed to find confetti useEffect block in HudOverlay.tsx");
+  process.exit(1);
+}
+
+const replacement = `useEffect(() => {
+    if (!overlayVisible) return;
+
+    let cleanupFn: (() => void) | undefined = undefined;
+    const confettiCanvas = document.getElementById("confetti-canvas") as HTMLCanvasElement | null;
+    
+    if (confettiCanvas) {
+      const myConfetti = confetti.create(confettiCanvas, { resize: true, useWorker: true });
+
+      if (overlayTitle === "VICTORY") {
+        const fireConfetti = () => {
+          myConfetti({
+            particleCount: 360,
+            spread: 80,
+            origin: { y: 0.55, x: 0.5 },
+            colors: ["#10b981", "#34d399", "#a7f3d0", "#ffffff"]
+          });
+          myConfetti({
+            particleCount: 200,
+            spread: 45,
+            angle: 135,
+            origin: { y: 0.55, x: 0.5 },
+            colors: ["#10b981", "#34d399", "#a7f3d0", "#ffffff"]
+          });
+          myConfetti({
+            particleCount: 200,
+            spread: 45,
+            angle: 45,
+            origin: { y: 0.55, x: 0.5 },
+            colors: ["#10b981", "#34d399", "#a7f3d0", "#ffffff"]
+          });
+        };
+
+        fireConfetti();
+        const intervalId = setInterval(fireConfetti, 3000);
+
+        let rainIndex = 0;
+        const victoryColors = ["#10b981", "#34d399", "#a7f3d0", "#ffffff"];
+        const rainIntervalId = setInterval(() => {
+          for (let k = 0; k < 24; k++) {
+            const xCoord = 0.32 + ((rainIndex + k) % 8) * 0.05 + (Math.random() - 0.5) * 0.03;
+            const randomColor = victoryColors[Math.floor(Math.random() * victoryColors.length)];
+            myConfetti({
+              particleCount: 1,
+              angle: 270 + (Math.random() - 0.5) * 10,
+              spread: 15,
+              startVelocity: 14 + Math.random() * 8,
+              decay: 0.95,
+              gravity: 0.85,
+              origin: {
+                y: 0.55,
+                x: Math.max(0.01, Math.min(0.99, xCoord))
+              },
+              colors: [randomColor]
+            });
+          }
+          rainIndex = (rainIndex + 1) % 8;
+        }, 120);
+
+        cleanupFn = () => {
+          clearInterval(intervalId);
+          clearInterval(rainIntervalId);
+          myConfetti.reset();
+        };
+
+      } else if (overlayTitle === "DEFEATED") {
+        let laneIndex = 0;
+        const NUM_LANES = 8;
+        const defeatColors = ["#ef4444", "#dc2626", "#b91c1c", "#991b1b", "#7f1d1d"];
+        
+        const intervalId = setInterval(() => {
+          for (let k = 0; k < 30; k++) {
+            const currentLane = (laneIndex + k) % NUM_LANES;
+            const xCoord = (currentLane / (NUM_LANES - 1)) * 0.9 + 0.05 + (Math.random() - 0.5) * 0.05;
+            const randomColor = defeatColors[Math.floor(Math.random() * defeatColors.length)];
+            
+            myConfetti({
+              particleCount: 1,
+              angle: 270 + (Math.random() - 0.5) * 10,
+              spread: 15,
+              startVelocity: 14 + Math.random() * 8,
+              decay: 0.95,
+              gravity: 0.85,
+              scalar: 0.65 + Math.random() * 0.3,
+              origin: { 
+                y: -0.15,
+                x: Math.max(0.01, Math.min(0.99, xCoord)) 
+              },
+              colors: [randomColor]
+            });
+          }
+          laneIndex = (laneIndex + 3) % NUM_LANES;
+        }, 120);
+
+        cleanupFn = () => {
+          clearInterval(intervalId);
+          myConfetti.reset();
+        };
+      }
+    }
+    
+    return () => {
+      if (cleanupFn) cleanupFn();
+    };
+  }, [overlayVisible, overlayTitle]);`;
+
+const before = content.substring(0, startIndex);
+const after = content.substring(endIndex + endMarker.length);
+const finalContent = before + replacement + after;
+
+fs.writeFileSync('src/ui/hud/HudOverlay.tsx', finalContent, 'utf8');
+console.log("Successfully patched SILK confetti effects!");
 
 
 
@@ -2649,9 +3474,11 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
 
           // Constant celebratory streamers (downward rain) centering around the main jets, behind the modal
           let rainIndex = 0;
+          const victoryColors = ["#22c55e", "#4ade80", "#86efac", "#ffffff"];
           const rainIntervalId = setInterval(() => {
             for (let k = 0; k < 24; k++) {
               const xCoord = 0.32 + ((rainIndex + k) % 8) * 0.05 + (Math.random() - 0.5) * 0.03;
+              const randomColor = victoryColors[Math.floor(Math.random() * victoryColors.length)];
               myConfetti({
                 particleCount: 1,
                 angle: 270 + (Math.random() - 0.5) * 10,
@@ -2663,7 +3490,7 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                   y: 0.55,
                   x: Math.max(0.01, Math.min(0.99, xCoord))
                 },
-                colors: ["#22c55e", "#4ade80", "#86efac", "#ffffff"]
+                colors: [randomColor]
               });
             }
             rainIndex = (rainIndex + 1) % 8;
@@ -2677,11 +3504,13 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
         } else if (gameResult === "GAMEOVER") {
           let laneIndex = 0;
           const NUM_LANES = 8;
+          const defeatColors = ["#ef4444", "#dc2626", "#b91c1c", "#991b1b", "#7f1d1d"];
           
           const intervalId = setInterval(() => {
-            for (let k = 0; k < 15; k++) {
+            for (let k = 0; k < 30; k++) {
               const currentLane = (laneIndex + k) % NUM_LANES;
               const xCoord = (currentLane / (NUM_LANES - 1)) * 0.9 + 0.05 + (Math.random() - 0.5) * 0.05;
+              const randomColor = defeatColors[Math.floor(Math.random() * defeatColors.length)];
               
               myConfetti({
                 particleCount: 1,
@@ -2692,15 +3521,10 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
                 gravity: 0.85,
                 scalar: 0.65 + Math.random() * 0.3,
                 origin: { 
-                  y: 0.0,
+                  y: -0.15,
                   x: Math.max(0.01, Math.min(0.99, xCoord)) 
                 },
-                colors: [
-                  "#ef4444",
-                  "#991b1b",
-                  "#374151",
-                  "#27272a"
-                ]
+                colors: [randomColor]
               });
             }
             laneIndex = (laneIndex + 3) % NUM_LANES;
