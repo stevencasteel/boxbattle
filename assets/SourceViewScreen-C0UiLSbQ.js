@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BZG9WRV0.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-wAdTwE-s.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -398,7 +398,9 @@ export default defineConfig([
   contain: layout style paint;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-height: 0;
+  align-self: center;
 }
 
 .game-viewport-container.viewport-mobile {
@@ -1296,6 +1298,9 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 `,"src/components/GameArena.css":`.cabinet-status-panel {
   width: 100%;
+  height: 8.5vmin;
+  min-height: 64px;
+  max-height: 96px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1334,7 +1339,9 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   contain: layout style paint;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-height: 0;
+  align-self: center;
 }
 
 .dialogue-console {
