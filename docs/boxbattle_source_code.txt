@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/5/2026, 2:34:27 PM
+ [SYSTEM] Generated: 6/5/2026, 3:08:14 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -2535,6 +2535,44 @@ export default function App() {
     }
     return false;
   });
+
+  useEffect(() => {
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data && e.data.type === "boxbattle-pause") {
+        soundSynth.suspendContext();
+        if (useSessionStore.getState().currentScreen === "PLAYING") {
+          const pauseEvent = new KeyboardEvent("keydown", { code: "KeyP" });
+          window.dispatchEvent(pauseEvent);
+        }
+      } else if (e.data && e.data.type === "boxbattle-resume") {
+        soundSynth.resumeContext(true);
+      }
+    };
+
+    const handleBlur = () => {
+      soundSynth.suspendContext();
+      if (useSessionStore.getState().currentScreen === "PLAYING") {
+        const pauseEvent = new KeyboardEvent("keydown", { code: "KeyP" });
+        window.dispatchEvent(pauseEvent);
+      }
+    };
+
+    const handleFocus = () => {
+      if (useSessionStore.getState().currentScreen === "PLAYING") {
+        soundSynth.resumeContext(true);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
 
   const isFullHeightScreen = currentScreen === "SOURCE_VIEW";
   const isPlayingScreen = currentScreen === "PLAYING";
@@ -10001,8 +10039,12 @@ class SoundSynth {
     return this.ctxManager.initialized;
   }
 
-  public resumeContext(force?: boolean): void {
+  public resumeContext(force = false): void {
     this.ctxManager.resumeContext(force);
+  }
+
+  public suspendContext(): void {
+    this.ctxManager.suspendContext();
   }
 
   public updateVolumes(): void {
@@ -10791,6 +10833,12 @@ export class AudioContextManager {
       if (Tone.getContext().state === "suspended") {
         Tone.getContext().resume();
       }
+    }
+  }
+
+  public suspendContext() {
+    if (this.initialized && Tone.getContext().state === "running") {
+      (Tone.getContext().rawContext as AudioContext).suspend();
     }
   }
 

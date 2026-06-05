@@ -91,8 +91,12 @@ class SoundSynth {
     return this.ctxManager.initialized;
   }
 
-  public resumeContext(force?: boolean): void {
+  public resumeContext(force = false): void {
     this.ctxManager.resumeContext(force);
+  }
+
+  public suspendContext(): void {
+    this.ctxManager.suspendContext();
   }
 
   public updateVolumes(): void {
