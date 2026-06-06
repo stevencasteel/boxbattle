@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CVj0ocFp.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DndHtTeM.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -2212,7 +2212,7 @@ function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
         <Heart size={14} fill="var(--signal-green)" style={{ color: "var(--signal-green)", flexShrink: 0 }} />
         PLAYER HP
       </span>
-      <div style={{ display: "grid", gridTemplateColumns: \`repeat(\${UNITS.PLAYER_MAX_HP}, 1.3vmin)\`, gap: "6px", alignItems: "center" }}>
+      <div style={{ display: "grid", gridTemplateColumns: \`repeat(\${UNITS.PLAYER_MAX_HP}, 10px)\`, gap: "6px", alignItems: "center" }}>
         {[...Array(UNITS.PLAYER_MAX_HP)].map((_, i) => {
           const isLit = i < activeHP;
           return (
@@ -2223,7 +2223,7 @@ function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
               style={{
                 border: "1px solid rgba(0,0,0,0.5)",
                 width: "100%",
-                height: "1.3vmin",
+                height: "10px",
               }}
             />
           );
@@ -2331,7 +2331,7 @@ function HealingAndDetermination({
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1.3vmin)", gap: "6px", alignItems: "center", marginTop: "6px", position: "relative" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 10px)", gap: "6px", alignItems: "center", marginTop: "1px", position: "relative" }}>
       <div style={{ gridColumn: "span 2", display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
         {[...Array(3)].map((_, i) => {
           const isLit = i < activeHealCharges;
@@ -2381,7 +2381,7 @@ function HealingAndDetermination({
         <div
           style={{
             position: "absolute",
-            left: "calc(6.5vmin + 36px)",
+            left: "calc(50px + 36px)",
             display: "flex",
             alignItems: "center",
             pointerEvents: "none",
