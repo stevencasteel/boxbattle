@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DlcG-XwS.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Ba-pcXNt.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7319,7 +7319,8 @@ export interface IEntityFactory {
     damage: number,
     speed: number,
     lifespan: number,
-    customColor?: string
+    customColor?: string,
+    kind?: string
   ): IProjectile;
 }
 
@@ -9013,7 +9014,8 @@ export class World implements IWorld {
     damage: number,
     speed: number,
     lifespan: number,
-    customColor?: string
+    customColor?: string,
+    kind?: string
   ): IProjectile {
     if (!this.projectilePool) {
       throw new Error("Projectile pool not initialized on World.");
@@ -9028,7 +9030,8 @@ export class World implements IWorld {
       speed,
       lifespan,
       this,
-      customColor
+      customColor,
+      kind
     );
   }
 }
@@ -13354,8 +13357,8 @@ export class MinionFactory {
 import { UNITS } from "@/core/Units";
 import { BaseMinion } from "./BaseMinion";
 import { LancerMinion } from "./LancerMinion";
-import { Boss } from "./Boss";
 import { setVec, zeroVec } from "@/core/VecUtils";
+import { TrigLUT } from "@/core/TrigLUT";
 
 export abstract class MinionState implements IState {
   protected owner: BaseMinion;
@@ -13432,10 +13435,9 @@ export class TurretTelegraphState extends MinionState {
   public update(_dt: number): void {
     zeroVec(this.owner.velocity);
     if (this.owner.stateTimer <= 0) {
-      const boss = this.owner.world.boss;
-      const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
-
-      if (phase === 3) {
+      const rand = TrigLUT.randomGameplay();
+      
+      if (rand < 0.6) {
         this.owner.stateMachine.changeState(new TurretBurstState(this.owner));
       } else {
         const player = this.owner.world.player;
@@ -13465,16 +13467,41 @@ export class TurretBurstState extends MinionState {
     zeroVec(this.owner.velocity);
     this.burstTimer -= dt;
 
-    if (this.burstTimer <= 0 && this.shotsFired < 3) {
+    if (this.burstTimer <= 0 && this.shotsFired < 4) {
       const player = this.owner.world.player;
       if (player && !player.isDead) {
-        this.owner.fireSingleShotAtPlayer(player);
+        const dx = player.position.x - this.owner.position.x;
+        const dy = player.position.y - this.owner.position.y;
+        const mag = Math.sqrt(dx * dx + dy * dy);
+
+        if (mag > 0) {
+          const dirX = dx / mag;
+          const dirY = dy / mag;
+
+          const proj = this.owner.world.spawnProjectile(
+            this.owner.position.x + dirX * 30,
+            this.owner.position.y - 12 + dirY * 30,
+            dirX,
+            dirY,
+            "boss",
+            1,
+            240,
+            3.5,
+            "hsl(180, 100%, 65%)",
+            "homing"
+          );
+
+          proj.size = { width: 16, height: 16 };
+        }
       }
+
+      this.owner.world.audio.playSelectTick();
+
       this.shotsFired++;
-      this.burstTimer = 0.16;
+      this.burstTimer = 0.14;
     }
 
-    if (this.shotsFired >= 3) {
+    if (this.shotsFired >= 4) {
       this.owner.shootTimer = 3.0;
       this.owner.stateMachine.changeState(new TurretPatrolState(this.owner));
     }
@@ -13643,10 +13670,7 @@ export class FlyerPatrolState extends MinionState {
       const dyP = player.position.y - this.owner.position.y;
       const playerDistSq = dxP * dxP + dyP * dyP;
 
-      const boss = this.owner.world.boss;
-      const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
-
-      if (phase === 3 && playerDistSq < 62500 && this.owner.shootTimer <= -3.0) {
+      if (playerDistSq < 62500 && this.owner.shootTimer <= -3.0) {
         this.owner.stateMachine.changeState(new FlyerDiveState(this.owner));
         return;
       }
@@ -14085,6 +14109,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   public damage = 1;
   public customColor: string | null = null;
   public pierce = 0;
+  public kind = "default";
   
   private strategy!: IProjectileStrategy;
   private lifespan = 0;
@@ -14112,7 +14137,8 @@ export class Projectile extends BaseEntity implements IPoolable {
     speed: number,
     lifespan: number,
     world: IWorld,
-    customColor?: string
+    customColor?: string,
+    kind?: string
   ) {
     setVec(this.position, x, y);
     setVec(this.previousPosition, x, y);
@@ -14124,6 +14150,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.world = world;
     this.customColor = customColor || null;
     this.pierce = ownerId === "player" && damage >= 3 ? 1 : 0;
+    this.kind = kind || "default";
 
     this.strategy = ownerId === "player" ? playerProjectileStrategy : bossProjectileStrategy;
 
@@ -14151,6 +14178,29 @@ export class Projectile extends BaseEntity implements IPoolable {
       this.isActive = false;
       this.isDead = true;
       return true;
+    }
+
+    if (this.kind === "homing" && this.world.player && !this.world.player.isDead) {
+      const player = this.world.player;
+      const dx = player.position.x - this.position.x;
+      const dy = player.position.y - this.position.y;
+      const dist = TrigLUT.fastSqrt(dx * dx + dy * dy);
+
+      if (dist > 0) {
+        const speed = TrigLUT.fastSqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        const desiredVx = (dx / dist) * speed;
+        const desiredVy = (dy / dist) * speed;
+
+        const steerStrength = 3.2 * dt;
+        this.velocity.x += (desiredVx - this.velocity.x) * steerStrength;
+        this.velocity.y += (desiredVy - this.velocity.y) * steerStrength;
+
+        const newSpeed = TrigLUT.fastSqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        if (newSpeed > 0) {
+          this.velocity.x = (this.velocity.x / newSpeed) * speed;
+          this.velocity.y = (this.velocity.y / newSpeed) * speed;
+        }
+      }
     }
 
     this.trailRing[this.trailHead].x = this.position.x;
