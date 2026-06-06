@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CeQM4ZvX.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DlcG-XwS.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8297,6 +8297,15 @@ export class SimulationSystems {
         this.input.triggerHapticFeedback("heavy");
       })
     );
+
+    this.unsubscribes.push(
+      this.events.subscribe("BOSS_PHASE_SHIFT", () => {
+        Camera.shake(18, 0.45);
+        Camera.triggerHitStop(0.12);
+        const bossX = getBossX();
+        this.events.publishSpark(bossX, 1000, 0, "hsl(45, 100%, 65%)", true, 25);
+      })
+    );
   }
 
   public teardown(): void {
@@ -11817,6 +11826,8 @@ export class BossVisuals {
 }
 `,"src/core/visuals/MinionVisuals.ts":`import { TrigLUT } from "@/core/TrigLUT";
 import { BaseMinion } from "@/entities/BaseMinion";
+import { LancerMinion } from "@/entities/LancerMinion";
+import { ShielderMinion } from "@/entities/ShielderMinion";
 import { Boss } from "@/entities/Boss";
 
 interface CageSegment { x1: number; y1: number; x2: number; y2: number; color: string; width: number; }
@@ -11974,6 +11985,51 @@ export class MinionVisuals {
 
     ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
     ctx.shadowBlur = 0;
+
+    if (minion.attackState === "PATROL" && minion.minionColor.includes("215")) {
+      const player = minion.world.player;
+      if (player) {
+        const angle = TrigLUT.atan2(player.position.y - minion.position.y, player.position.x - minion.position.x);
+        ctx.save();
+        ctx.translate(0, -minion.size.height / 2);
+        ctx.rotate(angle);
+        ctx.fillStyle = "#4a5568";
+        ctx.fillRect(0, -4, 24, 8);
+        ctx.fillStyle = "#1a202c";
+        ctx.fillRect(20, -5, 4, 10);
+        ctx.restore();
+      }
+    }
+
+    if (minion instanceof LancerMinion && minion.lanceExtended) {
+      ctx.save();
+      ctx.strokeStyle = "hsl(45, 100%, 65%)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(minion.facingDirection * 15, -18);
+      ctx.lineTo(minion.facingDirection * 55, -18);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(minion.facingDirection * 15, -18);
+      ctx.lineTo(minion.facingDirection * 50, -18);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (minion instanceof ShielderMinion && !minion.isSpawning && !minion.isDying) {
+      ctx.save();
+      ctx.strokeStyle = "hsl(180, 100%, 65%)";
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = "rgba(6, 182, 212, 0.6)";
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(minion.facingDirection * 12, -minion.size.height / 2, 24, -Math.PI / 3, Math.PI / 3);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     ctx.fillStyle = "black";
     ctx.fillRect(minion.facingDirection * 8 - 2, localY - 12, 6, 4);
@@ -13527,6 +13583,36 @@ function minionPatrolMovement(minion: BaseMinion, dt: number) {
   if (physics) {
     if (physics.isOnWallLeft) minion.facingDirection = 1;
     else if (physics.isOnWallRight) minion.facingDirection = -1;
+  }
+
+  if (physics && physics.isGrounded) {
+    const checkDist = 20;
+    const forwardX = minion.position.x + minion.facingDirection * checkDist;
+    const belowY = minion.position.y + minion.size.height / 2 + 10;
+    
+    const solids = minion.world.physicsWorld.getOverlapCandidates(forwardX, belowY, 8, 8, "solid");
+    const platforms = minion.world.physicsWorld.getOverlapCandidates(forwardX, belowY, 8, 8, "platform");
+
+    let hasGroundAhead = false;
+    for (const solid of solids) {
+      if (forwardX > solid.x && forwardX < solid.x + solid.width && belowY > solid.y && belowY < solid.y + solid.height) {
+        hasGroundAhead = true;
+        break;
+      }
+    }
+    if (!hasGroundAhead) {
+      for (const plat of platforms) {
+        if (forwardX > plat.x && forwardX < plat.x + plat.width && belowY > plat.y && belowY < plat.y + plat.height) {
+          hasGroundAhead = true;
+          break;
+        }
+      }
+    }
+
+    if (!hasGroundAhead) {
+      minion.facingDirection *= -1;
+      minion.velocity.x = 0;
+    }
   }
 }
 
