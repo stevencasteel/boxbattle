@@ -1,26 +1,26 @@
 .mixer-board {
   width: 100%;
-  max-width: 60vmin;
-  padding: 3.2vmin;
-  border-radius: 2.8vmin;
+  max-width: 450px;
+  padding: 24px;
+  border-radius: 20px;
   margin: auto 0;
   display: flex;
   flex-direction: column;
-  gap: 3.2vmin;
+  gap: 24px;
   box-sizing: border-box;
 }
 
 .mixer-strip {
   display: flex;
   flex-direction: column;
-  gap: 1vmin;
+  gap: 8px;
   width: 100%;
 }
 
 .mixer-header {
   display: flex;
   justify-content: space-between;
-  font-size: 1.5vmin;
+  font-size: 12px;
   font-weight: bold;
   letter-spacing: 0.12em;
   color: #718096;
@@ -29,22 +29,7 @@
 .slider-row {
   display: flex;
   align-items: center;
-  gap: 1.6vmin;
+  gap: 12px;
   width: 100%;
   box-sizing: border-box;
-}
-
-@media (max-width: 768px) and (pointer: coarse) {
-  .mixer-board {
-    padding: 18px;
-    gap: 20px;
-    max-width: none;
-    border-radius: 16px;
-  }
-  .mixer-header {
-    font-size: 14px;
-  }
-  .slider-row {
-    gap: 12px;
-  }
 }

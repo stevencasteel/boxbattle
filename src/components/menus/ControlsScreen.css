@@ -1,12 +1,12 @@
 .binding-board {
   width: 100%;
-  max-width: 80vmin;
-  padding: 1.2vmin 1.8vmin;
-  border-radius: 1.8vmin;
+  max-width: 600px;
+  padding: 10px 14px;
+  border-radius: 14px;
   margin: auto 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.8vmin 2vmin;
+  gap: 6px 16px;
   box-sizing: border-box;
   overflow-y: auto;
   max-height: 44vh;
@@ -16,9 +16,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 1.3vmin;
+  font-size: 11px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 0.6vmin 0.2vmin;
+  padding: 4px 2px;
   box-sizing: border-box;
   gap: 8px;
 }
@@ -32,7 +32,7 @@
 }
 
 .binding-btn {
-  width: 20vmin;
+  width: 150px;
   max-width: 160px;
   height: 38px;
   padding: 0 4px !important;
@@ -41,61 +41,25 @@
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  font-size: 1.2vmin;
-  border-radius: 0.8vmin;
+  font-size: 10px;
+  border-radius: 6px;
   box-sizing: border-box;
 }
 
 .controls-notice {
-  padding: 1vmin 2vmin;
-  border-radius: 1vmin;
+  padding: 8px 16px;
+  border-radius: 8px;
   background: rgba(168, 85, 247, 0.08);
   border: 1px solid rgba(168, 85, 247, 0.25);
   color: hsl(280, 80%, 75%);
-  font-size: 1.1vmin;
+  font-size: 10px;
   font-weight: bold;
   letter-spacing: 0.08em;
   text-align: center;
   text-transform: uppercase;
   text-shadow: 0 0 6px rgba(168, 85, 247, 0.35);
   width: 100%;
-  max-width: 80vmin;
+  max-width: 600px;
   box-sizing: border-box;
   white-space: nowrap;
-}
-
-@media (max-width: 768px) and (pointer: coarse) {
-  .binding-board {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    max-height: 30vh;
-    padding: 10px;
-    max-width: none;
-    border-radius: 16px;
-  }
-  .binding-row {
-    padding: 4px 0;
-    font-size: 12px;
-  }
-  .binding-btn {
-    width: 140px;
-    height: 36px;
-    padding: 0 !important;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-    font-size: 12px;
-    border-radius: 6px;
-    box-sizing: border-box;
-  }
-  .controls-notice {
-    font-size: 9px;
-    padding: 8px 12px;
-    white-space: normal;
-    line-height: 1.4;
-    max-width: none;
-    border-radius: 8px;
-  }
 }

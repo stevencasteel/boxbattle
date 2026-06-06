@@ -36,6 +36,39 @@ export default function App() {
   const bootStage = useBootSequence();
   const viewportRef = useRef<HTMLDivElement>(null);
 
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const isSource = useSessionStore.getState().currentScreen === "SOURCE_VIEW";
+      const cabinetWidth = isSource ? 1100 : 740;
+      const cabinetHeight = isSource ? 800 : 880;
+      const padding = 32; // Total padding around the cabinet
+      
+      const availableWidth = window.innerWidth - padding;
+      const availableHeight = window.innerHeight - padding;
+      
+      const scaleX = availableWidth / cabinetWidth;
+      const scaleY = availableHeight / cabinetHeight;
+      
+      const newScale = Math.min(scaleX, scaleY);
+      setScale(Math.max(0.1, newScale));
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    const unsub = useSessionStore.subscribe(() => {
+      handleResize();
+    });
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      unsub();
+    };
+  }, []);
+
+
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const gameResult = useSessionStore((state) => state.gameResult);
   const transitionActive = useSessionStore((state) => state.transitionActive);
@@ -161,19 +194,35 @@ export default function App() {
 
   if (bootStage === BootStage.NONE) {
     return (
-      <div className="app-wrapper">
-        <div className="cabinet-outer" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-          <span style={{ color: "#718096", fontSize: "11px", letterSpacing: "0.2em" }}>BOOTING SYSTEM...</span>
+      <div className="app-wrapper" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100vw", height: "100vh", overflow: "hidden", background: "#050505" }}>
+        <div style={{ transform: `scale(${scale})`, transformOrigin: "center center", width: "740px", height: "880px", display: "flex", flexDirection: "column", flexShrink: 0, flexGrow: 0 }}>
+          <div className="cabinet-outer" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
+            <span style={{ color: "#718096", fontSize: "11px", letterSpacing: "0.2em" }}>BOOTING SYSTEM...</span>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100vw", height: "100vh", overflow: "hidden", background: "#050505" }}>
       <div
-        className={`cabinet-outer ${isFullHeightScreen ? "cabinet-wide-source" : ""} ${isTouchDevice ? "cabinet-mobile" : ""}`}
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: "center center",
+          width: isFullHeightScreen ? "1100px" : "740px",
+          height: isFullHeightScreen ? "800px" : "880px",
+          display: "flex",
+          flexDirection: "column",
+          flexShrink: 0,
+          flexGrow: 0,
+          transition: "transform 0.15s ease-out, width 0.15s ease-out, height 0.15s ease-out"
+        }}
       >
+        <div
+          className={`cabinet-outer ${isFullHeightScreen ? "cabinet-wide-source" : ""} ${isTouchDevice ? "cabinet-mobile" : ""}`}
+          style={{ width: "100%", height: "100%" }}
+        >
         {!isFullHeightScreen && (
           <HudPanel
             key={`${currentScreen}-${retryCount}`}
@@ -329,6 +378,7 @@ export default function App() {
         )}
 
         {isPlayingScreen && isTouchDevice && <TouchOverlay />}
+      </div>
       </div>
 
       <ChromaticAberrationFilter />

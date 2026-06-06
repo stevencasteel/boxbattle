@@ -1,8 +1,8 @@
 .credits-block {
-  max-width: 64vmin;
-  padding: 3.2vmin;
+  max-width: 480px;
+  padding: 24px;
   width: 100%;
-  border-radius: 2vmin;
+  border-radius: 16px;
   margin: auto 0;
   box-sizing: border-box;
 }
@@ -10,7 +10,7 @@
 .credits-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.2vmin;
+  gap: 10px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -18,17 +18,17 @@
 .credits-item {
   background: var(--surface-bg);
   border: 1px solid rgba(0, 0, 0, 0.4);
-  border-radius: 1.2vmin;
-  padding: 1.2vmin 1.6vmin;
+  border-radius: 10px;
+  padding: 10px 12px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 0.4vmin;
+  gap: 4px;
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
 }
 
 .credits-tech-title {
-  font-size: 1.4vmin;
+  font-size: 11px;
   font-weight: bold;
   color: var(--signal-green);
   text-transform: uppercase;
@@ -37,33 +37,9 @@
 }
 
 .credits-tech-desc {
-  font-size: 1.25vmin;
+  font-size: 10px;
   color: #a0aec0;
   line-height: 1.45;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-@media (max-width: 768px) and (pointer: coarse) {
-  .credits-block {
-    padding: 12px 16px !important;
-    border-radius: 12px !important;
-    max-width: none;
-  }
-  .credits-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    max-height: 30vh;
-    overflow-y: auto;
-  }
-  .credits-item {
-    padding: 8px 12px;
-    border-radius: 8px;
-  }
-  .credits-tech-title {
-    font-size: 11px;
-  }
-  .credits-tech-desc {
-    font-size: 10px;
-  }
 }
