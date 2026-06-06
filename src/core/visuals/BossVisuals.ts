@@ -1,4 +1,5 @@
 import { Boss } from "@/entities/Boss";
+import { Software3DRenderer } from "./Software3DRenderer";
 
 export class BossVisuals {
   static draw(ctx: CanvasRenderingContext2D, boss: Boss, alpha: number): void {
@@ -25,13 +26,36 @@ export class BossVisuals {
       }
     }
 
-    const vWidth = boss.size.width * boss.visualScale.x;
-    const vHeight = boss.size.height * boss.visualScale.y;
     const feetY = drawY + boss.size.height / 2;
 
     ctx.translate(drawX, feetY);
     ctx.rotate(boss.rotation);
-    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
+
+    const yaw = 0.15 * boss.facingDirection + (boss.velocity.x / boss.lungeSpeed) * 0.45;
+    const pitch = 0.08 + (boss.velocity.y / 1200) * 0.25;
+    let baseColor = "hsl(350, 80%, 60%)";
+    if (boss.health.isFlashing()) {
+      baseColor = "hsl(0, 0%, 100%)";
+    } else if (activeState === "TELEGRAPH") {
+      baseColor = "hsl(45, 100%, 50%)";
+    }
+
+    Software3DRenderer.drawGeometry(
+      ctx,
+      Software3DRenderer.BOX_GEOMETRY,
+      0,
+      0,
+      boss.size.width,
+      boss.size.height,
+      boss.visualScale.x,
+      boss.visualScale.y,
+      yaw,
+      pitch,
+      0,
+      baseColor,
+      1.0,
+      "feet"
+    );
 
     ctx.shadowBlur = 0;
     ctx.restore();

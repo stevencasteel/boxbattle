@@ -1,7 +1,6 @@
+import { Software3DRenderer } from "./Software3DRenderer";
 import { TrigLUT } from "@/core/TrigLUT";
 import { BaseMinion } from "@/entities/BaseMinion";
-import { LancerMinion } from "@/entities/LancerMinion";
-import { ShielderMinion } from "@/entities/ShielderMinion";
 import { Boss } from "@/entities/Boss";
 
 interface CageSegment { x1: number; y1: number; x2: number; y2: number; color: string; width: number; }
@@ -141,69 +140,61 @@ export class MinionVisuals {
       ctx.translate(0, minion.size.height / 2);
     }
 
-    if (minion.health.isFlashing()) {
-      ctx.fillStyle = "white";
-    } else {
-      ctx.fillStyle = minion["bodyColorValue"];
-    }
+        const geom = (minion.id.includes("TURRET") || minion.id.includes("SHIELDER"))
+          ? Software3DRenderer.HEXAGON_GEOMETRY
+          : Software3DRenderer.BOX_GEOMETRY;
 
-    if (minion.attackState === "TELEGRAPH" && !minion.isDying) {
-      ctx.fillStyle = "hsl(45, 100%, 50%)";
-      ctx.shadowColor = "rgba(234, 179, 8, 0.8)";
-      ctx.shadowBlur = 14;
-    }
+        const yaw = 0.15 * minion.facingDirection + (minion.velocity.x / 450) * 0.35;
+        const pitch = 0.08 + (minion.velocity.y / 1000) * 0.22;
+        const pivotY = minion.squashPivot === "feet" ? "feet" : "center";
+        const posY = pivotY === "feet" ? 0 : -minion.size.height / 2;
+        const localY = minion.squashPivot === "feet" ? -minion.size.height / 2 : 0;
 
-    const vWidth = minion.size.width * minion.visualScale.x;
-    const vHeight = minion.size.height * minion.visualScale.y;
-    const localY = minion.squashPivot === "feet" ? -minion.size.height / 2 : 0;
+        if (minion.isDying) {
+          const shrapnelProgress = 1.0 - minion.dissolveTimer / 0.5;
+          Software3DRenderer.drawFragments(
+            ctx,
+            geom,
+            0,
+            posY,
+            minion.size.width,
+            minion.size.height,
+            minion.visualScale.x,
+            minion.visualScale.y,
+            yaw,
+            pitch,
+            0,
+            minion.minionColor,
+            shrapnelProgress,
+            180,
+            minion.dissolveTimer / 0.5,
+            pivotY
+          );
+        } else {
+          let baseColor = minion.minionColor;
+          if (minion.health.isFlashing()) {
+            baseColor = "hsl(0, 0%, 100%)";
+          } else if (minion.attackState === "TELEGRAPH") {
+            baseColor = "hsl(45, 100%, 50%)";
+          }
 
-    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
-    ctx.shadowBlur = 0;
-
-    if (minion.attackState === "PATROL" && minion.minionColor.includes("215")) {
-      const player = minion.world.player;
-      if (player) {
-        const angle = TrigLUT.atan2(player.position.y - minion.position.y, player.position.x - minion.position.x);
-        ctx.save();
-        ctx.translate(0, -minion.size.height / 2);
-        ctx.rotate(angle);
-        ctx.fillStyle = "#4a5568";
-        ctx.fillRect(0, -4, 24, 8);
-        ctx.fillStyle = "#1a202c";
-        ctx.fillRect(20, -5, 4, 10);
-        ctx.restore();
-      }
-    }
-
-    if (minion instanceof LancerMinion && minion.lanceExtended) {
-      ctx.save();
-      ctx.strokeStyle = "hsl(45, 100%, 65%)";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(minion.facingDirection * 12, -18);
-      ctx.lineTo(minion.facingDirection * 44, -18);
-      ctx.stroke();
-
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(minion.facingDirection * 12, -18);
-      ctx.lineTo(minion.facingDirection * 40, -18);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    if (minion instanceof ShielderMinion && !minion.isSpawning && !minion.isDying) {
-      ctx.save();
-      ctx.strokeStyle = "hsl(180, 100%, 65%)";
-      ctx.lineWidth = 3.5;
-      ctx.shadowColor = "rgba(6, 182, 212, 0.6)";
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(minion.facingDirection * 9.6, -minion.size.height / 2, 19.2, -Math.PI / 3, Math.PI / 3);
-      ctx.stroke();
-      ctx.restore();
-    }
+          Software3DRenderer.drawGeometry(
+            ctx,
+            geom,
+            0,
+            posY,
+            minion.size.width,
+            minion.size.height,
+            minion.visualScale.x,
+            minion.visualScale.y,
+            yaw,
+            pitch,
+            0,
+            baseColor,
+            1.0,
+            pivotY
+          );
+        }
 
     ctx.fillStyle = "black";
     ctx.fillRect(minion.facingDirection * 6.4 - 1.6, localY - 9.6, 4.8, 3.2);

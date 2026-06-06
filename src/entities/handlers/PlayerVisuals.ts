@@ -1,3 +1,4 @@
+import { Software3DRenderer } from "../../core/visuals/Software3DRenderer";
 import { Player } from "@/entities/Player";
 import { PlayerFxRenderer } from "@/core/effects/PlayerFxRenderer";
 import { UNITS } from "@/core/Units";
@@ -91,8 +92,8 @@ export class PlayerVisuals {
       ctx.restore();
     }
 
-    const vWidth = this.player.size.width * this.player.visualScale.x;
-    const vHeight = this.player.size.height * this.player.visualScale.y;
+    
+    
     const feetY = drawY + this.player.size.height / 2;
 
     const nowTime = performance.now();
@@ -128,13 +129,24 @@ export class PlayerVisuals {
       ctx.restore();
     }
 
-    if (this.player.health.isFlashing()) {
-      ctx.fillStyle = "white";
-    } else {
-      ctx.fillStyle = "hsl(142, 71%, 58%)";
-    }
-
-    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
+        const yaw = 0.15 * this.player.facingDirection + (this.player.velocity.x / 1120) * 0.35;
+    const pitch = 0.08 + (this.player.velocity.y / 1200) * 0.22;
+    Software3DRenderer.drawGeometry(
+      ctx,
+      Software3DRenderer.BOX_GEOMETRY,
+      0,
+      0,
+      this.player.size.width,
+      this.player.size.height,
+      this.player.visualScale.x,
+      this.player.visualScale.y,
+      yaw,
+      pitch,
+      0,
+      this.player.health.isFlashing() ? "hsl(0, 0%, 100%)" : "hsl(142, 71%, 58%)",
+      1.0,
+      "feet"
+    );
 
     const localCenterX = 0;
     const localCenterY = -this.player.size.height / 2;

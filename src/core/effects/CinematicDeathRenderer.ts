@@ -1,3 +1,4 @@
+import { Software3DRenderer } from "../visuals/Software3DRenderer";
 import { UNITS } from "@/core/Units";
 import { World } from "@/core/World";
 import { TrigLUT } from "@/core/TrigLUT";
@@ -56,11 +57,25 @@ export class CinematicDeathRenderer {
           ctx.fillStyle = (row + (row % gridCols)) % 2 === 0 ? primaryColor : secondaryColor;
           ctx.globalAlpha = opacity;
 
-          ctx.save();
-          ctx.translate(curX, curY);
-          ctx.rotate(progress * 4 + row);
-          ctx.fillRect(-size / 2, -size / 2, size, size);
-          ctx.restore();
+          const fYaw = progress * 6 + row;
+        const fPitch = progress * 4 - row;
+        const fRoll = progress * 5 + row * 2;
+        const fColor = (row + (row % gridCols)) % 2 === 0 ? primaryColor : secondaryColor;
+        Software3DRenderer.drawGeometry(
+          ctx,
+          Software3DRenderer.BOX_GEOMETRY,
+          curX,
+          curY,
+          size,
+          size,
+          1.0,
+          1.0,
+          fYaw,
+          fPitch,
+          fRoll,
+          fColor,
+          opacity
+        );
         }
       }
 
