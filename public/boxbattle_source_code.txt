@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/6/2026, 12:19:51 PM
+ [SYSTEM] Generated: 6/6/2026, 12:35:44 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -1825,8 +1825,8 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
 ────────────────────────────────────────────────────
 .cabinet-outer {
   position: relative;
-  width: min(95vw, 81.2vh);
-  height: min(111vw, 95vh);
+  width: min(90vw, 76.5vh);
+  height: min(114vw, 95vh);
   border-radius: 20px;
   background: #0f1218;
   padding: 2.5vmin;
@@ -9708,7 +9708,7 @@ export class PhysicsWorld implements IPhysicsWorld {
   constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
     this.solids = GreedyMerger.merge(solids);
     this.hazards = GreedyMerger.merge(hazards);
-    this.onewayPlatforms = GreedyMerger.merge(onewayPlatforms);
+    this.onewayPlatforms = onewayPlatforms;
 
     this.indexGeometry(this.solids, this.solidGrid);
     this.indexGeometry(this.onewayPlatforms, this.platformGrid);
@@ -10632,7 +10632,6 @@ export class StaticMapRenderer {
   private ctx: CanvasRenderingContext2D;
   private staticCanvas: HTMLCanvasElement;
   private staticCtx: CanvasRenderingContext2D;
-  private spikePath: Path2D | null = null;
   private staticCacheBuilt = false;
 
   constructor(ctx: CanvasRenderingContext2D) {
@@ -10652,18 +10651,20 @@ export class StaticMapRenderer {
     sctx.fillStyle = "#0c0d11";
     sctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
 
-    sctx.strokeStyle = "rgba(34, 197, 94, 0.4)";
-    sctx.lineWidth = 4;
-    sctx.lineJoin = "round";
-    sctx.shadowColor = "rgba(34, 197, 94, 0.25)";
-    sctx.shadowBlur = 8;
-    
-    sctx.beginPath();
-    for (const solid of solids) {
-      this.drawRoundedRectPath(sctx, solid.x - 2, solid.y - 2, solid.width + 4, solid.height + 4, 10);
+    if (hazards.length > 0) {
+      sctx.fillStyle = "hsl(350, 80%, 60%)";
+      sctx.beginPath();
+      for (const hazard of hazards) {
+        const spikeWidth = 25;
+        const spikeCount = Math.floor(hazard.width / spikeWidth);
+        for (let i = 0; i < spikeCount; i++) {
+          sctx.moveTo(hazard.x + i * spikeWidth, 1200);
+          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
+          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
+        }
+      }
+      sctx.fill();
     }
-    sctx.stroke();
-    sctx.shadowBlur = 0;
 
     sctx.fillStyle = "#13151a";
     sctx.beginPath();
@@ -10672,26 +10673,33 @@ export class StaticMapRenderer {
     }
     sctx.fill();
 
+    sctx.strokeStyle = "rgba(34, 197, 94, 0.4)";
+    sctx.lineWidth = 4;
+    sctx.lineJoin = "round";
+    sctx.shadowColor = "rgba(34, 197, 94, 0.25)";
+    sctx.shadowBlur = 8;
+    
+    sctx.beginPath();
+    for (const solid of solids) {
+      this.drawRoundedRectPath(sctx, solid.x + 2, solid.y + 2, solid.width - 4, solid.height - 4, 8);
+    }
+    sctx.stroke();
+    sctx.shadowBlur = 0;
+
+    sctx.fillStyle = "#13151a";
+    sctx.beginPath();
+    for (const solid of solids) {
+      this.drawRoundedRectPath(sctx, solid.x + 4, solid.y + 4, solid.width - 8, solid.height - 8, 6);
+    }
+    sctx.fill();
+
     sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
     sctx.lineWidth = 1;
     sctx.beginPath();
     for (const solid of solids) {
-      this.drawRoundedRectPath(sctx, solid.x + 3, solid.y + 3, solid.width - 6, solid.height - 6, 8);
+      this.drawRoundedRectPath(sctx, solid.x + 5, solid.y + 5, solid.width - 10, solid.height - 10, 5);
     }
     sctx.stroke();
-
-    if (hazards.length > 0) {
-      this.spikePath = new Path2D();
-      for (const hazard of hazards) {
-        const spikeWidth = 25;
-        const spikeCount = Math.floor(hazard.width / spikeWidth);
-        for (let i = 0; i < spikeCount; i++) {
-          this.spikePath.moveTo(hazard.x + i * spikeWidth, 1200);
-          this.spikePath.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
-          this.spikePath.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
-        }
-      }
-    }
 
     this.staticCacheBuilt = true;
   }
@@ -10711,11 +10719,6 @@ export class StaticMapRenderer {
 
   public renderBackground(): void {
     this.ctx.drawImage(this.staticCanvas, 0, 0);
-
-    if (this.spikePath) {
-      this.ctx.fillStyle = "hsl(350, 80%, 60%)";
-      this.ctx.fill(this.spikePath);
-    }
   }
 
   public renderOnewayPlatforms(
@@ -10738,7 +10741,6 @@ export class StaticMapRenderer {
 
   public resetCache(): void {
     this.staticCacheBuilt = false;
-    this.spikePath = null;
   }
 }
 
