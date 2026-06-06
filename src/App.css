@@ -1,10 +1,10 @@
 .cabinet-outer {
   position: relative;
   width: 740px;
-  height: 880px;
+  height: 862px;
   border-radius: 20px;
   background: #0f1218;
-  padding: 16px;
+  padding: 16px 16px 6px 16px;
   box-shadow:
     -8px -8px 24px rgba(255, 255, 255, 0.02),
     8px 8px 36px rgba(0, 0, 0, 0.95),
@@ -19,14 +19,14 @@
 
 .cabinet-outer.cabinet-mobile {
   width: 740px !important;
-  height: 880px !important;
+  height: 862px !important;
   border-radius: 20px !important;
   box-shadow:
     -8px -8px 24px rgba(255, 255, 255, 0.02),
     8px 8px 36px rgba(0, 0, 0, 0.95),
     inset 0 0 30px rgba(0, 0, 0, 0.9) !important;
   border: 1px solid rgba(255, 255, 255, 0.01) !important;
-  padding: 16px !important;
+  padding: 16px 16px 6px 16px !important;
 }
 
 .cabinet-wide-source {

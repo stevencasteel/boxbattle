@@ -42,7 +42,7 @@ export default function App() {
     const handleResize = () => {
       const isSource = useSessionStore.getState().currentScreen === "SOURCE_VIEW";
       const cabinetWidth = isSource ? 1100 : 740;
-      const cabinetHeight = isSource ? 800 : 880;
+      const cabinetHeight = isSource ? 800 : 862;
       const padding = 32; // Total padding around the cabinet
       
       const availableWidth = window.innerWidth - padding;
@@ -195,7 +195,7 @@ export default function App() {
   if (bootStage === BootStage.NONE) {
     return (
       <div className="app-wrapper" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100vw", height: "100vh", overflow: "hidden", background: "#050505" }}>
-        <div style={{ transform: `scale(${scale})`, transformOrigin: "center center", width: "740px", height: "880px", display: "flex", flexDirection: "column", flexShrink: 0, flexGrow: 0 }}>
+        <div style={{ transform: `scale(${scale})`, transformOrigin: "center center", width: "740px", height: "862px", display: "flex", flexDirection: "column", flexShrink: 0, flexGrow: 0 }}>
           <div className="cabinet-outer" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
             <span style={{ color: "#718096", fontSize: "11px", letterSpacing: "0.2em" }}>BOOTING SYSTEM...</span>
           </div>
@@ -211,7 +211,7 @@ export default function App() {
           transform: `scale(${scale})`,
           transformOrigin: "center center",
           width: isFullHeightScreen ? "1100px" : "740px",
-          height: isFullHeightScreen ? "800px" : "880px",
+          height: isFullHeightScreen ? "800px" : "862px",
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
