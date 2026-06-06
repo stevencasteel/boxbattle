@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CtTCPGfn.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CW6A4Dab.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1958,8 +1958,8 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
         >
           <canvas
             ref={canvasRef}
-            width={1250}
-            height={1250}
+            width={1000}
+            height={1000}
             className="crt-scanlines crt-flicker"
             style={{
               background: "#07080b",
@@ -6171,14 +6171,14 @@ export class EncounterDirector {
         const dx = player.position.x - anchor.x;
         const dy = player.position.y - anchor.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 260) isSafe = false;
+        if (dist < 208) isSafe = false;
       }
 
       if (boss && isSafe) {
         const dx = boss.position.x - anchor.x;
         const dy = boss.position.y - anchor.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 120) isSafe = false;
+        if (dist < 96) isSafe = false;
       }
 
       if (isSafe) {
@@ -6307,7 +6307,7 @@ export class Engine {
     this.systems.setup(
       () => this.player.position.x,
       () => this.boss.position.x,
-      (id) => this.world.minions.find((m) => m.id === id)?.position.x ?? 625
+      (id) => this.world.minions.find((m) => m.id === id)?.position.x ?? 500
     );
 
     this.pool = new ObjectPool(() => new Projectile(), 500);
@@ -8794,12 +8794,12 @@ export class StaticMapRenderer {
       sctx.fillStyle = "hsl(350, 80%, 60%)";
       sctx.beginPath();
       for (const hazard of hazards) {
-        const spikeWidth = 25;
+        const spikeWidth = 20;
         const spikeCount = Math.floor(hazard.width / spikeWidth);
         for (let i = 0; i < spikeCount; i++) {
-          sctx.moveTo(hazard.x + i * spikeWidth, 1200);
-          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
-          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
+          sctx.moveTo(hazard.x + i * spikeWidth, 960);
+          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 920);
+          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 960);
         }
       }
       sctx.fill();
@@ -8808,33 +8808,33 @@ export class StaticMapRenderer {
     sctx.fillStyle = "#13151a";
     sctx.beginPath();
     for (const solid of solids) {
-      this.drawRoundedRectPath(sctx, solid.x, solid.y, solid.width, solid.height, 10);
+      this.drawRoundedRectPath(sctx, solid.x, solid.y, solid.width, solid.height, 8);
     }
     sctx.fill();
 
     sctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
-    sctx.lineWidth = 4;
+    sctx.lineWidth = 3.2;
     sctx.lineJoin = "round";
     sctx.shadowColor = "rgba(34, 197, 94, 0.25)";
-    sctx.shadowBlur = 8;
+    sctx.shadowBlur = 6.4;
     
     sctx.beginPath();
-    this.drawInnerPerimeterPath(sctx, 2);
+    this.drawInnerPerimeterPath(sctx, 1.6);
     
-    const floatingPlatform = solids.find(s => s.x === 425 && s.y === 800);
+    const floatingPlatform = solids.find(s => s.x === 340 && s.y === 640);
     if (floatingPlatform) {
-      this.drawRoundedRectPath(sctx, floatingPlatform.x + 2, floatingPlatform.y + 2, floatingPlatform.width - 4, floatingPlatform.height - 4, 8);
+      this.drawRoundedRectPath(sctx, floatingPlatform.x + 1.6, floatingPlatform.y + 1.6, floatingPlatform.width - 3.2, floatingPlatform.height - 3.2, 6.4);
     }
     sctx.stroke();
     sctx.shadowBlur = 0;
 
     sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-    sctx.lineWidth = 1;
+    sctx.lineWidth = 0.8;
     sctx.beginPath();
-    this.drawInnerPerimeterPath(sctx, 3.5);
+    this.drawInnerPerimeterPath(sctx, 2.8);
     
     if (floatingPlatform) {
-      this.drawRoundedRectPath(sctx, floatingPlatform.x + 5, floatingPlatform.y + 5, floatingPlatform.width - 10, floatingPlatform.height - 10, 5);
+      this.drawRoundedRectPath(sctx, floatingPlatform.x + 4, floatingPlatform.y + 4, floatingPlatform.width - 8, floatingPlatform.height - 8, 4);
     }
     sctx.stroke();
 
@@ -8855,14 +8855,14 @@ export class StaticMapRenderer {
   }
 
   private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number) {
-    const ceilingY = 50 - inset;
-    const leftWallX = 50 - inset;
-    const rightWallX = 1200 + inset;
-    const leftFloorY = 1150 + inset;
-    const rightFloorY = 1150 + inset;
-    const leftPitWallX = 400 - inset;
-    const rightPitWallX = 850 + inset;
-    const pitFloorY = 1200 + inset;
+    const ceilingY = 40 - inset;
+    const leftWallX = 40 - inset;
+    const rightWallX = 960 + inset;
+    const leftFloorY = 920 + inset;
+    const rightFloorY = 920 + inset;
+    const leftPitWallX = 320 - inset;
+    const rightPitWallX = 680 + inset;
+    const pitFloorY = 960 + inset;
 
     ctx.moveTo(leftWallX, ceilingY);
     ctx.lineTo(rightWallX, ceilingY);
@@ -9004,16 +9004,16 @@ export class StaticMapRenderer {
   BOSS_PHASE_3_HP_PCT: 0.40,
 
   // Player Kinematics
-  PLAYER_MOVE_SPEED: 450,
-  PLAYER_JUMP_FORCE: 680,
-  PLAYER_WALL_SLIDE_SPEED: 120,
-  PLAYER_DASH_SPEED: 1400,
+  PLAYER_MOVE_SPEED: 360,
+  PLAYER_JUMP_FORCE: 544,
+  PLAYER_WALL_SLIDE_SPEED: 96,
+  PLAYER_DASH_SPEED: 1120,
   PLAYER_ACCEL: 12.0,
   PLAYER_DECEL: 16.0,
 
   // Boss Kinematics
-  BOSS_PATROL_SPEED_BASE: 200,
-  BOSS_LUNGE_SPEED_BASE: 1200,
+  BOSS_PATROL_SPEED_BASE: 160,
+  BOSS_LUNGE_SPEED_BASE: 960,
   BOSS_ACCEL: 6.0,
   BOSS_DECEL: 8.0,
 
@@ -9038,14 +9038,14 @@ export class StaticMapRenderer {
   CHARGE_LVL2_TIME: 1.12,
 
   // World space coordinates (1 World Unit = 1 Pixel)
-  WORLD_SIZE: 1250,
-  WORLD_HALF_SIZE: 625,
+  WORLD_SIZE: 1000,
+  WORLD_HALF_SIZE: 500,
 
   // Audio spatialization parameters
   AUDIO_MAX_PAN_SCALE: 0.45,
 
   // Spatial hashing configuration
-  SPATIAL_GRID_CELL_SIZE: 250,
+  SPATIAL_GRID_CELL_SIZE: 200,
 
   // Physics sub-stepping and tolerances
   CCD_STEP_LIMIT_DEFAULT: 6,
@@ -9060,23 +9060,23 @@ export class StaticMapRenderer {
   CANONICAL_DELTA_TIME: 1 / 60,
 
   // Combat range bounds
-  MELEE_MAX_REACH: 95,
-  MELEE_CLOSE_RANGE_THRESHOLD: 75,
-  MELEE_SIDE_OFFSET: 35,
-  MELEE_VERTICAL_OFFSET: 35,
-  MELEE_SWEEP_INNER_RADIUS: 25,
+  MELEE_MAX_REACH: 76,
+  MELEE_CLOSE_RANGE_THRESHOLD: 60,
+  MELEE_SIDE_OFFSET: 28,
+  MELEE_VERTICAL_OFFSET: 28,
+  MELEE_SWEEP_INNER_RADIUS: 20,
 
   // Player wall jump horizontal impulse
-  PLAYER_WALL_JUMP_X_VELOCITY: 1650,
+  PLAYER_WALL_JUMP_X_VELOCITY: 1320,
 
   // Boss wall collision rebound velocity
-  BOSS_WALL_REBOUND_VELOCITY: 350,
+  BOSS_WALL_REBOUND_VELOCITY: 280,
 
   // Downward attack (pogo) hitbox dimensions
-  POGO_HITBOX_WIDTH: 90,
-  POGO_HITBOX_HEIGHT: 44.5,
-  POGO_HITBOX_Y_OFFSET: 40,
-  POGO_HITBOX_X_OFFSET: -45,
+  POGO_HITBOX_WIDTH: 72,
+  POGO_HITBOX_HEIGHT: 35.6,
+  POGO_HITBOX_Y_OFFSET: 32,
+  POGO_HITBOX_X_OFFSET: -36,
 } as const;
 `,"src/core/VecUtils.ts":`import { Vector2D } from "./Interfaces";
 
@@ -10796,8 +10796,8 @@ export class CinematicDeathRenderer {
           const startY = py - baseHeight / 2 + (row + 0.5) * (baseHeight / gridRows);
 
           const angle = TrigLUT.atan2(row - (gridRows - 1) / 2, (row % gridCols) - (gridCols - 1) / 2) + (row % 2 === 0 ? 0.2 : -0.2);
-          const thrust = activeProgress * 80;
-          const gravityOffset = cascadeDir * activeProgress * activeProgress * 140;
+          const thrust = activeProgress * 64;
+          const gravityOffset = cascadeDir * activeProgress * activeProgress * 112;
 
           const curX = startX + TrigLUT.cos(angle) * thrust + (TrigLUT.sin(progress * 15 + row) * 4 * (1.0 - activeProgress));
           const curY = startY + TrigLUT.sin(angle) * thrust + gravityOffset;
@@ -10820,16 +10820,16 @@ export class CinematicDeathRenderer {
         ctx.fillStyle = "#ffffff";
         ctx.globalAlpha = flareAlpha;
 
-        const hLength = Math.max(4, 220 * (1.0 - pinchProgress * pinchProgress * pinchProgress));
-        const hHeight = Math.max(1, 8 * (1.0 - pinchProgress));
+        const hLength = Math.max(4, 176 * (1.0 - pinchProgress * pinchProgress * pinchProgress));
+        const hHeight = Math.max(1, 6.4 * (1.0 - pinchProgress));
         ctx.fillRect(px - hLength / 2, py - hHeight / 2, hLength, hHeight);
 
-        const vHeight = Math.max(4, 220 * (1.0 - pinchProgress * pinchProgress * pinchProgress));
-        const vWidth = Math.max(1, 8 * (1.0 - pinchProgress));
+        const vHeight = Math.max(4, 176 * (1.0 - pinchProgress * pinchProgress * pinchProgress));
+        const vWidth = Math.max(1, 6.4 * (1.0 - pinchProgress));
         ctx.fillRect(px - vWidth / 2, py - vHeight / 2, vWidth, vHeight);
 
         ctx.beginPath();
-        ctx.arc(px, py, Math.max(2, 12 * (1.0 - pinchProgress)), 0, Math.PI * 2);
+        ctx.arc(px, py, Math.max(2, 9.6 * (1.0 - pinchProgress)), 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -10851,7 +10851,7 @@ export class CinematicDeathRenderer {
       ctx.globalCompositeOperation = "lighter";
 
       const rayCount = 14;
-      const maxRayLength = 480;
+      const maxRayLength = 384;
       
       ctx.fillStyle = isPlayer ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)";
       ctx.globalAlpha = opacity * 0.35;
@@ -10860,7 +10860,7 @@ export class CinematicDeathRenderer {
       for (let i = 0; i < rayCount; i++) {
         const angle = (i / rayCount) * Math.PI * 2 + explodeT * 0.4;
         const currentLength = maxRayLength * TrigLUT.sin(explodeProgress * Math.PI * 0.5);
-        const rayWidth = 18 * TrigLUT.sin(explodeProgress * Math.PI) * (0.8 + 0.4 * (i % 2));
+        const rayWidth = 14.4 * TrigLUT.sin(explodeProgress * Math.PI) * (0.8 + 0.4 * (i % 2));
 
         const p1_angle = angle - (rayWidth / currentLength);
         const p2_angle = angle + (rayWidth / currentLength);
@@ -10891,7 +10891,7 @@ export class CinematicDeathRenderer {
       ctx.fill();
 
       const ringCount = 3;
-      const ringSpeed = 820;
+      const ringSpeed = 656;
       
       for (let i = 0; i < ringCount; i++) {
         const delay = i * 0.12;
@@ -10904,28 +10904,28 @@ export class CinematicDeathRenderer {
           ctx.beginPath();
           ctx.arc(px - 3, py, radius, 0, Math.PI * 2);
           ctx.strokeStyle = isPlayer ? "rgb(168, 85, 247)" : "rgb(239, 68, 68)";
-          ctx.lineWidth = Math.max(1, 10 * (1 - ringTime / 1.0));
+          ctx.lineWidth = Math.max(1, 8 * (1 - ringTime / 1.0));
           ctx.globalAlpha = ringOpacity * 0.4;
           ctx.stroke();
 
           ctx.beginPath();
           ctx.arc(px + 3, py, radius, 0, Math.PI * 2);
           ctx.strokeStyle = isPlayer ? "rgb(34, 197, 94)" : "rgb(234, 179, 8)";
-          ctx.lineWidth = Math.max(1, 6 * (1 - ringTime / 1.0));
+          ctx.lineWidth = Math.max(1, 4.8 * (1 - ringTime / 1.0));
           ctx.globalAlpha = ringOpacity * 0.7;
           ctx.stroke();
 
           ctx.beginPath();
           ctx.arc(px, py, radius, 0, Math.PI * 2);
           ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = Math.max(1, 3 * (1 - ringTime / 1.0));
+          ctx.lineWidth = Math.max(1, 2.4 * (1 - ringTime / 1.0));
           ctx.globalAlpha = ringOpacity * 0.95;
           ctx.stroke();
         }
       }
 
       const particleCount = 28;
-      const particleSpeed = 620;
+      const particleSpeed = 496;
       const particleLife = 1.0;
       
       if (explodeT < particleLife) {
@@ -10938,7 +10938,7 @@ export class CinematicDeathRenderer {
           const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
           const x = px + TrigLUT.cos(angle) * distance;
           const y = py + TrigLUT.sin(angle) * distance;
-          ctx.fillRect(x - 5, y - 5, 10, 10);
+          ctx.fillRect(x - 4, y - 4, 8, 8);
         }
 
         ctx.fillStyle = "#ffffff";
@@ -10948,7 +10948,7 @@ export class CinematicDeathRenderer {
           const distance = explodeT * particleSpeed * (0.6 + (0.4 * (i % 3)) / 3);
           const x = px + TrigLUT.cos(angle) * distance;
           const y = py + TrigLUT.sin(angle) * distance;
-          ctx.fillRect(x - 2, y - 2, 4, 4);
+          ctx.fillRect(x - 1.6, y - 1.6, 3.2, 3.2);
         }
       }
     }
@@ -11011,7 +11011,7 @@ export class PlayerFxRenderer {
     const loops = 4.0;
     const maxAngle = loops * Math.PI * 2;
     const rotationOffset = nowTime * 0.008;
-    const coilHeight = progress * 84;
+    const coilHeight = progress * 67.2;
 
     let backIdx = 0;
     let frontIdx = 0;
@@ -11023,8 +11023,8 @@ export class PlayerFxRenderer {
       const angle1 = t1 * maxAngle + rotationOffset;
       const angle2 = t2 * maxAngle + rotationOffset;
 
-      const r1 = (42 * (1 - t1 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t1 * 8) * 2;
-      const r2 = (42 * (1 - t2 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t2 * 8) * 2;
+      const r1 = (33.6 * (1 - t1 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t1 * 8) * 2;
+      const r2 = (33.6 * (1 - t2 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t2 * 8) * 2;
 
       const x1 = r1 * TrigLUT.cos(angle1);
       const y1 = -t1 * coilHeight + r1 * TrigLUT.sin(angle1) * 0.28;
@@ -11067,7 +11067,7 @@ export class PlayerFxRenderer {
   public static renderHealBuffer(ctx: CanvasRenderingContext2D, isBehind: boolean, count: number, progress: number): void {
     if (count === 0) return;
     const buffer = isBehind ? healBackBuffer : healFrontBuffer;
-    const coilHeight = progress * 84;
+    const coilHeight = progress * 67.2;
 
     ctx.save();
     
@@ -11134,8 +11134,8 @@ export class PlayerFxRenderer {
         const noise1 = TrigLUT.sin(theta1 * 5 + nowTime * 0.04) * 3 * chargeProgress;
         const noise2 = TrigLUT.sin(theta2 * 5 + nowTime * 0.04) * 3 * chargeProgress;
 
-        const r1 = baseRadius + noise1 + s * 12 * chargeProgress;
-        const r2 = baseRadius + noise2 + s * 12 * chargeProgress;
+        const r1 = baseRadius + noise1 + s * 9.6 * chargeProgress;
+        const r2 = baseRadius + noise2 + s * 9.6 * chargeProgress;
 
         const x0_1 = r1 * TrigLUT.cos(theta1);
         const y0_1 = r1 * TrigLUT.sin(theta1);
@@ -11342,31 +11342,31 @@ export interface LevelConfig {
 
 export const defaultLevelConfig: LevelConfig = {
   solids: [
-    { x: 0, y: 1150, width: 400, height: 100 },
-    { x: 850, y: 1150, width: 400, height: 100 },
-    { x: 400, y: 1200, width: 450, height: 50 },
-    { x: 0, y: 0, width: 1250, height: 50 },
-    { x: 0, y: 0, width: 50, height: 1250 },
-    { x: 1200, y: 0, width: 50, height: 1250 },
-    { x: 425, y: 800, width: 400, height: 40 },
+    { x: 0, y: 920, width: 320, height: 80 },
+    { x: 680, y: 920, width: 320, height: 80 },
+    { x: 320, y: 960, width: 360, height: 40 },
+    { x: 0, y: 0, width: 1000, height: 40 },
+    { x: 0, y: 0, width: 40, height: 1000 },
+    { x: 960, y: 0, width: 40, height: 1000 },
+    { x: 340, y: 640, width: 320, height: 32 },
   ],
   onewayPlatforms: [
-    { x: 50, y: 550, width: 300, height: 20 },
-    { x: 900, y: 550, width: 300, height: 20 },
+    { x: 40, y: 440, width: 240, height: 16 },
+    { x: 720, y: 440, width: 240, height: 16 },
   ],
-  hazards: [{ x: 400, y: 1150, width: 450, height: 100 }],
+  hazards: [{ x: 320, y: 920, width: 360, height: 80 }],
   spawners: [],
   spawnAnchors: [
-    { id: "left-catwalk", x: 175, y: 490, tags: ["high", "left", "perch"] },
-    { id: "right-catwalk", x: 1075, y: 490, tags: ["high", "right", "perch"] },
-    { id: "center-bridge", x: 625, y: 740, tags: ["mid", "center", "ground"] },
-    { id: "left-ground", x: 230, y: 1090, tags: ["low", "left", "ground"] },
-    { id: "right-ground", x: 1020, y: 1090, tags: ["low", "right", "ground"] },
-    { id: "upper-air-left", x: 360, y: 380, tags: ["air", "left", "ambush"] },
-    { id: "upper-air-right", x: 890, y: 380, tags: ["air", "right", "ambush"] },
-    { id: "center-air", x: 625, y: 330, tags: ["air", "center", "elite"] },
-    { id: "pit-warning-left", x: 430, y: 1080, tags: ["low", "hazard-edge"] },
-    { id: "pit-warning-right", x: 820, y: 1080, tags: ["low", "hazard-edge"] }
+    { id: "left-catwalk", x: 140, y: 392, tags: ["high", "left", "perch"] },
+    { id: "right-catwalk", x: 860, y: 392, tags: ["high", "right", "perch"] },
+    { id: "center-bridge", x: 500, y: 592, tags: ["mid", "center", "ground"] },
+    { id: "left-ground", x: 184, y: 872, tags: ["low", "left", "ground"] },
+    { id: "right-ground", x: 816, y: 872, tags: ["low", "right", "ground"] },
+    { id: "upper-air-left", x: 288, y: 304, tags: ["air", "left", "ambush"] },
+    { id: "upper-air-right", x: 712, y: 304, tags: ["air", "right", "ambush"] },
+    { id: "center-air", x: 500, y: 264, tags: ["air", "center", "elite"] },
+    { id: "pit-warning-left", x: 344, y: 864, tags: ["low", "hazard-edge"] },
+    { id: "pit-warning-right", x: 656, y: 864, tags: ["low", "hazard-edge"] }
   ],
   encounterWaves: [
     {
@@ -11426,8 +11426,8 @@ export const defaultLevelConfig: LevelConfig = {
       ]
     }
   ],
-  playerStart: { x: 150, y: 1000 },
-  bossStart: { x: 1050, y: 1000 },
+  playerStart: { x: 120, y: 800 },
+  bossStart: { x: 840, y: 800 },
 };
 
 export class LevelLoader {
@@ -11864,10 +11864,10 @@ export class MinionCollisionSystem {
       let applyLanceKnockback = false;
 
       if (minion instanceof LancerMinion && minion.lanceExtended) {
-        const lanceWidth = 90;
-        const lanceHeight = 18;
-        const lanceX = minion.position.x + minion.facingDirection * 55;
-        const lanceY = minion.position.y - 12;
+        const lanceWidth = 72;
+        const lanceHeight = 14.4;
+        const lanceX = minion.position.x + minion.facingDirection * 44;
+        const lanceY = minion.position.y - 9.6;
 
         const pW = player.size.width / 2;
         const pH = player.size.height / 2;
@@ -12138,15 +12138,15 @@ export class MinionVisuals {
       ctx.strokeStyle = "hsl(45, 100%, 65%)";
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(minion.facingDirection * 15, -18);
-      ctx.lineTo(minion.facingDirection * 55, -18);
+      ctx.moveTo(minion.facingDirection * 12, -18);
+      ctx.lineTo(minion.facingDirection * 44, -18);
       ctx.stroke();
 
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(minion.facingDirection * 15, -18);
-      ctx.lineTo(minion.facingDirection * 50, -18);
+      ctx.moveTo(minion.facingDirection * 12, -18);
+      ctx.lineTo(minion.facingDirection * 40, -18);
       ctx.stroke();
       ctx.restore();
     }
@@ -12158,13 +12158,13 @@ export class MinionVisuals {
       ctx.shadowColor = "rgba(6, 182, 212, 0.6)";
       ctx.shadowBlur = 10;
       ctx.beginPath();
-      ctx.arc(minion.facingDirection * 12, -minion.size.height / 2, 24, -Math.PI / 3, Math.PI / 3);
+      ctx.arc(minion.facingDirection * 9.6, -minion.size.height / 2, 19.2, -Math.PI / 3, Math.PI / 3);
       ctx.stroke();
       ctx.restore();
     }
 
     ctx.fillStyle = "black";
-    ctx.fillRect(minion.facingDirection * 8 - 2, localY - 12, 6, 4);
+    ctx.fillRect(minion.facingDirection * 6.4 - 1.6, localY - 9.6, 4.8, 3.2);
     ctx.restore();
 
     if (minion.isSpawning) {
@@ -12606,7 +12606,7 @@ export class Boss extends BaseEntity {
 
   constructor(id: string, world: IWorld) {
     super(id, world);
-    this.size = { width: 60, height: 60 };
+    this.size = { width: 48, height: 48 };
     this.squashPivot = "feet";
 
     zeroVec(this.position);
@@ -13224,7 +13224,7 @@ export class BossAttackState extends BossState implements IBossAttackState {
       6.0
     );
 
-    proj.size = { width: 22, height: 22 };
+    proj.size = { width: 17.6, height: 17.6 };
   }
 
   private fireGapRing() {
@@ -13368,7 +13368,7 @@ import { setVec } from "@/core/VecUtils";
 export class FlyerMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 36, height: 36 };
+    this.size = { width: 28.8, height: 28.8 };
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 3,
       invincibilityDuration: 0.15,
@@ -13416,7 +13416,7 @@ export class LancerMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 40, height: 50 };
+    this.size = { width: 32, height: 40 };
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 6,
       invincibilityDuration: 0.15,
@@ -13620,7 +13620,7 @@ export class TurretBurstState extends MinionState {
             "homing"
           );
 
-          proj.size = { width: 16, height: 16 };
+          proj.size = { width: 12.8, height: 12.8 };
         }
       }
 
@@ -13986,7 +13986,7 @@ export class Player extends BaseEntity {
 
   constructor(id: string, world: IWorld) {
     super(id, world);
-    this.size = { width: 40, height: 80 };
+    this.size = { width: 32, height: 64 };
     this.squashPivot = "center";
 
     zeroVec(this.position);
@@ -14252,7 +14252,7 @@ export class Projectile extends BaseEntity implements IPoolable {
 
   constructor() {
     super("projectile", null as unknown as IWorld);
-    this.size = { width: 14, height: 14 };
+    this.size = { width: 11.2, height: 11.2 };
     this.trailRing = Array.from({ length: TRAIL_RING_SIZE }, () => ({ x: 0, y: 0 }));
   }
 
@@ -14898,7 +14898,7 @@ export class ShielderPatrolState implements IState {
 export class ShielderMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 44, height: 50 };
+    this.size = { width: 35.2, height: 40 };
     this.patrolSpeed = 80;
 
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
@@ -15033,7 +15033,7 @@ import { TrigLUT } from "@/core/TrigLUT";
 export class TurretMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 44, height: 44 };
+    this.size = { width: 35.2, height: 35.2 };
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 5,
       invincibilityDuration: 0.15,
@@ -15317,9 +15317,9 @@ export class FireballComponent implements IEntityComponent {
     );
 
     if (isLvl2) {
-      proj.size = { width: 48, height: 48 };
+      proj.size = { width: 38.4, height: 38.4 };
     } else {
-      proj.size = { width: 22, height: 22 };
+      proj.size = { width: 17.6, height: 17.6 };
     }
   }
 }
