@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-IddAwoJU.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CVj0ocFp.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -193,10 +193,10 @@ export default defineConfig([
 `,"README.md":"# BOX BATTLE\n\nMega Man / Hollow Knight battle arena prototype.\n\nPorted over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand using Gemini 3.5 Flash\n\nPlay the game here:\n👉 **[GitHub.io](https://stevencasteel.github.io/boxbattle/)**\n👉 **[Itch.io](https://stevencasteel.itch.io/boxbattle)**\n\n---\n\n## Player Controls\n\n- **Move Left / Right**: `Left Arrow` / `Right Arrow` or `A` / `D`\n- **Look / Move Up**: `Up Arrow` or `W`\n- **Crouch / Move Down**: `Down Arrow` or `S`\n- **Jump**: `X` or `.` (Period) or `Space`\n- **Melee Attack**: `C` or `,` (Comma)\n- **Dash**: `Z` or `/` (Slash)\n- **Determination Heal**: Hold `Move Down` + Press `Jump` (Requires 1 active Heal Charge)\n\n_Key bindings are fully customizable inside the Options menu._\n\n---\n\n## Technical Architecture\n\n- **Presentation & UI**: React 19, TypeScript 6, Vite 8, Zustand 5\n- **Physics Simulation**: Custom 60Hz Semi-Implicit Euler accumulator loop with swept collision checks and corner-nudging\n- **Sound Design**: Pure procedural waveform synthesis utilizing native Web Audio API oscillators, filters, and envelope gains (zero external binary audio assets)\n","src/App.css":`.cabinet-outer {
   position: relative;
   width: 740px;
-  height: 880px;
+  height: 862px;
   border-radius: 20px;
   background: #0f1218;
-  padding: 16px;
+  padding: 16px 16px 6px 16px;
   box-shadow:
     -8px -8px 24px rgba(255, 255, 255, 0.02),
     8px 8px 36px rgba(0, 0, 0, 0.95),
@@ -211,14 +211,14 @@ export default defineConfig([
 
 .cabinet-outer.cabinet-mobile {
   width: 740px !important;
-  height: 880px !important;
+  height: 862px !important;
   border-radius: 20px !important;
   box-shadow:
     -8px -8px 24px rgba(255, 255, 255, 0.02),
     8px 8px 36px rgba(0, 0, 0, 0.95),
     inset 0 0 30px rgba(0, 0, 0, 0.9) !important;
   border: 1px solid rgba(255, 255, 255, 0.01) !important;
-  padding: 16px !important;
+  padding: 16px 16px 6px 16px !important;
 }
 
 .cabinet-wide-source {
@@ -838,7 +838,7 @@ export default function App() {
     const handleResize = () => {
       const isSource = useSessionStore.getState().currentScreen === "SOURCE_VIEW";
       const cabinetWidth = isSource ? 1100 : 740;
-      const cabinetHeight = isSource ? 800 : 880;
+      const cabinetHeight = isSource ? 800 : 862;
       const padding = 32; // Total padding around the cabinet
       
       const availableWidth = window.innerWidth - padding;
@@ -991,7 +991,7 @@ export default function App() {
   if (bootStage === BootStage.NONE) {
     return (
       <div className="app-wrapper" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100vw", height: "100vh", overflow: "hidden", background: "#050505" }}>
-        <div style={{ transform: \`scale(\${scale})\`, transformOrigin: "center center", width: "740px", height: "880px", display: "flex", flexDirection: "column", flexShrink: 0, flexGrow: 0 }}>
+        <div style={{ transform: \`scale(\${scale})\`, transformOrigin: "center center", width: "740px", height: "862px", display: "flex", flexDirection: "column", flexShrink: 0, flexGrow: 0 }}>
           <div className="cabinet-outer" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
             <span style={{ color: "#718096", fontSize: "11px", letterSpacing: "0.2em" }}>BOOTING SYSTEM...</span>
           </div>
@@ -1007,7 +1007,7 @@ export default function App() {
           transform: \`scale(\${scale})\`,
           transformOrigin: "center center",
           width: isFullHeightScreen ? "1100px" : "740px",
-          height: isFullHeightScreen ? "800px" : "880px",
+          height: isFullHeightScreen ? "800px" : "862px",
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
