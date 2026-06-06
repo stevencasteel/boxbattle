@@ -2,8 +2,8 @@ import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { BaseMinion } from "./BaseMinion";
 import { LancerMinion } from "./LancerMinion";
-import { Boss } from "./Boss";
 import { setVec, zeroVec } from "@/core/VecUtils";
+import { TrigLUT } from "@/core/TrigLUT";
 
 export abstract class MinionState implements IState {
   protected owner: BaseMinion;
@@ -80,10 +80,9 @@ export class TurretTelegraphState extends MinionState {
   public update(_dt: number): void {
     zeroVec(this.owner.velocity);
     if (this.owner.stateTimer <= 0) {
-      const boss = this.owner.world.boss;
-      const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
-
-      if (phase === 3) {
+      const rand = TrigLUT.randomGameplay();
+      
+      if (rand < 0.6) {
         this.owner.stateMachine.changeState(new TurretBurstState(this.owner));
       } else {
         const player = this.owner.world.player;
@@ -113,16 +112,41 @@ export class TurretBurstState extends MinionState {
     zeroVec(this.owner.velocity);
     this.burstTimer -= dt;
 
-    if (this.burstTimer <= 0 && this.shotsFired < 3) {
+    if (this.burstTimer <= 0 && this.shotsFired < 4) {
       const player = this.owner.world.player;
       if (player && !player.isDead) {
-        this.owner.fireSingleShotAtPlayer(player);
+        const dx = player.position.x - this.owner.position.x;
+        const dy = player.position.y - this.owner.position.y;
+        const mag = Math.sqrt(dx * dx + dy * dy);
+
+        if (mag > 0) {
+          const dirX = dx / mag;
+          const dirY = dy / mag;
+
+          const proj = this.owner.world.spawnProjectile(
+            this.owner.position.x + dirX * 30,
+            this.owner.position.y - 12 + dirY * 30,
+            dirX,
+            dirY,
+            "boss",
+            1,
+            240,
+            3.5,
+            "hsl(180, 100%, 65%)",
+            "homing"
+          );
+
+          proj.size = { width: 16, height: 16 };
+        }
       }
+
+      this.owner.world.audio.playSelectTick();
+
       this.shotsFired++;
-      this.burstTimer = 0.16;
+      this.burstTimer = 0.14;
     }
 
-    if (this.shotsFired >= 3) {
+    if (this.shotsFired >= 4) {
       this.owner.shootTimer = 3.0;
       this.owner.stateMachine.changeState(new TurretPatrolState(this.owner));
     }
@@ -291,10 +315,7 @@ export class FlyerPatrolState extends MinionState {
       const dyP = player.position.y - this.owner.position.y;
       const playerDistSq = dxP * dxP + dyP * dyP;
 
-      const boss = this.owner.world.boss;
-      const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
-
-      if (phase === 3 && playerDistSq < 62500 && this.owner.shootTimer <= -3.0) {
+      if (playerDistSq < 62500 && this.owner.shootTimer <= -3.0) {
         this.owner.stateMachine.changeState(new FlyerDiveState(this.owner));
         return;
       }

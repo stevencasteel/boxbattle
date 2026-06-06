@@ -40,7 +40,8 @@ export class World implements IWorld {
     damage: number,
     speed: number,
     lifespan: number,
-    customColor?: string
+    customColor?: string,
+    kind?: string
   ): IProjectile {
     if (!this.projectilePool) {
       throw new Error("Projectile pool not initialized on World.");
@@ -55,7 +56,8 @@ export class World implements IWorld {
       speed,
       lifespan,
       this,
-      customColor
+      customColor,
+      kind
     );
   }
 }

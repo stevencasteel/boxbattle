@@ -197,7 +197,8 @@ export interface IEntityFactory {
     damage: number,
     speed: number,
     lifespan: number,
-    customColor?: string
+    customColor?: string,
+    kind?: string
   ): IProjectile;
 }
 

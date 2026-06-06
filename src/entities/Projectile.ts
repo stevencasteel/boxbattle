@@ -19,6 +19,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   public damage = 1;
   public customColor: string | null = null;
   public pierce = 0;
+  public kind = "default";
   
   private strategy!: IProjectileStrategy;
   private lifespan = 0;
@@ -46,7 +47,8 @@ export class Projectile extends BaseEntity implements IPoolable {
     speed: number,
     lifespan: number,
     world: IWorld,
-    customColor?: string
+    customColor?: string,
+    kind?: string
   ) {
     setVec(this.position, x, y);
     setVec(this.previousPosition, x, y);
@@ -58,6 +60,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.world = world;
     this.customColor = customColor || null;
     this.pierce = ownerId === "player" && damage >= 3 ? 1 : 0;
+    this.kind = kind || "default";
 
     this.strategy = ownerId === "player" ? playerProjectileStrategy : bossProjectileStrategy;
 
@@ -85,6 +88,29 @@ export class Projectile extends BaseEntity implements IPoolable {
       this.isActive = false;
       this.isDead = true;
       return true;
+    }
+
+    if (this.kind === "homing" && this.world.player && !this.world.player.isDead) {
+      const player = this.world.player;
+      const dx = player.position.x - this.position.x;
+      const dy = player.position.y - this.position.y;
+      const dist = TrigLUT.fastSqrt(dx * dx + dy * dy);
+
+      if (dist > 0) {
+        const speed = TrigLUT.fastSqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        const desiredVx = (dx / dist) * speed;
+        const desiredVy = (dy / dist) * speed;
+
+        const steerStrength = 3.2 * dt;
+        this.velocity.x += (desiredVx - this.velocity.x) * steerStrength;
+        this.velocity.y += (desiredVy - this.velocity.y) * steerStrength;
+
+        const newSpeed = TrigLUT.fastSqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        if (newSpeed > 0) {
+          this.velocity.x = (this.velocity.x / newSpeed) * speed;
+          this.velocity.y = (this.velocity.y / newSpeed) * speed;
+        }
+      }
     }
 
     this.trailRing[this.trailHead].x = this.position.x;
