@@ -32,10 +32,10 @@ function formatKeyDisplayName(code: string): string {
 
   const upper = code.trim();
   if (upper === "Space") return "SPACE";
-  if (upper === "ArrowLeft") return "LEFT ARROW";
-  if (upper === "ArrowRight") return "RIGHT ARROW";
-  if (upper === "ArrowUp") return "UP ARROW";
-  if (upper === "ArrowDown") return "DOWN ARROW";
+  if (upper === "ArrowLeft") return "LEFT";
+  if (upper === "ArrowRight") return "RIGHT";
+  if (upper === "ArrowUp") return "UP";
+  if (upper === "ArrowDown") return "DOWN";
   if (upper === "Period") return ".";
   if (upper === "Comma") return ",";
   if (upper === "Slash") return "/";
@@ -156,7 +156,7 @@ export function ControlsScreen({
         </div>
       ) : (
         <>
-          <div className="flex-row" style={{ gap: "16px", width: "100%", maxWidth: "84vmin", marginTop: "auto", marginBottom: "auto" }}>
+          <div className="flex-row" style={{ gap: "16px", width: "100%", maxWidth: "80vmin", marginTop: "auto", marginBottom: "auto" }}>
             <MenuButton
               variant="led"
               isFocused={menuIndex === 0}
@@ -308,7 +308,7 @@ export function ControlsScreen({
         onFocused={() => setMenuIndex(backBtnIndex)}
         playHoverTick={playHoverTick}
         onBack={onBack}
-        style={{ maxWidth: "84vmin", width: "100%" }}
+        style={{ maxWidth: "80vmin", width: "100%" }}
       />
     </MenuContainer>
   );

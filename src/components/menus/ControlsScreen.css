@@ -1,26 +1,26 @@
 .binding-board {
   width: 100%;
-  max-width: 84vmin;
-  padding: 1.8vmin 2.4vmin;
-  border-radius: 2.4vmin;
+  max-width: 80vmin;
+  padding: 1.2vmin 1.8vmin;
+  border-radius: 1.8vmin;
   margin: auto 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.2vmin 3vmin;
+  gap: 0.8vmin 2vmin;
   box-sizing: border-box;
   overflow-y: auto;
-  max-height: 46vh;
+  max-height: 44vh;
 }
 
 .binding-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 1.2vmin;
+  font-size: 1.3vmin;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 0.8vmin 0.4vmin;
+  padding: 0.6vmin 0.2vmin;
   box-sizing: border-box;
-  gap: 10px;
+  gap: 8px;
 }
 
 .binding-action-label {
@@ -32,15 +32,16 @@
 }
 
 .binding-btn {
-  width: 230px;
-  height: 48px;
-  padding: 0 !important;
+  width: 20vmin;
+  max-width: 160px;
+  height: 38px;
+  padding: 0 4px !important;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  font-size: 1.4vmin;
+  font-size: 1.2vmin;
   border-radius: 0.8vmin;
   box-sizing: border-box;
 }
@@ -58,7 +59,7 @@
   text-transform: uppercase;
   text-shadow: 0 0 6px rgba(168, 85, 247, 0.35);
   width: 100%;
-  max-width: 84vmin;
+  max-width: 80vmin;
   box-sizing: border-box;
   white-space: nowrap;
 }
@@ -77,8 +78,8 @@
     font-size: 12px;
   }
   .binding-btn {
-    width: 170px;
-    height: 40px;
+    width: 140px;
+    height: 36px;
     padding: 0 !important;
     flex-shrink: 0;
     display: inline-flex;
