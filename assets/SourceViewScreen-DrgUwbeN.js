@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CozEBRP_.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CpyMHF9l.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -3510,27 +3510,27 @@ export function AudioScreen({
 }
 `,"src/components/menus/ControlsScreen.css":`.binding-board {
   width: 100%;
-  max-width: 84vmin;
-  padding: 1.8vmin 2.4vmin;
-  border-radius: 2.4vmin;
+  max-width: 80vmin;
+  padding: 1.2vmin 1.8vmin;
+  border-radius: 1.8vmin;
   margin: auto 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.2vmin 3vmin;
+  gap: 0.8vmin 2vmin;
   box-sizing: border-box;
   overflow-y: auto;
-  max-height: 46vh;
+  max-height: 44vh;
 }
 
 .binding-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 1.2vmin;
+  font-size: 1.3vmin;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 0.8vmin 0.4vmin;
+  padding: 0.6vmin 0.2vmin;
   box-sizing: border-box;
-  gap: 10px;
+  gap: 8px;
 }
 
 .binding-action-label {
@@ -3542,15 +3542,16 @@ export function AudioScreen({
 }
 
 .binding-btn {
-  width: 230px;
-  height: 48px;
-  padding: 0 !important;
+  width: 20vmin;
+  max-width: 160px;
+  height: 38px;
+  padding: 0 4px !important;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  font-size: 1.4vmin;
+  font-size: 1.2vmin;
   border-radius: 0.8vmin;
   box-sizing: border-box;
 }
@@ -3568,7 +3569,7 @@ export function AudioScreen({
   text-transform: uppercase;
   text-shadow: 0 0 6px rgba(168, 85, 247, 0.35);
   width: 100%;
-  max-width: 84vmin;
+  max-width: 80vmin;
   box-sizing: border-box;
   white-space: nowrap;
 }
@@ -3587,8 +3588,8 @@ export function AudioScreen({
     font-size: 12px;
   }
   .binding-btn {
-    width: 170px;
-    height: 40px;
+    width: 140px;
+    height: 36px;
     padding: 0 !important;
     flex-shrink: 0;
     display: inline-flex;
@@ -3642,10 +3643,10 @@ function formatKeyDisplayName(code: string): string {
 
   const upper = code.trim();
   if (upper === "Space") return "SPACE";
-  if (upper === "ArrowLeft") return "LEFT ARROW";
-  if (upper === "ArrowRight") return "RIGHT ARROW";
-  if (upper === "ArrowUp") return "UP ARROW";
-  if (upper === "ArrowDown") return "DOWN ARROW";
+  if (upper === "ArrowLeft") return "LEFT";
+  if (upper === "ArrowRight") return "RIGHT";
+  if (upper === "ArrowUp") return "UP";
+  if (upper === "ArrowDown") return "DOWN";
   if (upper === "Period") return ".";
   if (upper === "Comma") return ",";
   if (upper === "Slash") return "/";
@@ -3766,7 +3767,7 @@ export function ControlsScreen({
         </div>
       ) : (
         <>
-          <div className="flex-row" style={{ gap: "16px", width: "100%", maxWidth: "84vmin", marginTop: "auto", marginBottom: "auto" }}>
+          <div className="flex-row" style={{ gap: "16px", width: "100%", maxWidth: "80vmin", marginTop: "auto", marginBottom: "auto" }}>
             <MenuButton
               variant="led"
               isFocused={menuIndex === 0}
@@ -3918,7 +3919,7 @@ export function ControlsScreen({
         onFocused={() => setMenuIndex(backBtnIndex)}
         playHoverTick={playHoverTick}
         onBack={onBack}
-        style={{ maxWidth: "84vmin", width: "100%" }}
+        style={{ maxWidth: "80vmin", width: "100%" }}
       />
     </MenuContainer>
   );
@@ -4771,7 +4772,7 @@ export function SourceViewFooter({
   min-height: 0;
   width: 100%;
   box-sizing: border-box;
-  margin: 14px 0;
+  margin: 6px 0;
 }
 
 .directory-tree-pane {
@@ -5205,7 +5206,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   box-sizing: border-box;
   height: 100%;
   width: 100%;
-  padding: 1.5vmin 2.5vmin;
+  padding: 0.4vmin 2.5vmin;
   position: relative;
 }
 
@@ -5226,7 +5227,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 1.5vmin;
+  padding-top: 0.3vmin;
 }
 
 .system-tag {
@@ -5243,12 +5244,12 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
 .title-banner-overhauled {
   text-align: center;
-  margin-top: 1.5vmin;
+  margin-top: 0.3vmin;
   width: 100%;
 }
 
 .title-banner-overhauled h1 {
-  font-size: 4vmin;
+  font-size: 3.4vmin;
   margin: 0;
   letter-spacing: 0.22em;
   font-weight: 900;
@@ -5265,7 +5266,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   justify-content: center;
   gap: 1.6vmin;
   width: 100%;
-  margin-top: 0.8vmin;
+  margin-top: 0.2vmin;
 }
 
 .subtitle-line {
@@ -5308,7 +5309,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   max-width: 58vmin;
   display: flex;
   flex-direction: column;
-  gap: 1.8vmin;
+  gap: 1.1vmin;
 }
 
 .neo-btn-large {
@@ -17865,7 +17866,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   box-sizing: border-box;
   height: 100%;
   width: 100%;
-  padding: 1.5vmin 2.5vmin;
+  padding: 0.4vmin 2.5vmin;
   position: relative;
 }
 
@@ -17886,7 +17887,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 1.5vmin;
+  padding-top: 0.3vmin;
 }
 
 .system-tag {
@@ -17903,12 +17904,12 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 
 .title-banner-overhauled {
   text-align: center;
-  margin-top: 1.5vmin;
+  margin-top: 0.3vmin;
   width: 100%;
 }
 
 .title-banner-overhauled h1 {
-  font-size: 4vmin;
+  font-size: 3.4vmin;
   margin: 0;
   letter-spacing: 0.22em;
   font-weight: 900;
@@ -17925,7 +17926,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   justify-content: center;
   gap: 1.6vmin;
   width: 100%;
-  margin-top: 0.8vmin;
+  margin-top: 0.2vmin;
 }
 
 .subtitle-line {
@@ -17958,7 +17959,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   max-width: 58vmin;
   display: flex;
   flex-direction: column;
-  gap: 1.8vmin;
+  gap: 1.1vmin;
 }
 
 .neo-btn-large {
