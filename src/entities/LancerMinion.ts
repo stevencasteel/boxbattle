@@ -3,6 +3,7 @@ import { HealthComponent, DamagePayload } from "@/entities/components/HealthComp
 import { IWorld } from "@/core/Interfaces";
 import { LancerPatrolState } from "./MinionStates";
 import { TrigLUT } from "@/core/TrigLUT";
+import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 
 export class LancerMinion extends BaseMinion {
   public lanceExtended = false;
@@ -26,6 +27,21 @@ export class LancerMinion extends BaseMinion {
 
   get minionColor(): string {
     return "hsl(280, 60%, 55%)";
+  }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "kite",
+      danger: 0.5,
+      weight: 0.4,
+      corruption: 0.2,
+      hueRole: "determination",
+      strokePx: 2,
+      spinRate: 0,
+      wobbleAmp: 0,
+      cornerRadius: 0,
+      phaseOffset: 0
+    };
   }
 
   protected updateNonTelegraphRotation(): void {

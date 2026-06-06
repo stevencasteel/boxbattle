@@ -4,6 +4,7 @@ import { IWorld } from "@/core/Interfaces";
 import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { TrigLUT } from "@/core/TrigLUT";
+import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 
 export class ShielderPatrolState implements IState {
   private owner: ShielderMinion;
@@ -94,6 +95,21 @@ export class ShielderMinion extends BaseMinion {
 
   get minionColor(): string {
     return "hsl(180, 50%, 45%)";
+  }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "hex",
+      danger: 0.1,
+      weight: 0.8,
+      corruption: 0.2,
+      hueRole: "minion-logic",
+      strokePx: 2.5,
+      spinRate: 0,
+      wobbleAmp: 0,
+      cornerRadius: 4,
+      phaseOffset: 0
+    };
   }
 
   protected updateExhaust(): void {

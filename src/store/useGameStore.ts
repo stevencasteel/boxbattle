@@ -29,6 +29,8 @@ interface SessionState {
   gameResult: GameResultState;
   retryCount: number;
   transitionActive: "SHUTDOWN" | "POWER_ON" | "NONE";
+  currentStageIndex: number;
+  setCurrentStageIndex: (index: number) => void;
   navTo: (screen: ScreenState) => void;
   setMenuIndex: (index: number) => void;
   setGameResult: (result: GameResultState) => void;
@@ -41,6 +43,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   gameResult: "PLAYING",
   retryCount: 0,
   transitionActive: "NONE",
+  currentStageIndex: 0,
+  setCurrentStageIndex: (index) => set({ currentStageIndex: index }),
   navTo: (screen) => {
     const current = get().currentScreen;
     if (current === screen && screen !== "PLAYING") return;

@@ -1,6 +1,7 @@
 import { IEntityComponent } from "@/entities/EntityComponent";
 
 export type GameEventMap = {
+  LOAD_STAGE: { stageIndex: number };
   PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
   BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
   MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
@@ -167,6 +168,7 @@ export interface IPhysicsWorld {
     type: "solid" | "platform" | "hazard",
     outResult?: Rectangle[]
   ): Rectangle[];
+  rebuild(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]): void;
 }
 
 export interface IEventPublisher {

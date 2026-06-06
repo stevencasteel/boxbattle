@@ -1,6 +1,6 @@
 ===========================================================================
-  BOX BATTLE ENGINE WEB
-  Systems Architecture & Technical Specification
+  BOX BATTLE ENGINE WEB // CORE GAUNTLET SYSTEM
+  Systems Architecture & Technical Specification // OVERHAUL V2
 ===========================================================================
 
 ───────────────────────────────────────────────────────────────────────────────
@@ -9,107 +9,28 @@ TABLE OF CONTENTS
 
 1.  Runtime Stack and Configuration Boundary
 2.  Boot, First-Gesture, and App Initialization
-3.  World, Entity, and Component Architecture
-4.  Main Loop, Fixed-Step Simulation, and Projection
-5.  Physics World and Collision Broad Phase
-6.  Input Mapping and Control Surface
-7.  Player Traversal and Combat Mechanics
-8.  Projectile Ownership and Combat Resolution
-9.  Boss AI, Phase Gates, and Cinematic Escalation
-10. Minions, Spawners, and Spawn-Cage Presentation
-11. Camera, Shake, and Hit-Stop
-12. Rendering Pipeline and Visual Effects
-13. Procedural Audio and Audio Lifecycle
-14. Save Data, Settings, and Validation
-15. Build, Manifest Generation, and Deployment
+3.  Gauntlet, Entity, and Visual Profile Architecture
+4.  Main Loop, Fixed-Step Simulation, and State Projection
+5.  Physics World, Broad-Phase, and Dynamic Cache Rebuilds
+6.  Input Mapping and Global Keyboard Warps
+7.  Player Traversal, Combo Scale Chaining, and Combat Mechanics
+8.  Traversal Hazards & Path of Pain (PoP) State Machines
+9.  Roster V2, Spawn Cages, and Combat AI
+10. Dynamic Canvas Boss Portraits and Event Dialogue Console
+11. Build, Manifest Generation, and Deployment
 
 ───────────────────────────────────────────────────────────────────────────────
 1. RUNTIME STACK AND CONFIGURATION BOUNDARY
 ───────────────────────────────────────────────────────────────────────────────
 
 Primary application stack:
-- React 19
-- TypeScript 6
-- Zustand 5
-- Vite 8
-- HTML5 Canvas for gameplay rendering
-- Framer Motion for UI transitions
-- canvas-confetti for end-of-match overlays
-- lucide-react for iconography
-- Web Audio API for procedural sound synthesis
+- Presentation: React 19, TypeScript 6.0, Vite 8.0, Zustand 5.0
+- Simulation: 60Hz accumulator with custom swept collision solver
+- Visuals: Procedural HTML5 Canvas rendering (No external binary static textures)
+- Audio: Native Web Audio API procedural synthesis with limiter protection
+- Auxiliary: canvas-confetti, lucide-react
 
-The repository also includes Tone.js as a dependency, but the codebase and README
-describe audio as procedurally synthesized through Web Audio primitives rather
-than relying on binary music or sound assets.
-
-Canonical configuration lives in `src/core/Units.ts`. The important runtime
-constants are:
-
-Gameplay
-- PLAYER_MAX_HP = 5
-- BOSS_MAX_HP = 38
-- BOSS_PHASE_2_HP_PCT = 0.70
-- BOSS_PHASE_3_HP_PCT = 0.40
-
-Player motion
-- PLAYER_MOVE_SPEED = 360
-- PLAYER_JUMP_FORCE = 544
-- PLAYER_WALL_SLIDE_SPEED = 96
-- PLAYER_DASH_SPEED = 1120
-- PLAYER_ACCEL = 12.0
-- PLAYER_DECEL = 16.0
-
-Boss and minions
-- BOSS_PATROL_SPEED_BASE = 160
-- BOSS_LUNGE_SPEED_BASE = 960
-- BOSS_ACCEL = 6.0
-- BOSS_DECEL = 8.0
-- MINION_ACCEL = 5.0
-- MINION_DECEL = 7.0
-
-Combat and timing
-- PLAYER_MELEE_DAMAGE_BASE = 1
-- PLAYER_MELEE_DAMAGE_CLOSE = 5
-- PLAYER_FIREBALL_DAMAGE_LVL1 = 1
-- PLAYER_FIREBALL_DAMAGE_LVL2 = 3
-- HAZARD_SPIKE_DAMAGE = 1
-- ENEMY_CONTACT_DAMAGE = 1
-- BOSS_LUNGE_DAMAGE = 2
-- DASH_DURATION = 0.15
-- DASH_COOLDOWN = 0.50
-- HEAL_DURATION = 2.0
-- CHARGE_LVL1_TIME = 0.35
-- CHARGE_LVL2_TIME = 1.12
-
-World and physics
-- WORLD_SIZE = 1000
-- WORLD_HALF_SIZE = 500
-- SPATIAL_GRID_CELL_SIZE = 200
-- CCD_STEP_LIMIT_DEFAULT = 6
-- CCD_STEP_LIMIT_PROJECTILE = 5
-- GROUND_DETECTION_OFFSET = 1
-- CORNER_NUDGE_MAX_OVERLAP = 6
-- BROAD_PHASE_PADDING_STANDARD = 12
-- BROAD_PHASE_PADDING_LARGE = 24
-
-Combat geometry
-- MELEE_MAX_REACH = 76
-- MELEE_CLOSE_RANGE_THRESHOLD = 60
-- MELEE_SIDE_OFFSET = 28
-- MELEE_VERTICAL_OFFSET = 28
-- MELEE_SWEEP_INNER_RADIUS = 20
-- PLAYER_WALL_JUMP_X_VELOCITY = 1320
-- BOSS_WALL_REBOUND_VELOCITY = 280
-- POGO_HITBOX_WIDTH = 72
-- POGO_HITBOX_HEIGHT = 35.6
-- POGO_HITBOX_Y_OFFSET = 32
-- POGO_HITBOX_X_OFFSET = -36
-
-The document-level rule is simple:
-- core simulation is deterministic and fixed-step
-- presentation is projected from simulation state
-- persistent settings are validated before being reloaded
-- audio remains gesture-gated in the browser
+The repository includes standard properties in `src/core/Units.ts` governing player kinematics, basic boss scales, collision margins, and audio spatialization max ratios.
 
 ───────────────────────────────────────────────────────────────────────────────
 2. BOOT, FIRST-GESTURE, AND APP INITIALIZATION
@@ -120,569 +41,129 @@ Relevant files:
 - `src/App.tsx`
 - `src/hooks/useBootSequence.ts`
 - `src/hooks/useFirstGesture.ts`
-- `src/components/GameArena.tsx`
+- `src/core/GauntletDirector.ts`
 
-Startup begins in `main.tsx`, which mounts the React root in `StrictMode`.
-The app then moves through its own boot logic before the gameplay engine is
-allowed to run.
-
-Core initialization responsibilities:
-- mount the application shell
-- restore save and settings state
-- attach the current input map
-- wait for the first user gesture before starting audio playback
-- construct the engine only when the canvas is available
-
-The browser audio gate is important. Audio cannot reliably start until a user
-gesture occurs, so the app uses a first-interaction hook to unlock playback and
-then initialize the procedural audio graph.
-
-Typical startup sequence:
-
-[React root mounts]
-        |
-        v
-[App shell and menu state render]
-        |
-        v
-[Boot / save / settings initialization]
-        |
-        v
-[first pointer or keyboard gesture]
-        |
-        v
-[audio graph initializes]
-        |
-        v
-[engine starts and gameplay canvas becomes active]
-
-This architecture keeps menus responsive while avoiding autoplay restrictions.
+App initialization runs inside `main.tsx` which invokes `GauntletDirector.init()` to register global keyboard listeners prior to mounting. The app starts and suspends its audio context manager until the browser detects the first user gesture, resolving autoplay security rules. Upon gesture click/touch, the audio graph initializes, and the background music sequencer fires.
 
 ───────────────────────────────────────────────────────────────────────────────
-3. WORLD, ENTITY, AND COMPONENT ARCHITECTURE
-─────────────────────────────────────────────────────────────────────────
+3. GAUNTLET, ENTITY, AND VISUAL PROFILE ARCHITECTURE
+───────────────────────────────────────────────────────────────────────────────
 
 Relevant files:
-- `src/core/World.ts`
-- `src/core/Interfaces.ts`
 - `src/entities/BaseEntity.ts`
-- `src/entities/components/*`
+- `src/entities/BaseMinion.ts`
 - `src/entities/Player.ts`
 - `src/entities/Boss.ts`
-- `src/entities/Projectile.ts`
-- `src/entities/BaseMinion.ts`
+- `src/core/visuals/ShapeRenderer.ts`
+- `src/core/design/ColorRoles.ts`
 
-The engine uses a component-oriented entity architecture:
-- `World` owns the simulation surfaces and services
-- entities encapsulate identity, transform, and behavior
-- components hold discrete capabilities such as health, physics, melee, dash,
-  fireball, and input reception
+Entities utilize a flat composite object architecture with custom logical components (Physics, Health, Dash, Melee, Fireball, Heal, InputReceiver). Instead of standard software 3D box models, all entities expose a procedural `VisualProfile` defining their shape family (perfect-square, hex, diamond, kite, needle, saw, blister, cage) and color role.
 
-World-level responsibilities:
-- store the player, boss, and active minions
-- provide the physics world
-- provide the event bus
-- provide the audio interface
-- provide the input interface
-- manage the projectile pool
+Color Roles:
+- player-agency: Green HSL (Pure green reserved only for player actions)
+- boss-lethal: Red/Dark Red HSL (Hostile boss actions)
+- telegraph: Yellow HSL (Warning states before attack commitment)
+- determination: Violet HSL (Healing, pogo helixes, recovery barks)
+- minion-logic: Cyan HSL (Machine actions, tracking indicators)
+- minion-organic: Khaki/Brown HSL (Contaminated grow lanes)
+- arena-stone: Charcoal HSL (Static background solid bodies)
 
-Entity state is kept mostly off React. The simulation layer updates entities
-directly, while a projection system copies only the necessary high-level state
-into the UI store.
-
-Primary entity categories:
-- player: movement, combat, heal charge, determination
-- boss: phase-based AI, projectile logic, cinematic transitions
-- projectile: pooled owner-specific shot with damage and lifespan
-- minions: lightweight enemy actors with distinct movement and attack patterns
-- spawners: fixed points that instantiate minions during a battle
-
-Components are used to separate behavior from identity. The codebase includes
-component types such as:
-- `PhysicsComponent`
-- `HealthComponent`
-- `MeleeComponent`
-- `DashComponent`
-- `FireballComponent`
-- `HealComponent`
-- `InputReceiverComponent`
-
-This keeps the architecture modular without requiring a full ECS framework.
+The Player is maintained as the *only perfect square* in the simulation world, preserving visual priority.
 
 ───────────────────────────────────────────────────────────────────────────────
-4. MAIN LOOP, FIXED-STEP SIMULATION, AND PROJECTION
+4. MAIN LOOP, FIXED-STEP SIMULATION, AND STATE PROJECTION
 ───────────────────────────────────────────────────────────────────────────────
 
 Relevant files:
 - `src/core/GameLoop.ts`
 - `src/core/Engine.ts`
 - `src/core/StateProjectionSystem.ts`
-- `src/core/SimulationSystems.ts`
 
-The runtime loop uses requestAnimationFrame for display cadence, but simulation
-is normalized around a fixed update step.
-
-Observed loop behavior:
-- frame delta is measured from the previous RAF tick
-- delta is clamped to prevent runaway stalls
-- the engine advances simulation using a 60 Hz canonical step
-- the render pass follows the update pass
-- visibility changes stop and restart the loop
-
-The `GameLoop` class clamps very large frame deltas to 0.1 seconds. The `Engine`
-maintains a fixed-step accumulator internally and runs at 1/60 second
-simulation slices.
-
-A useful mental model:
-
-[RAF tick]
-   -> measure dt
-   -> clamp dt
-   -> advance world state
-   -> render current frame
-
-State projection is intentionally narrow. The `StateProjectionSystem` only
-pushes changes that matter to the UI:
-- player HP
-- boss HP
-- healing charges
-- determination counter
-
-It also tracks a crisis timer. When the player's HP drops to 1 from a higher
-value, the system triggers a crisis window of 0.45 seconds. That timer can be
-used by presentation code to intensify effects or slow the game flow.
-
-The result is a split between:
-- authoritative simulation state in the engine
-- derived presentation state in Zustand
+The game loop operates on requestAnimationFrame (rAF) but advanced state integrations are capped at a strict 60Hz accumulator loop. At each frame tick, previous position matrices are cached, sub-stepping is processed via dt increments, and the StateProjectionSystem replicates player health, boss health, healing charges, and determination counters into the Zustand store for reactive UI panels.
 
 ───────────────────────────────────────────────────────────────────────────────
-5. PHYSICS WORLD AND COLLISION BROAD PHASE
+5. PHYSICS WORLD, BROAD-PHASE, AND DYNAMIC CACHE REBUILDS
 ───────────────────────────────────────────────────────────────────────────────
 
 Relevant files:
 - `src/core/PhysicsWorld.ts`
-- `src/core/Interfaces.ts`
-- `src/core/Units.ts`
+- `src/core/StaticMapRenderer.ts`
+- `src/core/WorldRenderer.ts`
 
-Static geometry is partitioned into three indexed collections:
-- solids
-- one-way platforms
-- hazards
+Solid, platform, and hazard boundaries are partitioned inside cell buckets utilizing a spatial hashing grid with 200px cell width margins. 
 
-Each group is stored in its own spatial hash grid. The cell size is 200 pixels,
-matching `UNITS.SPATIAL_GRID_CELL_SIZE`.
-
-Bucket keys are generated with:
-- `key = (cy << 16) | cx`
-
-That layout supports fast broad-phase lookup without full pairwise scanning.
-
-The broad-phase pipeline is:
-1. compute the query AABB
-2. map the AABB into grid cells
-3. collect candidate rectangles from the matching buckets
-4. perform narrow-phase overlap checks only on the candidates
-
-This is applied separately for:
-- solid walls and floors
-- one-way platforms
-- hazards
-
-The engine also uses conservative movement handling for fast actors:
-- swept collision stepping for dashes and projectiles
-- a small corner-nudge allowance so the player does not snag on lip edges
-- platform logic that only resolves one-way surfaces when the actor is moving
-  downward and approaching from above
-
-The architecture is designed to keep collision cost low while preserving the
-feel of a fast arcade fighter.
+The physics world exposes a dynamic `rebuild(solids, hazards, oneways)` method. Whenever a dynamic dissolve platform collapses or respawns, the active solid geometries are filtered on the fly, `PhysicsWorld` clears its grid buckets and re-indexes them, and the `WorldRenderer` invalidates the static map cache via a public `resetCache()` delegator, redrawing neon boundaries for the new layout.
 
 ───────────────────────────────────────────────────────────────────────────────
-6. INPUT MAPPING AND CONTROL SURFACE
+6. INPUT MAPPING AND GLOBAL KEYBOARD WARPS
 ───────────────────────────────────────────────────────────────────────────────
 
 Relevant files:
 - `src/core/InputProvider.ts`
-- `src/core/SettingsManager.ts`
-- `src/core/menuNavigation.ts`
-- `src/store/useGameStore.ts`
+- `src/core/GauntletDirector.ts`
 
-The input layer supports:
-- keyboard
-- gamepad
-- configurable key maps
-- a pause edge trigger on `KeyP`
-
-Canonical actions:
-- MOVE_LEFT
-- MOVE_RIGHT
-- MOVE_UP
-- MOVE_DOWN
-- JUMP
-- ATTACK
-- DASH
-
-Default presets:
-- Default 1: arrow keys plus A/D/W/S, Space/X, C, Z
-- Default 2: A/D/W/S, Period, Comma, Slash
-- Custom: user-rebound map saved in settings
-
-Menu navigation reuses the same action map. Confirm and back behavior are
-resolved through helper logic rather than hard-coded key names.
-
-Persistence details:
-- the current settings blob is stored under `box_battle_config`
-- validation is schema-based and tolerant of malformed or partial data
-- a failed validation falls back to safe defaults
-
-This keeps the game playable even if localStorage is corrupted or stale.
+In addition to custom keyboard rebindings (Preset 1, Preset 2, and Custom) and virtual joysticks for mobile screens, the `GauntletDirector` registers a global keyboard handler. Pressing digit keys '1' through '7' at any time instantly triggers a warp sequence, resets the gameplay store, transitions screen routing, re-indexes the physics world, and spawns the player at the start of that respective stage layout.
 
 ───────────────────────────────────────────────────────────────────────────────
-7. PLAYER TRAVERSAL AND COMBAT MECHANICS
+7. PLAYER TRAVERSAL, COMBO SCALE CHAINING, AND COMBAT MECHANICS
 ───────────────────────────────────────────────────────────────────────────────
 
 Relevant files:
-- `src/entities/Player.ts`
 - `src/entities/handlers/PlayerInputHandler.ts`
 - `src/entities/handlers/PlayerCombatHandler.ts`
-- `src/entities/components/DashComponent.ts`
-- `src/entities/components/MeleeComponent.ts`
-- `src/entities/components/FireballComponent.ts`
-- `src/entities/components/HealComponent.ts`
+- `src/core/audio/sfx/BossSFX.ts`
 
-The player controller is tuned for responsive arcade movement rather than
-physically literal motion.
-
-Traversal features:
-- horizontal acceleration and deceleration
-- jump handling
-- wall-slide behavior
-- wall jump rebound
-- dash with duration and cooldown
-- coyote timing and jump buffering
-- optional double-jump behavior if enabled by the current ability state
-
-The common movement pattern is:
-- read the input state
-- compute target horizontal speed
-- apply acceleration or friction
-- resolve physics and collision constraints
-- project the result into renderable state
-
-Combat features:
-- horizontal melee sweep
-- upward melee sweep
-- downward pogo strike
-- projectile firing with charge tiers
-- healing charge / determination mechanics
-
-Melee resolution is range-sensitive:
-- the close-range sweet spot rewards precision with higher damage
-- the normal sweep deals baseline damage
-- the downward strike has its own hitbox geometry and rebound behavior
-
-Determination and healing:
-- successful hits contribute to a counter used for healing
-- the heal action is a timed channel
-- the channel consumes a charge and restores health on completion
-- interruption occurs if the player takes damage during the channel
-
-The design strongly favors readable player feedback:
-- hit sparks
-- screen shake
-- brief hit-stop windows
-- deterministic collision responses
+The player controller processes ground movement, coyote jump buffers, wall sliding, and dashes. Downward sfx strikes (pogoes) and hit confirms are dynamically pitched up according to 12-Tone Equal Temperament (12-TET) intervals based on C Dorian pitch multipliers. The active combo count scales pitches progressively, resetting immediately on damage or landing.
 
 ───────────────────────────────────────────────────────────────────────────────
-8. PROJECTILE OWNERSHIP AND COMBAT RESOLUTION
+8. TRAVERSAL HAZARDS & PATH OF PAIN (PoP) STATE MACHINES
 ───────────────────────────────────────────────────────────────────────────────
 
 Relevant files:
-- `src/entities/Projectile.ts`
-- `src/entities/ProjectileStrategy.ts`
-- `src/core/ObjectPool.ts`
-- `src/core/World.ts`
+- `src/core/systems/TraversalHazards.ts`
 
-Projectiles are pooled rather than instantiated and destroyed repeatedly.
-That reduces garbage generation and keeps hot-path performance stable.
-
-Ownership model:
-- player-owned projectiles
-- boss-owned projectiles
-
-The owner determines:
-- valid collision targets
-- visual treatment
-- whether projectile clash behavior is allowed
-- base damage and movement behavior
-
-Projectile lifecycle:
-- spawn from the world’s projectile pool
-- travel for a finite lifespan
-- collide with valid targets or surfaces
-- return to the pool when spent
-
-The codebase treats projectiles as a generic combat primitive, but the
-strategy layer keeps boss shots and player shots distinct in behavior and
-presentation.
+To support advanced platforming trials, three traversal state machines operate in the fixed-step physics integration loop:
+- DissolvePlatform: contact starts a 0.45s warning timer where the platform cracks in yellow, vanishes for 1.6s, then respawns as a desaturated dashed outline for 0.5s before solidifying.
+- PogoPost: safe only from downward melee attacks, which triggers a high-impulse rebound, and refreshes player double-jump and dash charges. Landing on it from any other angle triggers damage and knockback.
+- DashResetGate: a static green diamond outline that instantly replenishes player dash and double-jump charges upon overlap, entering a 2.0s cooldown.
 
 ───────────────────────────────────────────────────────────────────────────────
-9. BOSS AI, PHASE GATES, AND CINEMATIC ESCALATION
+9. ROSTER V2, SPAWN CAGES, AND COMBAT AI
 ───────────────────────────────────────────────────────────────────────────────
 
 Relevant files:
-- `src/entities/Boss.ts`
-- `src/entities/BossStates.ts`
-- `src/core/BattleDirector.ts`
-- `src/core/CinematicSystem.ts`
-
-The boss is phase-driven. The battle director watches the boss HP and triggers
-narrative or mechanical shifts when threshold conditions are crossed.
-
-Phase gates:
-- Phase 1: above 70% HP
-- Phase 2: 70% to 40% HP
-- Phase 3: below 40% HP
-
-Observed escalation behavior:
-- first boss damage can trigger introductory dialogue
-- phase 2 publishes a phase-shift event and unlocks more aggressive attacks
-- phase 3 publishes another phase-shift event and pushes final-stand behavior
-
-The boss’s movement and attack selection are state-machine driven:
-- patrol or cooldown states
-- telegraph state
-- lunge or attack state
-- post-impact recovery state
-
-The battle director is also responsible for kicking off cinematic handling when
-the boss dies or the match ends. That keeps victory/defeat presentation out of
-the low-level combat code.
-
-Relevant constants from the configuration layer include:
-- BOSS_PATROL_SPEED_BASE = 160
-- BOSS_LUNGE_SPEED_BASE = 960
-- BOSS_WALL_REBOUND_VELOCITY = 280
-- BOSS_LUNGE_DAMAGE = 2
-
-The important architectural point is that AI decides intent, while physics and
-collision decide outcome.
-
-───────────────────────────────────────────────────────────────────────────────
-10. MINIONS, SPAWNERS, AND SPAWN-CAGE PRESENTATION
-───────────────────────────────────────────────────────────────────────────────
-
-Relevant files:
-- `src/entities/BaseMinion.ts`
-- `src/entities/TurretMinion.ts`
-- `src/entities/LancerMinion.ts`
-- `src/entities/FlyerMinion.ts`
-- `src/entities/Spawner.ts`
+- `src/entities/NewGauntletMinions.ts`
+- `src/entities/MinionFactory.ts`
 - `src/core/visuals/MinionVisuals.ts`
 
-The minion system is composed of a few distinct archetypes:
-- TurretMinion: stationary ranged pressure
-- LancerMinion: patrol and lunge behavior
-- FlyerMinion: oscillating vertical or aerial pressure
+Minions utilize distinct geometric visual profiles:
+- Turret Seed: Hexagonal logic core firing tracking bullets.
+- Pit Lancer: Horizontal pusher trying to shove the player into hazards.
+- Compass Wasp: Small diamond wasp orbiting and diving along tangent lines.
+- Clampjaw: Lumpy heavy box moving wall-to-wall with high hp.
+- Hymn Nail: Vertical needle pogo anchor that turns hostile if overused.
+- Blister Ox: Massive organic blob releasing shockwaves on landing.
+- Bell Hammer: Heavy slam hammer targeting marked tiles.
 
-Spawners place minions at fixed encounter points defined by level data.
-
-Spawn presentation:
-- newly spawned minions can be held in a brief non-collidable window
-- a stylized cage effect is rendered during that window
-- the cage uses segmented wireframe geometry and squash-style deformation
-
-This effect is cosmetic and communicates spawn timing to the player. It is not
-a separate gameplay entity.
-
-The minion architecture is intentionally lighter than the boss architecture. The
-goal is readable encounter pressure rather than fully independent AI systems for
-every enemy type.
+Spawn Cages draw custom wireframes previewing the incoming silhouette (e.g. tuning forks for Hymn Nail, unfolding hexagons for Turret Seed, membrane bubbles for Blister Ox) during spawn initialization.
 
 ───────────────────────────────────────────────────────────────────────────────
-11. CAMERA, SHAKE, AND HIT-STOP
-───────────────────────────────────────────────────────────────────────────────
+10. DYNAMIC CANVAS BOSS PORTRAITS AND EVENT DIALOGUE CONSOLE
+─────────────────────────────────────────────────────────────────────────
 
 Relevant files:
-- `src/core/Camera.ts`
-- `src/core/CinematicSystem.ts`
+- `src/components/DialogueConsole.tsx`
+- `src/core/BattleDirector.ts`
 
-The game does not use camera panning or camera zoom as part of its core
-presentation. The screen stays fixed and readable, with motion delivered through
-impact feedback instead.
-
-Camera-related behavior includes:
-- screen shake / tremor
-- directional shake for strong impacts
-- decay over time
-- event-driven intensity changes
-
-High-impact events can also trigger hit-stop windows. Those pauses help sell
-combat weight and make high-value attacks feel more forceful.
-
-The architecture separates:
-- steady view framing
-- transient shake effects
-- cinematic freeze or slow-down effects
-
-That separation prevents the presentation layer from turning into a hidden
-source of simulation logic.
+The DialogueConsole embeds real-time `<canvas>` portrait renderers drawing mathematical identity patterns (one diagonal crack for Prime Wound, vertical prison bars for Scarlet Lock, circular cuts for Carminal Orbit, teeth edges for Vermilion Needle) instead of static images. The BattleDirector coordinates stage-specific narrative event barks based on the active gauntlet index, tracking custom phase thresholds and death sequences.
 
 ───────────────────────────────────────────────────────────────────────────────
-12. RENDERING PIPELINE AND VISUAL EFFECTS
-───────────────────────────────────────────────────────────────────────────────
-
-Relevant files:
-- `src/core/WorldRenderer.ts`
-- `src/core/EntityRenderer.ts`
-- `src/core/ParticleRenderer.ts`
-- `src/core/StaticMapRenderer.ts`
-- `src/core/effects/CinematicDeathRenderer.ts`
-- `src/core/effects/PlayerFxRenderer.ts`
-
-Rendering is canvas-first and procedurally driven.
-
-Primary render responsibilities:
-- draw static map geometry
-- draw entities
-- draw particles
-- draw cinematic overlays
-- draw UI-adjacent world effects
-
-Renderer structure:
-- `WorldRenderer` orchestrates the frame
-- `StaticMapRenderer` caches and draws static geometry
-- `EntityRenderer` draws actors and their visual transforms
-- `ParticleRenderer` handles sparks, rings, dust, and blast events
-
-Visual styles:
-- squash and stretch on key impacts
-- glow and gradient effects
-- procedural rings and sparks
-- transient trails and impact flashes
-
-The renderer favors a low-allocation strategy. Reusable objects and pools are
-used where practical so the hot loop stays stable under action-heavy scenes.
-
-───────────────────────────────────────────────────────────────────────────────
-13. PROCEDURAL AUDIO AND AUDIO LIFECYCLE
-───────────────────────────────────────────────────────────────────────────────
-
-Relevant files:
-- `src/core/SoundSynth.ts`
-- `src/core/audio/AudioContextManager.ts`
-- `src/core/audio/MusicSequencer.ts`
-- `src/core/audio/SFXManager.ts`
-- `src/core/audio/DroneManager.ts`
-- `src/core/audio/sfx/*`
-- `docs/MUSIC_ARCHITECTURE.txt`
-
-Audio is procedural rather than asset-driven:
-- oscillators
-- filters
-- envelope shaping
-- gain staging
-- transport or lifecycle control
-
-The audio pipeline is gesture-gated by the browser. Once unlocked, the app
-initializes the audio graph and then plays the appropriate menu or gameplay
-music.
-
-Observed audio architecture:
-- separate gain paths for music and SFX
-- cabinet-style filtering on the output chain
-- limiter protection on the final output
-- dynamic pitch scaling for combo feedback
-- procedural drones for healing and charge states
-
-The music architecture document describes C Dorian pitch ratios and combo-linked
-pitch stepping. That is consistent with the current procedural design: hit
-confirms can be tied to a repeatable, musically coherent scale chain.
-
-Important practical rule:
-- do not depend on heavy binary audio assets for core gameplay feedback
-- generate the important sounds in code
-
-───────────────────────────────────────────────────────────────────────────────
-14. SAVE DATA, SETTINGS, AND VALIDATION
-───────────────────────────────────────────────────────────────────────────────
-
-Relevant files:
-- `src/core/SaveManager.ts`
-- `src/core/SettingsManager.ts`
-- `src/core/schemas.ts`
-- `src/store/useGameStore.ts`
-
-Save slots:
-- three slots are stored in localStorage
-- slot data includes wins, losses, and empty state
-- copying and erasing slots are supported operations
-
-Save storage key:
-- `box_battle_save_slots`
-
-Settings storage key:
-- `box_battle_config`
-
-Validation is explicit and defensive:
-- save slot values are sanitized to non-negative integers
-- audio settings are clamped or replaced with fallbacks
-- key maps are validated against the required action list
-
-The UI store separates:
-- session state
-- gameplay state
-- screen state
-- result state
-
-That separation keeps the menu system from mutating core simulation logic
-directly.
-
-The main screens visible in the store-level state are:
-- TITLE
-- SAVE_SELECT
-- OPTIONS
-- SOUND
-- CONTROLS
-- CREDITS
-- SOURCE_VIEW
-- PLAYING
-
-The title flow and result flow are handled through store state and screen route
-helpers, not through hard-wired page changes.
-
-───────────────────────────────────────────────────────────────────────────────
-15. BUILD, MANIFEST GENERATION, AND DEPLOYMENT
+11. BUILD, MANIFEST GENERATION, AND DEPLOYMENT
 ───────────────────────────────────────────────────────────────────────────────
 
 Relevant files:
 - `package.json`
+- `vite.config.ts`
 - `scripts/generate_manifest.js`
-- `scripts/create_source_context.js`
-- `.github/workflows/deploy.yml`
 
-Development scripts:
-- `npm run dev`
-- `npm run build`
-- `npm run lint`
-- `npm run preview`
-
-Pre-dev and pre-build hooks:
-- generate the source manifest
-- generate the consolidated source context file
-
-The build pipeline is:
-1. lint
-2. TypeScript compile
-3. Vite production bundle
-
-Deployment automation:
-- push to `main`
-- build in GitHub Actions
-- deploy to GitHub Pages
-- push the same build artifact to Itch.io via Butler
-
-The manifest generation workflow is also part of the project’s documentation
-story. It allows the source code to be flattened into a single searchable context
-document for AI-assisted debugging and review.
+Execution of `npm run build` runs ESLint, compiles TypeScript, and invokes Rollup chunks splitting (vendor-react, vendor-motion, vendor-zustand, vendor-tone, vendor-icons, vendor-highlighter) to optimize asset loadtimes. Build output is deployed to GitHub Pages and Itch.io.

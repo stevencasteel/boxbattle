@@ -23,7 +23,7 @@ export function TitleScreen({
   return (
     <MenuContainer hasGridOverlay>
       <div className="title-screen-header">
-        <div className="system-tag">WELCOME TO THE ARENA</div>
+        <div className="system-tag">WELCOME TO THE GAUNTLET</div>
         <MenuHeader title="BOX BATTLE" subtitle="RETRO ACTION GAME" />
       </div>
 

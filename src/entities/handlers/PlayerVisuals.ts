@@ -1,4 +1,4 @@
-import { Software3DRenderer } from "../../core/visuals/Software3DRenderer";
+import { drawVisualProfile, VisualProfile } from "../../core/visuals/ShapeRenderer";
 import { Player } from "@/entities/Player";
 import { PlayerFxRenderer } from "@/core/effects/PlayerFxRenderer";
 import { UNITS } from "@/core/Units";
@@ -61,11 +61,26 @@ export class PlayerVisuals {
     const drawY = this.player.previousPosition.y + (this.player.position.y - this.player.previousPosition.y) * alphaVal;
 
     for (const ghost of this.player.dashComponent.ghosts) {
-      ctx.fillStyle = `hsla(142, 71%, 58%, ${ghost.opacity})`;
+      ctx.save();
       const gWidth = this.player.size.width * this.player.visualScale.x;
       const gHeight = this.player.size.height * this.player.visualScale.y;
       const gFeetY = ghost.y + this.player.size.height / 2;
-      ctx.fillRect(ghost.x - gWidth / 2, gFeetY - gHeight, gWidth, gHeight);
+
+      const ghostProfile: VisualProfile = {
+        shapeFamily: "perfect-square",
+        danger: 0,
+        weight: 0,
+        corruption: 0,
+        hueRole: "player-agency",
+        strokePx: 2,
+        spinRate: 0,
+        wobbleAmp: 0,
+        cornerRadius: 0,
+        phaseOffset: 0,
+      };
+      ctx.globalAlpha = ghost.opacity;
+      drawVisualProfile(ctx, ghost.x, gFeetY - gHeight / 2, gWidth, gHeight, ghostProfile, performance.now() / 1000);
+      ctx.restore();
     }
 
     if (this.player.doubleJumpDiskTimer > 0) {
@@ -92,8 +107,6 @@ export class PlayerVisuals {
       ctx.restore();
     }
 
-    
-    
     const feetY = drawY + this.player.size.height / 2;
 
     const nowTime = performance.now();
@@ -129,24 +142,23 @@ export class PlayerVisuals {
       ctx.restore();
     }
 
-        const yaw = 0.15 * this.player.facingDirection + (this.player.velocity.x / 1120) * 0.35;
-    const pitch = 0.08 + (this.player.velocity.y / 1200) * 0.22;
-    Software3DRenderer.drawGeometry(
-      ctx,
-      Software3DRenderer.BOX_GEOMETRY,
-      0,
-      0,
-      this.player.size.width,
-      this.player.size.height,
-      this.player.visualScale.x,
-      this.player.visualScale.y,
-      yaw,
-      pitch,
-      0,
-      this.player.health.isFlashing() ? "hsl(0, 0%, 100%)" : "hsl(142, 71%, 58%)",
-      1.0,
-      "feet"
-    );
+    const playerProfile: VisualProfile = {
+      shapeFamily: "perfect-square",
+      danger: 0,
+      weight: 0,
+      corruption: 0,
+      hueRole: this.player.health.isFlashing() ? "impact-white" : "player-agency",
+      strokePx: 3,
+      spinRate: 0,
+      wobbleAmp: 0,
+      cornerRadius: 0,
+      phaseOffset: 0,
+    };
+
+    const drawW = this.player.size.width * this.player.visualScale.x;
+    const drawH = this.player.size.height * this.player.visualScale.y;
+
+    drawVisualProfile(ctx, 0, -this.player.size.height / 2, drawW, drawH, playerProfile, nowTime / 1000);
 
     const localCenterX = 0;
     const localCenterY = -this.player.size.height / 2;

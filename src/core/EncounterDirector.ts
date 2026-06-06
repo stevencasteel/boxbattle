@@ -1,13 +1,15 @@
 import { IWorld } from "./Interfaces";
-import { SpawnAnchor, defaultLevelConfig, MinionType } from "./levelData";
+import { SpawnAnchor, MinionType } from "./levelData";
 import { MinionFactory } from "@/entities/MinionFactory";
 import { TrigLUT } from "./TrigLUT";
+import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
 
 export class EncounterDirector {
   private world: IWorld;
   private currentPhase = 1;
   private elapsedFightTime = 0;
   private spawnCooldownTimer = 12.0;
+  private activeStageConfig: StageConfig = GAUNTLET_STAGES[0];
 
   private unsubs: (() => void)[] = [];
 
@@ -29,6 +31,11 @@ export class EncounterDirector {
         this.despawnAllMinions();
       })
     );
+  }
+
+  public loadStage(stage: StageConfig) {
+    this.activeStageConfig = stage;
+    this.reset();
   }
 
   public update(dt: number) {
@@ -60,7 +67,7 @@ export class EncounterDirector {
   }
 
   private triggerNextWave() {
-    const waves = defaultLevelConfig.encounterWaves.filter(
+    const waves = this.activeStageConfig.encounterWaves.filter(
       (w) => w.phase === this.currentPhase && this.elapsedFightTime >= (w.earliestTime || 0)
     );
 
@@ -101,7 +108,7 @@ export class EncounterDirector {
   }
 
   private findSafeAnchor(ids?: string[], tags?: string[]): SpawnAnchor | null {
-    let candidates = defaultLevelConfig.spawnAnchors;
+    let candidates = this.activeStageConfig.spawnAnchors;
 
     if (ids && ids.length > 0) {
       candidates = candidates.filter((a) => ids.includes(a.id));
@@ -156,24 +163,19 @@ export class EncounterDirector {
   }
 
   private spawnInitialPlaytestMinions() {
-    const turretAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "left-catwalk");
+    const turretAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("catwalk") || a.id.includes("perch"));
     if (turretAnchor) {
       this.spawnMinion("TURRET", turretAnchor);
     }
 
-    const lancerAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "center-bridge");
+    const lancerAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("bridge") || a.id.includes("mid"));
     if (lancerAnchor) {
       this.spawnMinion("LANCER", lancerAnchor);
     }
 
-    const flyerAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "upper-air-left");
+    const flyerAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("air") || a.id.includes("ambush"));
     if (flyerAnchor) {
       this.spawnMinion("FLYER", flyerAnchor);
-    }
-
-    const shielderAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "left-ground");
-    if (shielderAnchor) {
-      this.spawnMinion("SHIELDER", shielderAnchor);
     }
   }
 

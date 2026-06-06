@@ -1,6 +1,16 @@
 import { Rectangle } from "@/core/Interfaces";
 
-export type MinionType = "TURRET" | "LANCER" | "FLYER" | "SHIELDER";
+export type MinionType =
+  | "TURRET"
+  | "LANCER"
+  | "FLYER"
+  | "SHIELDER"
+  | "PIT_LANCER"
+  | "COMPASS_WASP"
+  | "CLAMPJAW"
+  | "HYMN_NAIL"
+  | "BLISTER_OX"
+  | "BELL_HAMMER";
 
 export interface SpawnerConfig {
   type: MinionType;

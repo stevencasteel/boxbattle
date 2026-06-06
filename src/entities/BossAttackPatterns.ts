@@ -1,4 +1,5 @@
 import { Boss } from "./Boss";
+import { useSessionStore } from "@/store/useGameStore";
 
 export type AttackTag = "projectile-heavy" | "melee" | "arena-denial" | "reposition";
 
@@ -140,6 +141,19 @@ export const ALL_PATTERNS: AttackPattern[] = [
 ];
 
 export function selectBestAttack(ctx: BossAttackContext): AttackPattern {
+  const stageIdx = useSessionStore.getState().currentStageIndex;
+
+  if (stageIdx === 1) { // Scarlet Lock loves Volleys
+    return ALL_PATTERNS.find(p => p.id === "VOLLEY") || ALL_PATTERNS[0];
+  } else if (stageIdx === 2) { // Carminal Orbit loves Fan Burst
+    return ALL_PATTERNS.find(p => p.id === "FAN_BURST") || ALL_PATTERNS[0];
+  } else if (stageIdx === 3) { // Vermilion Needle loves Predictive
+    return ALL_PATTERNS.find(p => p.id === "PREDICTIVE_SHOT") || ALL_PATTERNS[0];
+  } else if (stageIdx === 6) { // False Square Glitches to Gap Ring
+    const rand = Math.random();
+    if (rand < 0.35) return ALL_PATTERNS.find(p => p.id === "GAP_RING") || ALL_PATTERNS[0];
+  }
+
   let bestPattern = ALL_PATTERNS[0];
   let highestScore = -1;
 

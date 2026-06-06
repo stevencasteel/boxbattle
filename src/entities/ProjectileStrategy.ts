@@ -39,6 +39,7 @@ export interface TrailDrawData {
   damage: number;
   customColor: string | null;
   projWidth: number;
+  kind?: string;
 }
 
 export interface BodyDrawData {
@@ -46,6 +47,7 @@ export interface BodyDrawData {
   height: number;
   damage: number;
   customColor: string | null;
+  kind?: string;
 }
 
 export interface IProjectileStrategy {
@@ -165,48 +167,36 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
   drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void {
     const isLvl2 = data.damage >= 3;
     const radius = data.width / 2;
-
+    ctx.save();
     if (isLvl2) {
-      ctx.shadowColor = "rgba(34, 197, 94, 0.8)";
-      ctx.shadowBlur = 24;
-
-      const radialGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
-      radialGrad.addColorStop(0.0, "hsl(45, 100%, 65%)");
-      radialGrad.addColorStop(0.65, "hsl(45, 100%, 65%)");
-      radialGrad.addColorStop(1.0, "hsl(142, 71%, 58%)");
-      ctx.fillStyle = radialGrad;
+      ctx.fillStyle = "hsl(45, 100%, 60%)";
+      ctx.strokeStyle = "hsl(142, 72%, 56%)";
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.ellipse(0, 0, radius, radius * 0.75, 0, 0, Math.PI * 2);
+      ctx.moveTo(-radius, -radius);
+      ctx.quadraticCurveTo(0, -radius * 1.5, radius, -radius);
+      ctx.quadraticCurveTo(radius * 1.5, 0, radius, radius);
+      ctx.quadraticCurveTo(0, radius * 1.5, -radius, radius);
+      ctx.quadraticCurveTo(-radius * 1.5, 0, -radius, -radius);
+      ctx.closePath();
       ctx.fill();
+      ctx.stroke();
 
-      ctx.shadowBlur = 0;
       ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.ellipse(0, 0, radius * 0.45, radius * 0.35, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.fillRect(-radius * 0.45, -radius * 0.45, radius * 0.9, radius * 0.9);
+    } else {
+      ctx.fillStyle = "hsl(142, 72%, 56%)";
+      ctx.strokeStyle = "hsl(142, 100%, 80%)";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(0, 0, radius * 0.85, -Math.PI / 4, Math.PI / 4);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(0, 0, radius * 0.85, Math.PI * 0.75, Math.PI * 1.25);
-      ctx.stroke();
-    } else {
-      ctx.shadowColor = "rgba(34, 197, 94, 0.75)";
-      ctx.shadowBlur = 14;
-      ctx.fillStyle = "hsl(142, 71%, 58%)";
-      ctx.beginPath();
-      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.rect(-radius, -radius, data.width, data.height);
       ctx.fill();
+      ctx.stroke();
 
-      ctx.shadowBlur = 0;
       ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(0, 0, radius * 0.55, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillRect(-radius * 0.4, -radius * 0.4, radius * 0.8, radius * 0.8);
     }
+    ctx.restore();
   }
 }
 
@@ -264,17 +254,22 @@ export class BossProjectileStrategy implements IProjectileStrategy {
   }
 
   drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void {
-    const bodyColor = data.customColor || "hsl(350, 80%, 60%)";
-    const shadowCol = bodyColor.startsWith("hsl")
-      ? bodyColor.replace("hsl", "hsla").replace(")", ", 0.6)")
-      : "rgba(239, 68, 68, 0.6)";
-
+    const radius = data.width / 2;
+    ctx.save();
+    const bodyColor = data.customColor || "hsl(350, 82%, 58%)";
     ctx.fillStyle = bodyColor;
-    ctx.shadowColor = shadowCol;
-    ctx.shadowBlur = 10;
+    ctx.strokeStyle = "hsl(0, 100%, 72%)";
+    ctx.lineWidth = 1.5;
+
     ctx.beginPath();
-    ctx.arc(0, 0, data.width / 2, 0, Math.PI * 2);
+    ctx.moveTo(-radius * 1.8, 0);
+    ctx.lineTo(0, -radius * 0.35);
+    ctx.lineTo(radius * 1.2, 0);
+    ctx.lineTo(0, radius * 0.35);
+    ctx.closePath();
     ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
 }
 

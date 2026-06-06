@@ -3,6 +3,7 @@ import { HealthComponent, DamagePayload } from "@/entities/components/HealthComp
 import { IWorld } from "@/core/Interfaces";
 import { TurretPatrolState } from "./MinionStates";
 import { TrigLUT } from "@/core/TrigLUT";
+import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 
 export class TurretMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
@@ -26,6 +27,21 @@ export class TurretMinion extends BaseMinion {
 
   get minionColor(): string {
     return "hsl(215, 20%, 65%)";
+  }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "hex",
+      danger: 0.2,
+      weight: 0.4,
+      corruption: 0.1,
+      hueRole: "minion-logic",
+      strokePx: 2,
+      spinRate: 0.2,
+      wobbleAmp: 0,
+      cornerRadius: 0,
+      phaseOffset: 0
+    };
   }
 
   protected updateExhaust(): void {

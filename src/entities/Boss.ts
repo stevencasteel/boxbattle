@@ -4,9 +4,10 @@ import { HealthComponent, DamagePayload } from "@/entities/components/HealthComp
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
-import { TrigLUT } from "@/core/TrigLUT";
-import { HazardSystem } from "@/core/systems/HazardSystem";
 import { setVec, zeroVec } from "@/core/VecUtils";
+import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
+import { useSessionStore } from "@/store/useGameStore";
+import { HazardSystem } from "@/core/systems/HazardSystem";
 import {
   BossCooldownState,
   BossPatrolState,
@@ -47,9 +48,13 @@ export class Boss extends BaseEntity {
     zeroVec(this.position);
     zeroVec(this.previousPosition);
 
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+    const stage = GAUNTLET_STAGES[stageIdx] || GAUNTLET_STAGES[0];
+    const maxHp = stage.midBossMaxHp;
+
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-      maxHealth: UNITS.BOSS_MAX_HP,
+      maxHealth: maxHp,
       invincibilityDuration: 0.25,
       onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
         this.world.events.publish("BOSS_HURT", { amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
@@ -111,7 +116,7 @@ export class Boss extends BaseEntity {
 
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
-    const mag = TrigLUT.fastSqrt(dx * dx + dy * dy);
+    const mag = Math.sqrt(dx * dx + dy * dy);
     if (mag === 0) return;
 
     const dirX = dx / mag;
@@ -198,7 +203,7 @@ export class Boss extends BaseEntity {
 
     const dx = this.position.x - sourceX;
     const dy = this.position.y - sourceY;
-    const dist = TrigLUT.fastSqrt(dx * dx + dy * dy);
+    const dist = Math.sqrt(dx * dx + dy * dy);
 
     const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
 

@@ -1,6 +1,6 @@
 # BOX BATTLE
 
-Mega Man / Hollow Knight battle arena prototype.
+Mega Man / Hollow Knight precision traversal gauntlet prototype.
 
 Ported over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand using Gemini 3.5 Flash
 

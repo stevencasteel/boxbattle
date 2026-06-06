@@ -62,7 +62,7 @@ export class Player extends BaseEntity {
 
   constructor(id: string, world: IWorld) {
     super(id, world);
-    this.size = { width: 32, height: 64 };
+    this.size = { width: 40, height: 40 };
     this.squashPivot = "center";
 
     zeroVec(this.position);

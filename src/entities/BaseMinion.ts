@@ -7,8 +7,19 @@ import { IState } from "@/core/StateMachine";
 import { HazardSystem } from "@/core/systems/HazardSystem";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import { TrigLUT } from "@/core/TrigLUT";
+import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 
-export type MinionType = "TURRET" | "LANCER" | "FLYER" | "SHIELDER";
+export type MinionType =
+  | "TURRET"
+  | "LANCER"
+  | "FLYER"
+  | "SHIELDER"
+  | "PIT_LANCER"
+  | "COMPASS_WASP"
+  | "CLAMPJAW"
+  | "HYMN_NAIL"
+  | "BLISTER_OX"
+  | "BELL_HAMMER";
 
 export abstract class BaseMinion extends BaseEntity {
   private unsubHurt!: () => void;
@@ -73,6 +84,7 @@ export abstract class BaseMinion extends BaseEntity {
   }
 
   public abstract get minionColor(): string;
+  public abstract getVisualProfile(): VisualProfile;
 
   public startDeathSequence() {
     this.world.events.publish("MINION_DISSOLVING", undefined);

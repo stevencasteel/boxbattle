@@ -1,4 +1,4 @@
-import { Software3DRenderer } from "./Software3DRenderer";
+import { drawVisualProfile } from "./ShapeRenderer";
 import { TrigLUT } from "@/core/TrigLUT";
 import { BaseMinion } from "@/entities/BaseMinion";
 import { Boss } from "@/entities/Boss";
@@ -37,68 +37,96 @@ export class MinionVisuals {
 
       const boss = minion.world.boss;
       const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
-      let mColor = `hsla(180, 85%, 65%, ${cageAlpha})`;
+      let mColor = `hsla(194, 62%, 52%, ${cageAlpha})`;
       if (phase === 2) {
-        mColor = `hsla(35, 95%, 60%, ${cageAlpha})`;
+        mColor = `hsla(45, 100%, 60%, ${cageAlpha})`;
       } else if (phase === 3) {
-        mColor = `hsla(0, 100%, 60%, ${cageAlpha})`;
+        mColor = `hsla(350, 82%, 58%, ${cageAlpha})`;
       }
 
       const H = minion.size.height;
       const W = minion.size.width;
       const R = W * 0.72;
 
-      const rotation = nowTime * 0.005;
       const hMid = H / 2;
 
       const hBottom = hMid - hMid * accordionScale;
-      const hMiddle = hMid;
       const hTop = hMid + hMid * accordionScale;
 
-      const ringHeights = [hBottom, hMiddle, hTop];
-      const segments = 24;
-      const step = (Math.PI * 2) / segments;
+      const isHex = minion.id.includes("TURRET") || minion.id.includes("SHIELDER") || minion.id.includes("BELL_HAMMER");
+      const isTri = minion.id.includes("LANCER") || minion.id.includes("PIT_LANCER");
+      const isFork = minion.id.includes("HYMN_NAIL");
+      const isBubble = minion.id.includes("BLISTER_OX");
 
-      for (let rIdx = 0; rIdx < ringHeights.length; rIdx++) {
-        const h = ringHeights[rIdx];
-        const dir = rIdx % 2 === 0 ? 1 : -1;
-        const ringRotation = rotation * dir;
-
+      if (isHex) {
+        const segments = 6;
+        const step = (Math.PI * 2) / segments;
         for (let i = 0; i < segments; i++) {
-          const theta1 = i * step + ringRotation;
-          const theta2 = (i + 1) * step + ringRotation;
-
+          const theta1 = i * step + nowTime * 0.001;
+          const theta2 = (i + 1) * step + nowTime * 0.001;
           const x1 = R * TrigLUT.cos(theta1);
-          const y1 = -h + R * TrigLUT.sin(theta1) * 0.28;
-
+          const y1 = -hBottom + R * TrigLUT.sin(theta1) * 0.28;
           const x2 = R * TrigLUT.cos(theta2);
-          const y2 = -h + R * TrigLUT.sin(theta2) * 0.28;
+          const y2 = -hBottom + R * TrigLUT.sin(theta2) * 0.28;
 
-          const midAngle = (theta1 + theta2) / 2;
-          const isBehind = TrigLUT.sin(midAngle) < 0;
-
-          const segment = { x1, y1, x2, y2, color: mColor, width: 1.5 };
-          if (isBehind) {
-            backCageScratch.push(segment);
-          } else {
-            frontCageScratch.push(segment);
-          }
+          const isBehind = TrigLUT.sin((theta1 + theta2) / 2) < 0;
+          const seg = { x1, y1, x2, y2, color: mColor, width: 2.0 };
+          if (isBehind) backCageScratch.push(seg);
+          else frontCageScratch.push(seg);
         }
-      }
+      } else if (isTri) {
+        const segments = 3;
+        const step = (Math.PI * 2) / segments;
+        for (let i = 0; i < segments; i++) {
+          const theta1 = i * step + nowTime * 0.0015;
+          const theta2 = (i + 1) * step + nowTime * 0.0015;
+          const x1 = R * 1.2 * TrigLUT.cos(theta1);
+          const y1 = -hBottom + R * 0.8 * TrigLUT.sin(theta1) * 0.28;
+          const x2 = R * 1.2 * TrigLUT.cos(theta2);
+          const y2 = -hBottom + R * 0.8 * TrigLUT.sin(theta2) * 0.28;
 
-      const strutAngles = [0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2];
-      for (const angle of strutAngles) {
-        const theta = angle + rotation;
-        const x = R * TrigLUT.cos(theta);
-        const yBottom = -hBottom + R * TrigLUT.sin(theta) * 0.28;
-        const yTop = -hTop + R * TrigLUT.sin(theta) * 0.28;
+          const isBehind = TrigLUT.sin((theta1 + theta2) / 2) < 0;
+          const seg = { x1, y1, x2, y2, color: mColor, width: 2.5 };
+          if (isBehind) backCageScratch.push(seg);
+          else frontCageScratch.push(seg);
+        }
+      } else if (isFork) {
+        const xLeft = -W * 0.4;
+        const xRight = W * 0.4;
+        backCageScratch.push({ x1: xLeft, y1: -hBottom, x2: xLeft, y2: -hTop, color: mColor, width: 2.0 });
+        frontCageScratch.push({ x1: xRight, y1: -hBottom, x2: xRight, y2: -hTop, color: mColor, width: 2.0 });
+      } else if (isBubble) {
+        const segments = 16;
+        const step = (Math.PI * 2) / segments;
+        for (let i = 0; i < segments; i++) {
+          const theta1 = i * step;
+          const theta2 = (i + 1) * step;
+          const rPulse = R * (1.0 + 0.1 * Math.sin(nowTime * 0.008 + i));
+          const x1 = rPulse * TrigLUT.cos(theta1);
+          const y1 = -hBottom + rPulse * TrigLUT.sin(theta1) * 0.35;
+          const x2 = rPulse * TrigLUT.cos(theta2);
+          const y2 = -hBottom + rPulse * TrigLUT.sin(theta2) * 0.35;
 
-        const isBehind = TrigLUT.sin(theta) < 0;
-        const segment = { x1: x, y1: yBottom, x2: x, y2: yTop, color: mColor, width: 2.0 };
-        if (isBehind) {
-          backCageScratch.push(segment);
-        } else {
-          frontCageScratch.push(segment);
+          const isBehind = TrigLUT.sin((theta1 + theta2) / 2) < 0;
+          const seg = { x1, y1, x2, y2, color: mColor, width: 1.5 };
+          if (isBehind) backCageScratch.push(seg);
+          else frontCageScratch.push(seg);
+        }
+      } else {
+        const segments = 12;
+        const step = (Math.PI * 2) / segments;
+        for (let i = 0; i < segments; i++) {
+          const theta1 = i * step + nowTime * 0.002;
+          const theta2 = (i + 1) * step + nowTime * 0.002;
+          const x1 = R * TrigLUT.cos(theta1);
+          const y1 = -hBottom + R * TrigLUT.sin(theta1) * 0.28;
+          const x2 = R * TrigLUT.cos(theta2);
+          const y2 = -hBottom + R * TrigLUT.sin(theta2) * 0.28;
+
+          const isBehind = TrigLUT.sin((theta1 + theta2) / 2) < 0;
+          const seg = { x1, y1, x2, y2, color: mColor, width: 1.5 };
+          if (isBehind) backCageScratch.push(seg);
+          else frontCageScratch.push(seg);
         }
       }
     }
@@ -140,62 +168,21 @@ export class MinionVisuals {
       ctx.translate(0, minion.size.height / 2);
     }
 
-        const geom = (minion.id.includes("TURRET") || minion.id.includes("SHIELDER"))
-          ? Software3DRenderer.HEXAGON_GEOMETRY
-          : Software3DRenderer.BOX_GEOMETRY;
+    const profile = minion.getVisualProfile();
+    const isTelegraph = minion.attackState === "TELEGRAPH";
 
-        const yaw = 0.15 * minion.facingDirection + (minion.velocity.x / 450) * 0.35;
-        const pitch = 0.08 + (minion.velocity.y / 1000) * 0.22;
-        const pivotY = minion.squashPivot === "feet" ? "feet" : "center";
-        const posY = pivotY === "feet" ? 0 : -minion.size.height / 2;
-        const localY = minion.squashPivot === "feet" ? -minion.size.height / 2 : 0;
+    if (minion.health.isFlashing()) {
+      profile.hueRole = "impact-white";
+    } else if (isTelegraph) {
+      profile.hueRole = "telegraph";
+    }
 
-        if (minion.isDying) {
-          const shrapnelProgress = 1.0 - minion.dissolveTimer / 0.5;
-          Software3DRenderer.drawFragments(
-            ctx,
-            geom,
-            0,
-            posY,
-            minion.size.width,
-            minion.size.height,
-            minion.visualScale.x,
-            minion.visualScale.y,
-            yaw,
-            pitch,
-            0,
-            minion.minionColor,
-            shrapnelProgress,
-            180,
-            minion.dissolveTimer / 0.5,
-            pivotY
-          );
-        } else {
-          let baseColor = minion.minionColor;
-          if (minion.health.isFlashing()) {
-            baseColor = "hsl(0, 0%, 100%)";
-          } else if (minion.attackState === "TELEGRAPH") {
-            baseColor = "hsl(45, 100%, 50%)";
-          }
+    const drawW = minion.size.width * minion.visualScale.x;
+    const drawH = minion.size.height * minion.visualScale.y;
 
-          Software3DRenderer.drawGeometry(
-            ctx,
-            geom,
-            0,
-            posY,
-            minion.size.width,
-            minion.size.height,
-            minion.visualScale.x,
-            minion.visualScale.y,
-            yaw,
-            pitch,
-            0,
-            baseColor,
-            1.0,
-            pivotY
-          );
-        }
+    drawVisualProfile(ctx, 0, -minion.size.height / 2, drawW, drawH, profile, nowTime / 1000);
 
+    const localY = -minion.size.height / 2;
     ctx.fillStyle = "black";
     ctx.fillRect(minion.facingDirection * 6.4 - 1.6, localY - 9.6, 4.8, 3.2);
     ctx.restore();

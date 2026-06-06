@@ -7,6 +7,7 @@ import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { setVec } from "@/core/VecUtils";
 import { selectBestAttack, BossAttackContext, IBossAttackState } from "./BossAttackPatterns";
+import { useSessionStore } from "@/store/useGameStore";
 
 export abstract class BossState implements IState {
   protected owner: Boss;
@@ -205,10 +206,14 @@ export class BossAttackState extends BossState implements IBossAttackState {
     const projectileCount = phase === 1 ? 12 : phase === 2 ? 18 : 24;
     const angleStep = (Math.PI * 2) / projectileCount;
 
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+
     for (let i = 0; i < projectileCount; i++) {
       const angle = i * angleStep;
       const dirX = TrigLUT.cos(angle);
       const dirY = TrigLUT.sin(angle);
+
+      const color = stageIdx === 4 ? "hsl(82, 38%, 44%)" : undefined; // Marrow King color
 
       this.owner.world.spawnProjectile(
         this.owner.position.x + dirX * 40,
@@ -218,7 +223,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
         "boss",
         1,
         280,
-        4.0
+        4.0,
+        color
       );
     }
   }
@@ -237,10 +243,14 @@ export class BossAttackState extends BossState implements IBossAttackState {
     const startAngle = centerAngle - totalSpread / 2;
     const step = totalSpread / (count - 1);
 
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+
     for (let i = 0; i < count; i++) {
       const angle = startAngle + i * step;
       const dirX = TrigLUT.cos(angle);
       const dirY = TrigLUT.sin(angle);
+
+      const color = stageIdx === 2 ? "hsl(338, 76%, 55%)" : undefined; // Carminal Orbit color
 
       this.owner.world.spawnProjectile(
         this.owner.position.x + dirX * 40,
@@ -250,7 +260,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
         "boss",
         1,
         300,
-        5.0
+        5.0,
+        color
       );
     }
   }
@@ -271,6 +282,9 @@ export class BossAttackState extends BossState implements IBossAttackState {
     const dirX = dx / mag;
     const dirY = dy / mag;
 
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+    const color = stageIdx === 3 ? "hsl(356, 94%, 62%)" : undefined; // Vermilion Needle
+
     const proj = this.owner.world.spawnProjectile(
       this.owner.position.x + dirX * 45,
       this.owner.position.y + dirY * 45,
@@ -279,7 +293,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
       "boss",
       2,
       450,
-      6.0
+      6.0,
+      color
     );
 
     proj.size = { width: 17.6, height: 17.6 };

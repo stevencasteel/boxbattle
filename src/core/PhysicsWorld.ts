@@ -22,6 +22,20 @@ export class PhysicsWorld implements IPhysicsWorld {
     this.indexGeometry(this.hazards, this.hazardGrid);
   }
 
+  public rebuild(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
+    this.solids = GreedyMerger.merge(solids);
+    this.hazards = GreedyMerger.merge(hazards);
+    this.onewayPlatforms = onewayPlatforms;
+
+    this.solidGrid.clear();
+    this.platformGrid.clear();
+    this.hazardGrid.clear();
+
+    this.indexGeometry(this.solids, this.solidGrid);
+    this.indexGeometry(this.onewayPlatforms, this.platformGrid);
+    this.indexGeometry(this.hazards, this.hazardGrid);
+  }
+
   private indexGeometry(rects: Rectangle[], grid: Map<number, Rectangle[]>) {
     for (const rect of rects) {
       const startX = Math.floor(rect.x / PhysicsWorld.CELL_SIZE);

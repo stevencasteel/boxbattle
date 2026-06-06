@@ -9,7 +9,6 @@ import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { Rectangle } from "@/core/Interfaces";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { defaultLevelConfig, LevelConfig } from "@/core/levelData";
 import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
@@ -17,6 +16,9 @@ import { StateProjectionSystem } from "@/core/StateProjectionSystem";
 import { MinionCollisionSystem } from "@/core/systems/MinionCollisionSystem";
 import { EntityResetService } from "@/core/systems/EntityResetService";
 import { setVec, copyVec, zeroVec } from "@/core/VecUtils";
+import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
+import { useSessionStore } from "@/store/useGameStore";
+import { DissolvePlatform, PogoPost, DashResetGate } from "./systems/TraversalHazards";
 
 export class Engine {
   private renderer: WorldRenderer;
@@ -36,24 +38,31 @@ export class Engine {
   private encounterDirector!: EncounterDirector;
   private springPlatforms: { rect: Rectangle; offsetY: number; velocityY: number }[] = [];
   private unsubPlatformImpact!: () => void;
+  private unsubLoadStage!: () => void;
+
+  public activeDissolvePlatforms: DissolvePlatform[] = [];
+  public activePogoPosts: PogoPost[] = [];
+  public activeDashResetGates: DashResetGate[] = [];
 
   public isPaused: boolean = false;
   private accumulator: number = 0;
   private currentScale: number = 1.0;
   private readonly fixedTimeStep: number = 1 / 60;
 
-  private levelConfig: LevelConfig;
+  private levelConfig: StageConfig;
   private solids: Rectangle[] = [];
   private onewayPlatforms: Rectangle[] = [];
   private hazards: Rectangle[] = [];
 
-  constructor(world: World, renderer: WorldRenderer, levelConfig: LevelConfig = defaultLevelConfig) {
+  constructor(world: World, renderer: WorldRenderer) {
     this.world = world;
     this.renderer = renderer;
-    this.levelConfig = levelConfig;
     this.stateProjection = new StateProjectionSystem(this.world.events);
     this.minionCollisionSystem = new MinionCollisionSystem();
     this.entityResetService = new EntityResetService();
+
+    const activeStageIdx = useSessionStore.getState().currentStageIndex;
+    this.levelConfig = GAUNTLET_STAGES[activeStageIdx] || GAUNTLET_STAGES[0];
 
     this.solids = this.levelConfig.solids;
     this.onewayPlatforms = this.levelConfig.onewayPlatforms;
@@ -85,6 +94,7 @@ export class Engine {
     this.world.boss = this.boss;
 
     this.encounterDirector = new EncounterDirector(this.world);
+    this.encounterDirector.loadStage(this.levelConfig);
 
     Camera.reset();
 
@@ -93,7 +103,11 @@ export class Engine {
     this.particleSystem = new ParticleSystem(this.world.events);
     this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
 
-    this.springPlatforms = this.levelConfig.onewayPlatforms.map((rect) => ({
+    this.activeDissolvePlatforms = (this.levelConfig.dissolvePlatforms || []).map((r) => new DissolvePlatform(r));
+    this.activePogoPosts = (this.levelConfig.pogoPosts || []).map((r) => new PogoPost(r));
+    this.activeDashResetGates = (this.levelConfig.dashResetGates || []).map((r) => new DashResetGate(r));
+
+    this.springPlatforms = this.onewayPlatforms.map((rect) => ({
       rect,
       offsetY: 0,
       velocityY: 0,
@@ -106,10 +120,74 @@ export class Engine {
       }
     });
 
+    this.unsubLoadStage = this.world.events.subscribe("LOAD_STAGE", ({ stageIndex }) => {
+      this.loadStage(stageIndex);
+    });
+
+    this.rebuildPhysics();
+
     this.loop = new GameLoop(
       (dt) => this.update(dt),
       () => this.render()
     );
+  }
+
+  private rebuildPhysics() {
+    const activeSolids = [
+      ...this.solids,
+      ...this.activeDissolvePlatforms
+        .filter((dp) => dp.state === "idle" || dp.state === "cracking")
+        .map((dp) => dp.rect)
+    ];
+    this.world.physicsWorld.rebuild(activeSolids, this.hazards, this.onewayPlatforms);
+  }
+
+  public loadStage(stageIndex: number) {
+    const stage = GAUNTLET_STAGES[stageIndex];
+    if (!stage) return;
+
+    this.levelConfig = stage;
+    this.solids = stage.solids;
+    this.onewayPlatforms = stage.onewayPlatforms;
+    this.hazards = stage.hazards;
+
+    this.activeDissolvePlatforms = (stage.dissolvePlatforms || []).map((r) => new DissolvePlatform(r));
+    this.activePogoPosts = (stage.pogoPosts || []).map((r) => new PogoPost(r));
+    this.activeDashResetGates = (stage.dashResetGates || []).map((r) => new DashResetGate(r));
+
+    this.rebuildPhysics();
+    this.renderer.resetCache();
+
+    this.isPaused = false;
+    this.accumulator = 0;
+    Camera.reset();
+    this.pool.clear();
+
+    this.springPlatforms = this.onewayPlatforms.map((rect) => ({
+      rect,
+      offsetY: 0,
+      velocityY: 0,
+    }));
+
+    this.entityResetService.resetPlayer(this.player, stage.playerStart, 1);
+    this.entityResetService.resetBoss(this.boss, stage.bossStart, -1);
+
+    this.boss.currentPhase = 1;
+    this.boss.patrolSpeed = 200;
+    this.boss.lungeSpeed = 1200;
+    this.boss.stateMachine.changeState(this.boss.cooldownState);
+
+    this.encounterDirector.loadStage(stage);
+
+    this.particleSystem.cleanup();
+    this.particleSystem = new ParticleSystem(this.world.events);
+    this.battleDirector.cleanup();
+    this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
+    this.stateProjection.reset();
+
+    this.stateProjection.project(this.player, this.boss);
+    this.world.events.publish("CLEAR_DIALOGUES", undefined);
+    this.world.events.publish("SESSION_RESET", undefined);
   }
 
   public start() {
@@ -121,43 +199,8 @@ export class Engine {
   }
 
   public reset() {
-    this.isPaused = false;
-    this.accumulator = 0;
-    Camera.reset();
-    this.pool.clear();
-
-    const overlay = this.renderer.getCanvas().parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
-    if (overlay) {
-      overlay.classList.remove("vignette-pulse");
-    }
-
-    this.encounterDirector.reset();
-
-    if (this.world.audio.stopCrowdSounds) {
-      this.world.audio.stopCrowdSounds();
-    }
-    this.entityResetService.resetPlayer(this.player, this.levelConfig.playerStart, 1);
-    this.entityResetService.resetBoss(this.boss, this.levelConfig.bossStart, -1);
-    this.boss.currentPhase = 1;
-    this.boss.patrolSpeed = 200;
-    this.boss.lungeSpeed = 1200;
-    this.boss.stateMachine.changeState(this.boss.cooldownState);
-
-    this.particleSystem.cleanup();
-    this.particleSystem = new ParticleSystem(this.world.events);
-    this.battleDirector.cleanup();
-    this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
-    this.stateProjection.reset();
-
-    this.world.events.publish("SESSION_RESET", undefined);
-
-    this.stateProjection.project(this.player, this.boss);
-    this.world.events.publish("CLEAR_DIALOGUES", undefined);
-
-    this.render();
-    requestAnimationFrame(() => {
-      this.start();
-    });
+    const activeStageIdx = useSessionStore.getState().currentStageIndex;
+    this.loadStage(activeStageIdx);
   }
 
   private update(dt: number) {
@@ -244,6 +287,26 @@ export class Engine {
       return;
     }
 
+    let rebuildNeeded = false;
+    for (const dp of this.activeDissolvePlatforms) {
+      const oldState = dp.state;
+      dp.update(dt, this.player);
+      if (dp.state !== oldState) {
+        rebuildNeeded = true;
+      }
+    }
+    if (rebuildNeeded) {
+      this.rebuildPhysics();
+    }
+
+    for (const post of this.activePogoPosts) {
+      post.update(dt, this.player);
+    }
+
+    for (const gate of this.activeDashResetGates) {
+      gate.update(dt, this.player);
+    }
+
     this.particleSystem.update(dt);
 
     this.player.update(dt);
@@ -276,7 +339,10 @@ export class Engine {
       this.battleDirector.getDeathVisuals().timer,
       this.battleDirector.getDeathVisuals().pos,
       this.springPlatforms,
-      alpha
+      alpha,
+      this.activeDissolvePlatforms,
+      this.activePogoPosts,
+      this.activeDashResetGates
     );
   }
 
@@ -293,6 +359,9 @@ export class Engine {
 
     if (this.unsubPlatformImpact) {
       this.unsubPlatformImpact();
+    }
+    if (this.unsubLoadStage) {
+      this.unsubLoadStage();
     }
 
     this.encounterDirector.teardown();
