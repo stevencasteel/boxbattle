@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/6/2026, 5:32:50 PM
+ [SYSTEM] Generated: 6/6/2026, 5:37:49 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -1823,8 +1823,8 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
 ────────────────────────────────────────────────────
 .cabinet-outer {
   position: relative;
-  width: min(95vw, 81.2vh);
-  height: min(111vw, 95vh);
+  width: min(90vw, 76.5vh);
+  height: min(114vw, 95vh);
   border-radius: 20px;
   background: #0f1218;
   padding: 2.5vmin;
