@@ -282,7 +282,7 @@ export class BossAttackState extends BossState implements IBossAttackState {
       6.0
     );
 
-    proj.size = { width: 22, height: 22 };
+    proj.size = { width: 17.6, height: 17.6 };
   }
 
   private fireGapRing() {

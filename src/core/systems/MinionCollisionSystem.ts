@@ -16,10 +16,10 @@ export class MinionCollisionSystem {
       let applyLanceKnockback = false;
 
       if (minion instanceof LancerMinion && minion.lanceExtended) {
-        const lanceWidth = 90;
-        const lanceHeight = 18;
-        const lanceX = minion.position.x + minion.facingDirection * 55;
-        const lanceY = minion.position.y - 12;
+        const lanceWidth = 72;
+        const lanceHeight = 14.4;
+        const lanceX = minion.position.x + minion.facingDirection * 44;
+        const lanceY = minion.position.y - 9.6;
 
         const pW = player.size.width / 2;
         const pH = player.size.height / 2;

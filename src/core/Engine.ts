@@ -67,7 +67,7 @@ export class Engine {
     this.systems.setup(
       () => this.player.position.x,
       () => this.boss.position.x,
-      (id) => this.world.minions.find((m) => m.id === id)?.position.x ?? 625
+      (id) => this.world.minions.find((m) => m.id === id)?.position.x ?? 500
     );
 
     this.pool = new ObjectPool(() => new Projectile(), 500);

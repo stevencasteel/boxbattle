@@ -131,14 +131,14 @@ export class EncounterDirector {
         const dx = player.position.x - anchor.x;
         const dy = player.position.y - anchor.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 260) isSafe = false;
+        if (dist < 208) isSafe = false;
       }
 
       if (boss && isSafe) {
         const dx = boss.position.x - anchor.x;
         const dy = boss.position.y - anchor.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 120) isSafe = false;
+        if (dist < 96) isSafe = false;
       }
 
       if (isSafe) {

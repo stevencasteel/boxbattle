@@ -45,31 +45,31 @@ export interface LevelConfig {
 
 export const defaultLevelConfig: LevelConfig = {
   solids: [
-    { x: 0, y: 1150, width: 400, height: 100 },
-    { x: 850, y: 1150, width: 400, height: 100 },
-    { x: 400, y: 1200, width: 450, height: 50 },
-    { x: 0, y: 0, width: 1250, height: 50 },
-    { x: 0, y: 0, width: 50, height: 1250 },
-    { x: 1200, y: 0, width: 50, height: 1250 },
-    { x: 425, y: 800, width: 400, height: 40 },
+    { x: 0, y: 920, width: 320, height: 80 },
+    { x: 680, y: 920, width: 320, height: 80 },
+    { x: 320, y: 960, width: 360, height: 40 },
+    { x: 0, y: 0, width: 1000, height: 40 },
+    { x: 0, y: 0, width: 40, height: 1000 },
+    { x: 960, y: 0, width: 40, height: 1000 },
+    { x: 340, y: 640, width: 320, height: 32 },
   ],
   onewayPlatforms: [
-    { x: 50, y: 550, width: 300, height: 20 },
-    { x: 900, y: 550, width: 300, height: 20 },
+    { x: 40, y: 440, width: 240, height: 16 },
+    { x: 720, y: 440, width: 240, height: 16 },
   ],
-  hazards: [{ x: 400, y: 1150, width: 450, height: 100 }],
+  hazards: [{ x: 320, y: 920, width: 360, height: 80 }],
   spawners: [],
   spawnAnchors: [
-    { id: "left-catwalk", x: 175, y: 490, tags: ["high", "left", "perch"] },
-    { id: "right-catwalk", x: 1075, y: 490, tags: ["high", "right", "perch"] },
-    { id: "center-bridge", x: 625, y: 740, tags: ["mid", "center", "ground"] },
-    { id: "left-ground", x: 230, y: 1090, tags: ["low", "left", "ground"] },
-    { id: "right-ground", x: 1020, y: 1090, tags: ["low", "right", "ground"] },
-    { id: "upper-air-left", x: 360, y: 380, tags: ["air", "left", "ambush"] },
-    { id: "upper-air-right", x: 890, y: 380, tags: ["air", "right", "ambush"] },
-    { id: "center-air", x: 625, y: 330, tags: ["air", "center", "elite"] },
-    { id: "pit-warning-left", x: 430, y: 1080, tags: ["low", "hazard-edge"] },
-    { id: "pit-warning-right", x: 820, y: 1080, tags: ["low", "hazard-edge"] }
+    { id: "left-catwalk", x: 140, y: 392, tags: ["high", "left", "perch"] },
+    { id: "right-catwalk", x: 860, y: 392, tags: ["high", "right", "perch"] },
+    { id: "center-bridge", x: 500, y: 592, tags: ["mid", "center", "ground"] },
+    { id: "left-ground", x: 184, y: 872, tags: ["low", "left", "ground"] },
+    { id: "right-ground", x: 816, y: 872, tags: ["low", "right", "ground"] },
+    { id: "upper-air-left", x: 288, y: 304, tags: ["air", "left", "ambush"] },
+    { id: "upper-air-right", x: 712, y: 304, tags: ["air", "right", "ambush"] },
+    { id: "center-air", x: 500, y: 264, tags: ["air", "center", "elite"] },
+    { id: "pit-warning-left", x: 344, y: 864, tags: ["low", "hazard-edge"] },
+    { id: "pit-warning-right", x: 656, y: 864, tags: ["low", "hazard-edge"] }
   ],
   encounterWaves: [
     {
@@ -129,8 +129,8 @@ export const defaultLevelConfig: LevelConfig = {
       ]
     }
   ],
-  playerStart: { x: 150, y: 1000 },
-  bossStart: { x: 1050, y: 1000 },
+  playerStart: { x: 120, y: 800 },
+  bossStart: { x: 840, y: 800 },
 };
 
 export class LevelLoader {

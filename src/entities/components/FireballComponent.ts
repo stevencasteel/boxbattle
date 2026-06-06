@@ -146,9 +146,9 @@ export class FireballComponent implements IEntityComponent {
     );
 
     if (isLvl2) {
-      proj.size = { width: 48, height: 48 };
+      proj.size = { width: 38.4, height: 38.4 };
     } else {
-      proj.size = { width: 22, height: 22 };
+      proj.size = { width: 17.6, height: 17.6 };
     }
   }
 }

@@ -378,8 +378,8 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
         >
           <canvas
             ref={canvasRef}
-            width={1250}
-            height={1250}
+            width={1000}
+            height={1000}
             className="crt-scanlines crt-flicker"
             style={{
               background: "#07080b",

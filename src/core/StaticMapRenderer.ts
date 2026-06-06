@@ -28,12 +28,12 @@ export class StaticMapRenderer {
       sctx.fillStyle = "hsl(350, 80%, 60%)";
       sctx.beginPath();
       for (const hazard of hazards) {
-        const spikeWidth = 25;
+        const spikeWidth = 20;
         const spikeCount = Math.floor(hazard.width / spikeWidth);
         for (let i = 0; i < spikeCount; i++) {
-          sctx.moveTo(hazard.x + i * spikeWidth, 1200);
-          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 1150);
-          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 1200);
+          sctx.moveTo(hazard.x + i * spikeWidth, 960);
+          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 920);
+          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 960);
         }
       }
       sctx.fill();
@@ -42,33 +42,33 @@ export class StaticMapRenderer {
     sctx.fillStyle = "#13151a";
     sctx.beginPath();
     for (const solid of solids) {
-      this.drawRoundedRectPath(sctx, solid.x, solid.y, solid.width, solid.height, 10);
+      this.drawRoundedRectPath(sctx, solid.x, solid.y, solid.width, solid.height, 8);
     }
     sctx.fill();
 
     sctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
-    sctx.lineWidth = 4;
+    sctx.lineWidth = 3.2;
     sctx.lineJoin = "round";
     sctx.shadowColor = "rgba(34, 197, 94, 0.25)";
-    sctx.shadowBlur = 8;
+    sctx.shadowBlur = 6.4;
     
     sctx.beginPath();
-    this.drawInnerPerimeterPath(sctx, 2);
+    this.drawInnerPerimeterPath(sctx, 1.6);
     
-    const floatingPlatform = solids.find(s => s.x === 425 && s.y === 800);
+    const floatingPlatform = solids.find(s => s.x === 340 && s.y === 640);
     if (floatingPlatform) {
-      this.drawRoundedRectPath(sctx, floatingPlatform.x + 2, floatingPlatform.y + 2, floatingPlatform.width - 4, floatingPlatform.height - 4, 8);
+      this.drawRoundedRectPath(sctx, floatingPlatform.x + 1.6, floatingPlatform.y + 1.6, floatingPlatform.width - 3.2, floatingPlatform.height - 3.2, 6.4);
     }
     sctx.stroke();
     sctx.shadowBlur = 0;
 
     sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-    sctx.lineWidth = 1;
+    sctx.lineWidth = 0.8;
     sctx.beginPath();
-    this.drawInnerPerimeterPath(sctx, 3.5);
+    this.drawInnerPerimeterPath(sctx, 2.8);
     
     if (floatingPlatform) {
-      this.drawRoundedRectPath(sctx, floatingPlatform.x + 5, floatingPlatform.y + 5, floatingPlatform.width - 10, floatingPlatform.height - 10, 5);
+      this.drawRoundedRectPath(sctx, floatingPlatform.x + 4, floatingPlatform.y + 4, floatingPlatform.width - 8, floatingPlatform.height - 8, 4);
     }
     sctx.stroke();
 
@@ -89,14 +89,14 @@ export class StaticMapRenderer {
   }
 
   private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number) {
-    const ceilingY = 50 - inset;
-    const leftWallX = 50 - inset;
-    const rightWallX = 1200 + inset;
-    const leftFloorY = 1150 + inset;
-    const rightFloorY = 1150 + inset;
-    const leftPitWallX = 400 - inset;
-    const rightPitWallX = 850 + inset;
-    const pitFloorY = 1200 + inset;
+    const ceilingY = 40 - inset;
+    const leftWallX = 40 - inset;
+    const rightWallX = 960 + inset;
+    const leftFloorY = 920 + inset;
+    const rightFloorY = 920 + inset;
+    const leftPitWallX = 320 - inset;
+    const rightPitWallX = 680 + inset;
+    const pitFloorY = 960 + inset;
 
     ctx.moveTo(leftWallX, ceilingY);
     ctx.lineTo(rightWallX, ceilingY);

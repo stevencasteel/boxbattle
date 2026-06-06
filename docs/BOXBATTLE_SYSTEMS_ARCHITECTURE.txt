@@ -52,16 +52,16 @@ Gameplay
 - BOSS_PHASE_3_HP_PCT = 0.40
 
 Player motion
-- PLAYER_MOVE_SPEED = 450
-- PLAYER_JUMP_FORCE = 680
-- PLAYER_WALL_SLIDE_SPEED = 120
-- PLAYER_DASH_SPEED = 1400
+- PLAYER_MOVE_SPEED = 360
+- PLAYER_JUMP_FORCE = 544
+- PLAYER_WALL_SLIDE_SPEED = 96
+- PLAYER_DASH_SPEED = 1120
 - PLAYER_ACCEL = 12.0
 - PLAYER_DECEL = 16.0
 
 Boss and minions
-- BOSS_PATROL_SPEED_BASE = 200
-- BOSS_LUNGE_SPEED_BASE = 1200
+- BOSS_PATROL_SPEED_BASE = 160
+- BOSS_LUNGE_SPEED_BASE = 960
 - BOSS_ACCEL = 6.0
 - BOSS_DECEL = 8.0
 - MINION_ACCEL = 5.0
@@ -82,9 +82,9 @@ Combat and timing
 - CHARGE_LVL2_TIME = 1.12
 
 World and physics
-- WORLD_SIZE = 1250
-- WORLD_HALF_SIZE = 625
-- SPATIAL_GRID_CELL_SIZE = 250
+- WORLD_SIZE = 1000
+- WORLD_HALF_SIZE = 500
+- SPATIAL_GRID_CELL_SIZE = 200
 - CCD_STEP_LIMIT_DEFAULT = 6
 - CCD_STEP_LIMIT_PROJECTILE = 5
 - GROUND_DETECTION_OFFSET = 1
@@ -93,17 +93,17 @@ World and physics
 - BROAD_PHASE_PADDING_LARGE = 24
 
 Combat geometry
-- MELEE_MAX_REACH = 95
-- MELEE_CLOSE_RANGE_THRESHOLD = 75
-- MELEE_SIDE_OFFSET = 35
-- MELEE_VERTICAL_OFFSET = 35
-- MELEE_SWEEP_INNER_RADIUS = 25
-- PLAYER_WALL_JUMP_X_VELOCITY = 1650
-- BOSS_WALL_REBOUND_VELOCITY = 350
-- POGO_HITBOX_WIDTH = 90
-- POGO_HITBOX_HEIGHT = 44.5
-- POGO_HITBOX_Y_OFFSET = 40
-- POGO_HITBOX_X_OFFSET = -45
+- MELEE_MAX_REACH = 76
+- MELEE_CLOSE_RANGE_THRESHOLD = 60
+- MELEE_SIDE_OFFSET = 28
+- MELEE_VERTICAL_OFFSET = 28
+- MELEE_SWEEP_INNER_RADIUS = 20
+- PLAYER_WALL_JUMP_X_VELOCITY = 1320
+- BOSS_WALL_REBOUND_VELOCITY = 280
+- POGO_HITBOX_WIDTH = 72
+- POGO_HITBOX_HEIGHT = 35.6
+- POGO_HITBOX_Y_OFFSET = 32
+- POGO_HITBOX_X_OFFSET = -36
 
 The document-level rule is simple:
 - core simulation is deterministic and fixed-step
@@ -160,7 +160,7 @@ This architecture keeps menus responsive while avoiding autoplay restrictions.
 
 ───────────────────────────────────────────────────────────────────────────────
 3. WORLD, ENTITY, AND COMPONENT ARCHITECTURE
-───────────────────────────────────────────────────────────────────────────────
+─────────────────────────────────────────────────────────────────────────
 
 Relevant files:
 - `src/core/World.ts`
@@ -270,7 +270,7 @@ Static geometry is partitioned into three indexed collections:
 - one-way platforms
 - hazards
 
-Each group is stored in its own spatial hash grid. The cell size is 250 pixels,
+Each group is stored in its own spatial hash grid. The cell size is 200 pixels,
 matching `UNITS.SPATIAL_GRID_CELL_SIZE`.
 
 Bucket keys are generated with:
@@ -461,9 +461,9 @@ the boss dies or the match ends. That keeps victory/defeat presentation out of
 the low-level combat code.
 
 Relevant constants from the configuration layer include:
-- BOSS_PATROL_SPEED_BASE = 200
-- BOSS_LUNGE_SPEED_BASE = 1200
-- BOSS_WALL_REBOUND_VELOCITY = 350
+- BOSS_PATROL_SPEED_BASE = 160
+- BOSS_LUNGE_SPEED_BASE = 960
+- BOSS_WALL_REBOUND_VELOCITY = 280
 - BOSS_LUNGE_DAMAGE = 2
 
 The important architectural point is that AI decides intent, while physics and
@@ -686,5 +686,3 @@ Deployment automation:
 The manifest generation workflow is also part of the project’s documentation
 story. It allows the source code to be flattened into a single searchable context
 document for AI-assisted debugging and review.
-
-

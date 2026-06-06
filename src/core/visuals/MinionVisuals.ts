@@ -180,15 +180,15 @@ export class MinionVisuals {
       ctx.strokeStyle = "hsl(45, 100%, 65%)";
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(minion.facingDirection * 15, -18);
-      ctx.lineTo(minion.facingDirection * 55, -18);
+      ctx.moveTo(minion.facingDirection * 12, -18);
+      ctx.lineTo(minion.facingDirection * 44, -18);
       ctx.stroke();
 
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(minion.facingDirection * 15, -18);
-      ctx.lineTo(minion.facingDirection * 50, -18);
+      ctx.moveTo(minion.facingDirection * 12, -18);
+      ctx.lineTo(minion.facingDirection * 40, -18);
       ctx.stroke();
       ctx.restore();
     }
@@ -200,13 +200,13 @@ export class MinionVisuals {
       ctx.shadowColor = "rgba(6, 182, 212, 0.6)";
       ctx.shadowBlur = 10;
       ctx.beginPath();
-      ctx.arc(minion.facingDirection * 12, -minion.size.height / 2, 24, -Math.PI / 3, Math.PI / 3);
+      ctx.arc(minion.facingDirection * 9.6, -minion.size.height / 2, 19.2, -Math.PI / 3, Math.PI / 3);
       ctx.stroke();
       ctx.restore();
     }
 
     ctx.fillStyle = "black";
-    ctx.fillRect(minion.facingDirection * 8 - 2, localY - 12, 6, 4);
+    ctx.fillRect(minion.facingDirection * 6.4 - 1.6, localY - 9.6, 4.8, 3.2);
     ctx.restore();
 
     if (minion.isSpawning) {

@@ -33,7 +33,7 @@ export class Projectile extends BaseEntity implements IPoolable {
 
   constructor() {
     super("projectile", null as unknown as IWorld);
-    this.size = { width: 14, height: 14 };
+    this.size = { width: 11.2, height: 11.2 };
     this.trailRing = Array.from({ length: TRAIL_RING_SIZE }, () => ({ x: 0, y: 0 }));
   }
 

@@ -136,7 +136,7 @@ export class TurretBurstState extends MinionState {
             "homing"
           );
 
-          proj.size = { width: 16, height: 16 };
+          proj.size = { width: 12.8, height: 12.8 };
         }
       }
 

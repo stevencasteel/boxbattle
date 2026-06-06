@@ -41,7 +41,7 @@ export class Boss extends BaseEntity {
 
   constructor(id: string, world: IWorld) {
     super(id, world);
-    this.size = { width: 60, height: 60 };
+    this.size = { width: 48, height: 48 };
     this.squashPivot = "feet";
 
     zeroVec(this.position);

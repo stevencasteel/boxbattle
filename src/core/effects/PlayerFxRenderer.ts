@@ -53,7 +53,7 @@ export class PlayerFxRenderer {
     const loops = 4.0;
     const maxAngle = loops * Math.PI * 2;
     const rotationOffset = nowTime * 0.008;
-    const coilHeight = progress * 84;
+    const coilHeight = progress * 67.2;
 
     let backIdx = 0;
     let frontIdx = 0;
@@ -65,8 +65,8 @@ export class PlayerFxRenderer {
       const angle1 = t1 * maxAngle + rotationOffset;
       const angle2 = t2 * maxAngle + rotationOffset;
 
-      const r1 = (42 * (1 - t1 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t1 * 8) * 2;
-      const r2 = (42 * (1 - t2 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t2 * 8) * 2;
+      const r1 = (33.6 * (1 - t1 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t1 * 8) * 2;
+      const r2 = (33.6 * (1 - t2 * 0.3)) + TrigLUT.sin(nowTime * 0.03 + t2 * 8) * 2;
 
       const x1 = r1 * TrigLUT.cos(angle1);
       const y1 = -t1 * coilHeight + r1 * TrigLUT.sin(angle1) * 0.28;
@@ -109,7 +109,7 @@ export class PlayerFxRenderer {
   public static renderHealBuffer(ctx: CanvasRenderingContext2D, isBehind: boolean, count: number, progress: number): void {
     if (count === 0) return;
     const buffer = isBehind ? healBackBuffer : healFrontBuffer;
-    const coilHeight = progress * 84;
+    const coilHeight = progress * 67.2;
 
     ctx.save();
     
@@ -176,8 +176,8 @@ export class PlayerFxRenderer {
         const noise1 = TrigLUT.sin(theta1 * 5 + nowTime * 0.04) * 3 * chargeProgress;
         const noise2 = TrigLUT.sin(theta2 * 5 + nowTime * 0.04) * 3 * chargeProgress;
 
-        const r1 = baseRadius + noise1 + s * 12 * chargeProgress;
-        const r2 = baseRadius + noise2 + s * 12 * chargeProgress;
+        const r1 = baseRadius + noise1 + s * 9.6 * chargeProgress;
+        const r2 = baseRadius + noise2 + s * 9.6 * chargeProgress;
 
         const x0_1 = r1 * TrigLUT.cos(theta1);
         const y0_1 = r1 * TrigLUT.sin(theta1);

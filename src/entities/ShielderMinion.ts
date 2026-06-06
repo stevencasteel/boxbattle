@@ -44,7 +44,7 @@ export class ShielderPatrolState implements IState {
 export class ShielderMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 44, height: 50 };
+    this.size = { width: 35.2, height: 40 };
     this.patrolSpeed = 80;
 
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
