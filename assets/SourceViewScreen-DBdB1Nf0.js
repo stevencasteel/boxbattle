@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-wAdTwE-s.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CeQM4ZvX.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6031,13 +6031,213 @@ export class CinematicSystem {
     this.cinematicActive = false;
   }
 }
+`,"src/core/EncounterDirector.ts":`import { IWorld } from "./Interfaces";
+import { SpawnAnchor, defaultLevelConfig, MinionType } from "./levelData";
+import { MinionFactory } from "@/entities/MinionFactory";
+import { TrigLUT } from "./TrigLUT";
+
+export class EncounterDirector {
+  private world: IWorld;
+  private currentPhase = 1;
+  private elapsedFightTime = 0;
+  private spawnCooldownTimer = 12.0;
+
+  private unsubs: (() => void)[] = [];
+
+  constructor(world: IWorld) {
+    this.world = world;
+    this.setupSubscriptions();
+    this.spawnInitialPlaytestMinions();
+  }
+
+  private setupSubscriptions() {
+    this.unsubs.push(
+      this.world.events.subscribe("BOSS_PHASE_SHIFT", () => {
+        this.currentPhase = Math.min(3, this.currentPhase + 1);
+      })
+    );
+
+    this.unsubs.push(
+      this.world.events.subscribe("MINION_DESPAWN_ALL", () => {
+        this.despawnAllMinions();
+      })
+    );
+  }
+
+  public update(dt: number) {
+    if (this.world.boss && this.world.boss.isDead) {
+      return;
+    }
+
+    this.elapsedFightTime += dt;
+
+    for (let i = this.world.minions.length - 1; i >= 0; i--) {
+      const m = this.world.minions[i];
+      if (m.isDead) {
+        m.teardown();
+        this.world.minions.splice(i, 1);
+      }
+    }
+
+    const activeCount = this.world.minions.length;
+    const maxBudget = this.currentPhase === 1 ? 2 : this.currentPhase === 2 ? 3 : 5;
+
+    if (this.spawnCooldownTimer > 0) {
+      this.spawnCooldownTimer -= dt;
+      return;
+    }
+
+    if (activeCount < maxBudget) {
+      this.triggerNextWave();
+    }
+  }
+
+  private triggerNextWave() {
+    const waves = defaultLevelConfig.encounterWaves.filter(
+      (w) => w.phase === this.currentPhase && this.elapsedFightTime >= (w.earliestTime || 0)
+    );
+
+    if (waves.length === 0) return;
+
+    const rand = TrigLUT.randomGameplay();
+    const waveIdx = Math.floor(rand * waves.length);
+    const selectedWave = waves[waveIdx];
+
+    const entriesToSpawn = selectedWave.maxActiveMinions;
+    const activeCount = this.world.minions.length;
+    const maxBudget = this.currentPhase === 1 ? 2 : this.currentPhase === 2 ? 3 : 5;
+    const spaceInBudget = maxBudget - activeCount;
+    const limit = Math.min(entriesToSpawn, spaceInBudget);
+
+    for (let i = 0; i < limit; i++) {
+      const entryRand = TrigLUT.randomGameplay() * 100;
+      let accumulatedWeight = 0;
+      let selectedEntry = selectedWave.entries[0];
+
+      for (const entry of selectedWave.entries) {
+        accumulatedWeight += entry.weight;
+        if (entryRand <= accumulatedWeight) {
+          selectedEntry = entry;
+          break;
+        }
+      }
+
+      const anchor = this.findSafeAnchor(selectedEntry.anchorIds, selectedEntry.anchorTags);
+      if (anchor) {
+        this.spawnMinion(selectedEntry.type, anchor);
+      }
+    }
+
+    const minCd = selectedWave.cooldownRange[0];
+    const maxCd = selectedWave.cooldownRange[1];
+    this.spawnCooldownTimer = minCd + TrigLUT.randomGameplay() * (maxCd - minCd);
+  }
+
+  private findSafeAnchor(ids?: string[], tags?: string[]): SpawnAnchor | null {
+    let candidates = defaultLevelConfig.spawnAnchors;
+
+    if (ids && ids.length > 0) {
+      candidates = candidates.filter((a) => ids.includes(a.id));
+    } else if (tags && tags.length > 0) {
+      candidates = candidates.filter((a) => a.tags.some((t) => tags.includes(t)));
+    }
+
+    if (candidates.length === 0) {
+      return null;
+    }
+
+    const shuffled = [...candidates];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(TrigLUT.randomGameplay() * (i + 1));
+      const temp = shuffled[i];
+      shuffled[i] = shuffled[j];
+      shuffled[j] = temp;
+    }
+
+    const player = this.world.player;
+    const boss = this.world.boss;
+
+    for (const anchor of shuffled) {
+      let isSafe = true;
+
+      if (player) {
+        const dx = player.position.x - anchor.x;
+        const dy = player.position.y - anchor.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 260) isSafe = false;
+      }
+
+      if (boss && isSafe) {
+        const dx = boss.position.x - anchor.x;
+        const dy = boss.position.y - anchor.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) isSafe = false;
+      }
+
+      if (isSafe) {
+        return anchor;
+      }
+    }
+
+    return shuffled[0] || null;
+  }
+
+  private spawnMinion(type: MinionType, anchor: SpawnAnchor) {
+    const minionId = \`minion-\${type}-\${Date.now()}-\${Math.floor(TrigLUT.randomGameplay() * 1000000)}\`;
+    const minion = MinionFactory.createMinion(type, minionId, { x: anchor.x, y: anchor.y }, this.world);
+    this.world.minions.push(minion);
+  }
+
+  private spawnInitialPlaytestMinions() {
+    const turretAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "left-catwalk");
+    if (turretAnchor) {
+      this.spawnMinion("TURRET", turretAnchor);
+    }
+
+    const lancerAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "center-bridge");
+    if (lancerAnchor) {
+      this.spawnMinion("LANCER", lancerAnchor);
+    }
+
+    const flyerAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "upper-air-left");
+    if (flyerAnchor) {
+      this.spawnMinion("FLYER", flyerAnchor);
+    }
+
+    const shielderAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "left-ground");
+    if (shielderAnchor) {
+      this.spawnMinion("SHIELDER", shielderAnchor);
+    }
+  }
+
+  private despawnAllMinions() {
+    for (const m of this.world.minions) {
+      m.teardown();
+    }
+    this.world.minions = [];
+  }
+
+  public reset() {
+    this.despawnAllMinions();
+    this.currentPhase = 1;
+    this.elapsedFightTime = 0;
+    this.spawnCooldownTimer = 12.0;
+    this.spawnInitialPlaytestMinions();
+  }
+
+  public teardown() {
+    this.unsubs.forEach((unsub) => unsub());
+    this.unsubs = [];
+    this.despawnAllMinions();
+  }
+}
 `,"src/core/Engine.ts":`import GameLoop from "@/core/GameLoop";
 import { Player } from "@/entities/Player";
 import { Boss } from "@/entities/Boss";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
-import { Spawner } from "@/entities/Spawner";
+import { EncounterDirector } from "@/core/EncounterDirector";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { Rectangle } from "@/core/Interfaces";
@@ -6066,7 +6266,7 @@ export class Engine {
   private pool!: ObjectPool<Projectile>;
   private player!: Player;
   private boss!: Boss;
-  private activeSpawners: Spawner[] = [];
+  private encounterDirector!: EncounterDirector;
   private springPlatforms: { rect: Rectangle; offsetY: number; velocityY: number }[] = [];
   private unsubPlatformImpact!: () => void;
 
@@ -6103,7 +6303,7 @@ export class Engine {
       (id) => this.world.minions.find((m) => m.id === id)?.position.x ?? 625
     );
 
-    this.pool = new ObjectPool(() => new Projectile(), 60);
+    this.pool = new ObjectPool(() => new Projectile(), 500);
     this.world.projectilePool = this.pool;
 
     this.player = new Player("player-01", this.world);
@@ -6117,7 +6317,7 @@ export class Engine {
     this.world.player = this.player;
     this.world.boss = this.boss;
 
-    this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
+    this.encounterDirector = new EncounterDirector(this.world);
 
     Camera.reset();
 
@@ -6164,11 +6364,7 @@ export class Engine {
       overlay.classList.remove("vignette-pulse");
     }
 
-    for (const spawner of this.activeSpawners) {
-      spawner.cleanup();
-    }
-    this.world.minions = [];
-    this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
+    this.encounterDirector.reset();
 
     if (this.world.audio.stopCrowdSounds) {
       this.world.audio.stopCrowdSounds();
@@ -6286,9 +6482,7 @@ export class Engine {
     this.player.update(dt);
     this.boss.update(dt);
 
-    for (const spawner of this.activeSpawners) {
-      spawner.update(dt);
-    }
+    this.encounterDirector.update(dt);
 
     this.minionCollisionSystem.update(this.world.minions, this.player, dt);
 
@@ -6334,10 +6528,7 @@ export class Engine {
       this.unsubPlatformImpact();
     }
 
-    for (const spawner of this.activeSpawners) {
-      spawner.cleanup();
-    }
-    this.world.minions = [];
+    this.encounterDirector.teardown();
   }
 }
 `,"src/core/EntityRenderer.ts":`import { Player } from "@/entities/Player";
@@ -10964,7 +11155,8 @@ class EventBroker implements IEventBus {
 
 export const eventBroker = new EventBroker();
 `,"src/core/levelData.ts":`import { Rectangle } from "@/core/Interfaces";
-import { MinionType } from "@/entities/BaseMinion";
+
+export type MinionType = "TURRET" | "LANCER" | "FLYER" | "SHIELDER";
 
 export interface SpawnerConfig {
   type: MinionType;
@@ -10972,11 +11164,37 @@ export interface SpawnerConfig {
   y: number;
 }
 
+export interface SpawnAnchor {
+  id: string;
+  x: number;
+  y: number;
+  tags: string[];
+}
+
+export interface EncounterWave {
+  id: string;
+  phase: 1 | 2 | 3;
+  earliestTime?: number;
+  cooldownRange: [number, number];
+  maxActiveMinions: number;
+  entries: EncounterSpawnEntry[];
+}
+
+export interface EncounterSpawnEntry {
+  type: MinionType;
+  anchorTags?: string[];
+  anchorIds?: string[];
+  weight: number;
+  maxAliveOfType?: number;
+}
+
 export interface LevelConfig {
   solids: Rectangle[];
   onewayPlatforms: Rectangle[];
   hazards: Rectangle[];
   spawners: SpawnerConfig[];
+  spawnAnchors: SpawnAnchor[];
+  encounterWaves: EncounterWave[];
   playerStart: { x: number; y: number };
   bossStart: { x: number; y: number };
 }
@@ -10996,11 +11214,76 @@ export const defaultLevelConfig: LevelConfig = {
     { x: 900, y: 550, width: 300, height: 20 },
   ],
   hazards: [{ x: 400, y: 1150, width: 450, height: 100 }],
-  spawners: [
-    { type: "TURRET", x: 175, y: 490 },
-    { type: "TURRET", x: 1075, y: 490 },
-    { type: "LANCER", x: 625, y: 740 },
-    { type: "FLYER", x: 625, y: 400 },
+  spawners: [],
+  spawnAnchors: [
+    { id: "left-catwalk", x: 175, y: 490, tags: ["high", "left", "perch"] },
+    { id: "right-catwalk", x: 1075, y: 490, tags: ["high", "right", "perch"] },
+    { id: "center-bridge", x: 625, y: 740, tags: ["mid", "center", "ground"] },
+    { id: "left-ground", x: 230, y: 1090, tags: ["low", "left", "ground"] },
+    { id: "right-ground", x: 1020, y: 1090, tags: ["low", "right", "ground"] },
+    { id: "upper-air-left", x: 360, y: 380, tags: ["air", "left", "ambush"] },
+    { id: "upper-air-right", x: 890, y: 380, tags: ["air", "right", "ambush"] },
+    { id: "center-air", x: 625, y: 330, tags: ["air", "center", "elite"] },
+    { id: "pit-warning-left", x: 430, y: 1080, tags: ["low", "hazard-edge"] },
+    { id: "pit-warning-right", x: 820, y: 1080, tags: ["low", "hazard-edge"] }
+  ],
+  encounterWaves: [
+    {
+      id: "p1-first-perch",
+      phase: 1,
+      earliestTime: 3,
+      cooldownRange: [7, 10],
+      maxActiveMinions: 2,
+      entries: [
+        { type: "TURRET", anchorIds: ["left-catwalk", "right-catwalk"], weight: 70 },
+        { type: "LANCER", anchorIds: ["center-bridge"], weight: 30 }
+      ]
+    },
+    {
+      id: "p1-air-intro",
+      phase: 1,
+      earliestTime: 14,
+      cooldownRange: [8, 12],
+      maxActiveMinions: 2,
+      entries: [
+        { type: "FLYER", anchorTags: ["air"], weight: 60 },
+        { type: "TURRET", anchorTags: ["perch"], weight: 40 }
+      ]
+    },
+    {
+      id: "p2-crossfire",
+      phase: 2,
+      cooldownRange: [5, 8],
+      maxActiveMinions: 3,
+      entries: [
+        { type: "TURRET", anchorTags: ["perch"], weight: 40 },
+        { type: "LANCER", anchorTags: ["ground"], weight: 40 },
+        { type: "SHIELDER", anchorIds: ["center-bridge"], weight: 20 }
+      ]
+    },
+    {
+      id: "p2-air-skirmish",
+      phase: 2,
+      cooldownRange: [6, 9],
+      maxActiveMinions: 3,
+      entries: [
+        { type: "FLYER", anchorTags: ["air"], weight: 50 },
+        { type: "LANCER", anchorIds: ["center-bridge"], weight: 30 },
+        { type: "SHIELDER", anchorTags: ["ground"], weight: 20 }
+      ]
+    },
+    {
+      id: "p3-surge",
+      phase: 3,
+      cooldownRange: [4, 7],
+      maxActiveMinions: 5,
+      entries: [
+        { type: "FLYER", anchorTags: ["air"], weight: 30 },
+        { type: "LANCER", anchorTags: ["ground"], weight: 30 },
+        { type: "TURRET", anchorTags: ["perch"], weight: 20 },
+        { type: "SHIELDER", anchorTags: ["ground", "center"], weight: 20 }
+      ]
+    }
   ],
   playerStart: { x: 150, y: 1000 },
   bossStart: { x: 1050, y: 1000 },
@@ -11015,7 +11298,6 @@ export class LevelLoader {
         Array.isArray(parsed.solids) &&
         Array.isArray(parsed.onewayPlatforms) &&
         Array.isArray(parsed.hazards) &&
-        Array.isArray(parsed.spawners) &&
         parsed.playerStart &&
         parsed.bossStart
       ) {
@@ -11426,6 +11708,8 @@ export class HazardSystem {
 `,"src/core/systems/MinionCollisionSystem.ts":`import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { EntityStatus, IWorld } from "@/core/Interfaces";
+import { LancerMinion } from "@/entities/LancerMinion";
+import { BaseMinion } from "@/entities/BaseMinion";
 
 export class MinionCollisionSystem {
   public update(minions: IWorld["minions"], player: Player, dt: number): void {
@@ -11435,25 +11719,57 @@ export class MinionCollisionSystem {
 
       if (player.isDead || minion.status !== EntityStatus.ACTIVE) continue;
 
-      const pW = player.size.width / 2;
-      const pH = player.size.height / 2;
-      const mW = minion.size.width / 2;
-      const mH = minion.size.height / 2;
+      let isColliding = false;
+      let applyLanceKnockback = false;
 
-      const isColliding =
-        player.position.x + pW > minion.position.x - mW &&
-        player.position.x - pW < minion.position.x + mW &&
-        player.position.y + pH > minion.position.y - mH &&
-        player.position.y - pH < minion.position.y + mH;
+      if (minion instanceof LancerMinion && minion.lanceExtended) {
+        const lanceWidth = 90;
+        const lanceHeight = 18;
+        const lanceX = minion.position.x + minion.facingDirection * 55;
+        const lanceY = minion.position.y - 12;
+
+        const pW = player.size.width / 2;
+        const pH = player.size.height / 2;
+
+        const isLanceColliding =
+          player.position.x + pW > lanceX - lanceWidth / 2 &&
+          player.position.x - pW < lanceX + lanceWidth / 2 &&
+          player.position.y + pH > lanceY - lanceHeight / 2 &&
+          player.position.y - pH < lanceY + lanceHeight / 2;
+
+        if (isLanceColliding) {
+          isColliding = true;
+          applyLanceKnockback = true;
+        }
+      }
+
+      if (!isColliding) {
+        const pW = player.size.width / 2;
+        const pH = player.size.height / 2;
+        const mW = minion.size.width / 2;
+        const mH = minion.size.height / 2;
+
+        isColliding =
+          player.position.x + pW > minion.position.x - mW &&
+          player.position.x - pW < minion.position.x + mW &&
+          player.position.y + pH > minion.position.y - mH &&
+          player.position.y - pH < minion.position.y + mH;
+      }
 
       if (isColliding) {
         const playerHealth = player.getComponent(HealthComponent);
         if (playerHealth) {
           const damaged = playerHealth.takeDamage(1);
           if (damaged) {
-            const knockbackDir = Math.sign(player.position.x - minion.position.x);
-            player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
-            player.velocity.y = -350;
+            if (applyLanceKnockback && minion instanceof BaseMinion) {
+              const knockbackDir = minion.facingDirection !== 0 ? minion.facingDirection : 1;
+              player.velocity.x = knockbackDir * 650;
+              player.velocity.y = -350;
+            } else {
+              const knockbackDir = Math.sign(player.position.x - minion.position.x);
+              player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
+              player.velocity.y = -350;
+            }
           }
         }
       }
@@ -11501,6 +11817,7 @@ export class BossVisuals {
 }
 `,"src/core/visuals/MinionVisuals.ts":`import { TrigLUT } from "@/core/TrigLUT";
 import { BaseMinion } from "@/entities/BaseMinion";
+import { Boss } from "@/entities/Boss";
 
 interface CageSegment { x1: number; y1: number; x2: number; y2: number; color: string; width: number; }
 const backCageScratch: CageSegment[] = [];
@@ -11534,7 +11851,14 @@ export class MinionVisuals {
       const staticFlicker = TrigLUT.random() < 0.04 ? 0.45 : 1.0;
       const cageAlpha = spawnPct <= 0.5 ? 0.85 * staticFlicker : (1.0 - secondHalfProgress) * 0.85 * staticFlicker;
 
-      const mColor = minion["cageColorValue"] + \`\${cageAlpha})\`;
+      const boss = minion.world.boss;
+      const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
+      let mColor = \`hsla(180, 85%, 65%, \${cageAlpha})\`;
+      if (phase === 2) {
+        mColor = \`hsla(35, 95%, 60%, \${cageAlpha})\`;
+      } else if (phase === 3) {
+        mColor = \`hsla(0, 100%, 60%, \${cageAlpha})\`;
+      }
 
       const H = minion.size.height;
       const W = minion.size.width;
@@ -11819,7 +12143,7 @@ import { HazardSystem } from "@/core/systems/HazardSystem";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import { TrigLUT } from "@/core/TrigLUT";
 
-export type MinionType = "TURRET" | "LANCER" | "FLYER";
+export type MinionType = "TURRET" | "LANCER" | "FLYER" | "SHIELDER";
 
 export abstract class BaseMinion extends BaseEntity {
   private unsubHurt!: () => void;
@@ -12051,8 +12375,6 @@ export abstract class BaseMinion extends BaseEntity {
     super.teardown();
   }
 }
-
-
 `,"src/entities/Boss.ts":`import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent, DamagePayload } from "@/entities/components/HealthComponent";
@@ -12090,6 +12412,9 @@ export class Boss extends BaseEntity {
 
   public facingDirection: number = -1;
   public currentPhase: number = 1;
+
+  public recentAttackIds: string[] = [];
+  public timeSinceLastProjectileHeavy = 0;
 
   constructor(id: string, world: IWorld) {
     super(id, world);
@@ -12133,10 +12458,10 @@ export class Boss extends BaseEntity {
       return;
     }
 
+    this.timeSinceLastProjectileHeavy += dt;
     this.evaluatePhaseShifts();
     this.trackPlayer();
 
-    // Standard Boss target rotation lean driven by movement velocity
     if (this.physics.isGrounded) {
       this.targetRotation = Math.sign(this.velocity.x) * 0.1;
     } else {
@@ -12179,28 +12504,6 @@ export class Boss extends BaseEntity {
       250,
       10.0
     );
-  }
-
-  public fireRadialOmniBurst() {
-    const projectileCount = 8;
-    const angleStep = (Math.PI * 2) / projectileCount;
-
-    for (let i = 0; i < projectileCount; i++) {
-      const angle = i * angleStep;
-      const dirX = TrigLUT.cos(angle);
-      const dirY = TrigLUT.sin(angle);
-
-      this.world.spawnProjectile(
-        this.position.x + dirX * 40,
-        this.position.y + dirY * 40,
-        dirX,
-        dirY,
-        "boss",
-        1,
-        280,
-        4.0
-      );
-    }
   }
 
   private evaluatePhaseShifts() {
@@ -12276,12 +12579,10 @@ export class Boss extends BaseEntity {
 
     const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
 
-    // Overriding velocities directly to create a satisfying pop upward similar to the spike hazard response
     this.velocity.x = dirX * 240 * intensity;
     this.velocity.y = Math.min(this.velocity.y, -280 * intensity);
     this.physics.isGrounded = false;
 
-    // Stretch vertically to visually sell the launch momentum
     setVec(this.visualScale, 1.0 - 0.15 * intensity, 1.0 + 0.3 * intensity);
     setVec(this.scaleVelocity, 8.0 * intensity, -16.0 * intensity);
 
@@ -12296,12 +12597,170 @@ export class Boss extends BaseEntity {
     super.teardown();
   }
 }
+`,"src/entities/BossAttackPatterns.ts":`import { Boss } from "./Boss";
+
+export type AttackTag = "projectile-heavy" | "melee" | "arena-denial" | "reposition";
+
+export interface BossAttackContext {
+  phase: number;
+  distanceToPlayer: number;
+  playerIsAirborne: boolean;
+  playerHP: number;
+  activeMinionsCount: number;
+  recentAttackIds: string[];
+  timeSinceLastProjectileHeavy: number;
+}
+
+export interface IBossAttackState {
+  volleyCount: number;
+  volleyTimer: number;
+  durationTimer: number;
+  getBoss(): Boss;
+}
+
+export interface AttackPattern {
+  id: string;
+  tags: AttackTag[];
+  minPhase: 1 | 2 | 3;
+  basePriority: number;
+  score(ctx: BossAttackContext): number;
+  configure(state: IBossAttackState): void;
+}
+
+export class OmniBurstPattern implements AttackPattern {
+  public id = "OMNI_BURST";
+  public tags: AttackTag[] = ["projectile-heavy", "arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 40;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    let s = this.basePriority;
+    if (ctx.distanceToPlayer < 250) s += 30;
+    if (ctx.phase === 3) s += 15;
+    return s;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 0.8;
+  }
+}
+
+export class VolleyPattern implements AttackPattern {
+  public id = "VOLLEY";
+  public tags: AttackTag[] = ["projectile-heavy"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 45;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    let s = this.basePriority;
+    if (ctx.distanceToPlayer > 300) s += 25;
+    if (ctx.phase === 1) s -= 10;
+    return s;
+  }
+
+  public configure(state: IBossAttackState): void {
+    const phase = state.getBoss().currentPhase;
+    state.volleyCount = phase === 1 ? 3 : phase === 2 ? 6 : 10;
+    state.volleyTimer = 0;
+    state.durationTimer = phase === 1 ? 0.8 : phase === 2 ? 1.2 : 1.6;
+  }
+}
+
+export class FanBurstPattern implements AttackPattern {
+  public id = "FAN_BURST";
+  public tags: AttackTag[] = ["projectile-heavy", "reposition"];
+  public minPhase: 1 | 2 | 3 = 2;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    if (ctx.phase < this.minPhase) return 0;
+    let s = this.basePriority;
+    if (ctx.playerIsAirborne) s += 35;
+    return s;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 0.7;
+  }
+}
+
+export class PredictiveShotPattern implements AttackPattern {
+  public id = "PREDICTIVE_SHOT";
+  public tags: AttackTag[] = ["projectile-heavy"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 30;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    let s = this.basePriority;
+    if (ctx.distanceToPlayer > 200) s += 20;
+    return s;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 0.6;
+  }
+}
+
+export class GapRingPattern implements AttackPattern {
+  public id = "GAP_RING";
+  public tags: AttackTag[] = ["projectile-heavy", "arena-denial"];
+  public minPhase: 1 | 2 | 3 = 3;
+  public basePriority = 70;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    if (ctx.phase < this.minPhase) return 0;
+    return this.basePriority + (ctx.playerHP <= 2 ? 20 : 0);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.0;
+  }
+}
+
+export const ALL_PATTERNS: AttackPattern[] = [
+  new OmniBurstPattern(),
+  new VolleyPattern(),
+  new FanBurstPattern(),
+  new PredictiveShotPattern(),
+  new GapRingPattern()
+];
+
+export function selectBestAttack(ctx: BossAttackContext): AttackPattern {
+  let bestPattern = ALL_PATTERNS[0];
+  let highestScore = -1;
+
+  for (const p of ALL_PATTERNS) {
+    const score = p.score(ctx);
+    if (score > highestScore) {
+      highestScore = score;
+      bestPattern = p;
+    }
+  }
+
+  return bestPattern;
+}
 `,"src/entities/BossStates.ts":`import { TrigLUT } from "@/core/TrigLUT";
 import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { Boss } from "./Boss";
+import { Player } from "./Player";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
 import { setVec } from "@/core/VecUtils";
+import { selectBestAttack, BossAttackContext, IBossAttackState } from "./BossAttackPatterns";
 
 export abstract class BossState implements IState {
   protected owner: Boss;
@@ -12333,7 +12792,7 @@ export class BossCooldownState extends BossState {
       this.duration = this.overrideDuration;
       this.overrideDuration = -1;
     } else {
-      this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
+      this.duration = this.owner.currentPhase === 3 ? 1.2 : 2.0;
     }
     setVec(this.owner.targetVisualScale, 1.0, 1.0);
   }
@@ -12354,7 +12813,7 @@ export class BossPatrolState extends BossState {
 
   public enter(): void {
     setVec(this.owner.targetVisualScale, 1.0, 1.0);
-    this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
+    this.duration = this.owner.currentPhase === 3 ? 1.0 : 2.0;
   }
 
   public update(dt: number): void {
@@ -12412,47 +12871,63 @@ export class BossMeleeState extends BossState {
   public exit(): void {}
 }
 
-export class BossAttackState extends BossState {
-  private attackType: "SINGLE_SHOT" | "VOLLEY" | "OMNI_BURST" = "SINGLE_SHOT";
-  private durationTimer: number = 0;
-  private volleyCount: number = 0;
-  private volleyTimer: number = 0;
+export class BossAttackState extends BossState implements IBossAttackState {
+  public attackType: "SINGLE_SHOT" | "VOLLEY" | "OMNI_BURST" | "FAN_BURST" | "PREDICTIVE_SHOT" | "GAP_RING" = "SINGLE_SHOT";
+  public durationTimer: number = 0;
+  public volleyCount: number = 0;
+  public volleyTimer: number = 0;
+
+  constructor(owner: Boss) {
+    super(owner);
+  }
+
+  public getBoss(): Boss {
+    return this.owner;
+  }
 
   public enter(): void {
-    const phase = this.owner.currentPhase;
     this.owner.velocity.x = 0;
+    const player = this.owner.world.player as Player;
+    if (!player || player.isDead) {
+      this.owner.stateMachine.changeState(this.owner.cooldownState);
+      return;
+    }
 
-    if (phase === 1) {
-      if (TrigLUT.randomGameplay() < 0.6) {
-        this.attackType = "SINGLE_SHOT";
-        this.durationTimer = 0.5;
-        this.owner.fireSingleShotAtPlayer();
-      } else {
-        this.owner.stateMachine.changeState(this.owner.telegraphState);
-      }
-    } else if (phase === 2) {
-      if (TrigLUT.randomGameplay() < 0.5) {
-        this.attackType = "VOLLEY";
-        this.volleyCount = 3;
-        this.volleyTimer = 0;
-        this.durationTimer = 1.0;
-      } else {
-        this.owner.stateMachine.changeState(this.owner.telegraphState);
-      }
-    } else {
-      const r = TrigLUT.randomGameplay();
-      if (r < 0.33) {
-        this.attackType = "VOLLEY";
-        this.volleyCount = 5;
-        this.volleyTimer = 0;
-        this.durationTimer = 1.2;
-      } else if (r < 0.66) {
-        this.attackType = "OMNI_BURST";
-        this.owner.fireRadialOmniBurst();
-        this.durationTimer = 0.8;
-      } else {
-        this.owner.stateMachine.changeState(this.owner.telegraphState);
-      }
+    const playerHealth = player.getComponent(HealthComponent);
+    const playerHp = playerHealth ? playerHealth.currentHealth : 5;
+
+    const ctx: BossAttackContext = {
+      phase: this.owner.currentPhase,
+      distanceToPlayer: Math.abs(player.position.x - this.owner.position.x),
+      playerIsAirborne: !player.physics.isGrounded,
+      playerHP: playerHp,
+      activeMinionsCount: this.owner.world.minions.length,
+      recentAttackIds: [...this.owner.recentAttackIds],
+      timeSinceLastProjectileHeavy: this.owner.timeSinceLastProjectileHeavy,
+    };
+
+    const pattern = selectBestAttack(ctx);
+
+    this.owner.recentAttackIds.push(pattern.id);
+    if (this.owner.recentAttackIds.length > 3) {
+      this.owner.recentAttackIds.shift();
+    }
+
+    this.attackType = pattern.id as "SINGLE_SHOT" | "VOLLEY" | "OMNI_BURST" | "FAN_BURST" | "PREDICTIVE_SHOT" | "GAP_RING";
+    pattern.configure(this);
+
+    this.executeImmediateFire();
+  }
+
+  private executeImmediateFire() {
+    if (this.attackType === "OMNI_BURST") {
+      this.fireOmniBurst();
+    } else if (this.attackType === "FAN_BURST") {
+      this.fireFanBurst();
+    } else if (this.attackType === "PREDICTIVE_SHOT") {
+      this.firePredictiveShot();
+    } else if (this.attackType === "GAP_RING") {
+      this.fireGapRing();
     }
   }
 
@@ -12464,17 +12939,143 @@ export class BossAttackState extends BossState {
       if (this.volleyTimer <= 0) {
         this.owner.fireSingleShotAtPlayer();
         this.volleyCount--;
-        this.volleyTimer = 0.2;
+        this.volleyTimer = this.owner.currentPhase === 3 ? 0.10 : 0.12;
       }
     }
 
     if (this.durationTimer <= 0) {
-      let cooldown = 1.5;
-      if (this.attackType === "VOLLEY") cooldown = 2.5;
-      else if (this.attackType === "OMNI_BURST") cooldown = 3.5;
+      let cooldown = 1.2;
+      if (this.attackType === "VOLLEY") cooldown = 2.0;
+      else if (this.attackType === "OMNI_BURST") cooldown = 2.5;
+      else if (this.attackType === "GAP_RING") cooldown = 3.0;
 
       this.owner.cooldownState.setDuration(cooldown);
       this.owner.stateMachine.changeState(this.owner.cooldownState);
+    }
+  }
+
+  private fireOmniBurst() {
+    const phase = this.owner.currentPhase;
+    const projectileCount = phase === 1 ? 12 : phase === 2 ? 18 : 24;
+    const angleStep = (Math.PI * 2) / projectileCount;
+
+    for (let i = 0; i < projectileCount; i++) {
+      const angle = i * angleStep;
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
+
+      this.owner.world.spawnProjectile(
+        this.owner.position.x + dirX * 40,
+        this.owner.position.y + dirY * 40,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        280,
+        4.0
+      );
+    }
+  }
+
+  private fireFanBurst() {
+    const player = this.owner.world.player;
+    if (!player) return;
+
+    const dx = player.position.x - this.owner.position.x;
+    const dy = player.position.y - this.owner.position.y;
+    const centerAngle = TrigLUT.atan2(dy, dx);
+
+    const phase = this.owner.currentPhase;
+    const count = phase === 2 ? 7 : 12;
+    const totalSpread = (phase === 2 ? 55 : 80) * (Math.PI / 180);
+    const startAngle = centerAngle - totalSpread / 2;
+    const step = totalSpread / (count - 1);
+
+    for (let i = 0; i < count; i++) {
+      const angle = startAngle + i * step;
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
+
+      this.owner.world.spawnProjectile(
+        this.owner.position.x + dirX * 40,
+        this.owner.position.y + dirY * 40,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        300,
+        5.0
+      );
+    }
+  }
+
+  private firePredictiveShot() {
+    const player = this.owner.world.player;
+    if (!player) return;
+
+    const leadTime = 0.35;
+    const predX = player.position.x + player.velocity.x * leadTime;
+    const predY = player.position.y + player.velocity.y * leadTime;
+
+    const dx = predX - this.owner.position.x;
+    const dy = predY - this.owner.position.y;
+    const mag = Math.sqrt(dx * dx + dy * dy);
+    if (mag === 0) return;
+
+    const dirX = dx / mag;
+    const dirY = dy / mag;
+
+    const proj = this.owner.world.spawnProjectile(
+      this.owner.position.x + dirX * 45,
+      this.owner.position.y + dirY * 45,
+      dirX,
+      dirY,
+      "boss",
+      2,
+      450,
+      6.0
+    );
+
+    proj.size = { width: 22, height: 22 };
+  }
+
+  private fireGapRing() {
+    const player = this.owner.world.player;
+    if (!player) return;
+
+    const leadTime = 0.3;
+    const predX = player.position.x + player.velocity.x * leadTime;
+    const predY = player.position.y + player.velocity.y * leadTime;
+
+    const dx = predX - this.owner.position.x;
+    const dy = predY - this.owner.position.y;
+    const targetAngle = TrigLUT.atan2(dy, dx);
+
+    const projCount = 18;
+    const angleStep = (Math.PI * 2) / projCount;
+
+    for (let i = 0; i < projCount; i++) {
+      const angle = i * angleStep;
+      let diff = Math.abs(angle - targetAngle) % (Math.PI * 2);
+      if (diff > Math.PI) diff = Math.PI * 2 - diff;
+
+      if (diff < 0.22) {
+        continue;
+      }
+
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
+
+      this.owner.world.spawnProjectile(
+        this.owner.position.x + dirX * 40,
+        this.owner.position.y + dirY * 40,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        280,
+        4.0
+      );
     }
   }
 
@@ -12486,7 +13087,7 @@ export class BossTelegraphState extends BossState {
 
   public enter(): void {
     this.owner.velocity.x = 0;
-    this.duration = this.owner.currentPhase === 3 ? 0.4 : 0.8;
+    this.duration = this.owner.currentPhase === 3 ? 0.35 : 0.6;
     setVec(this.owner.visualScale, 1.25, 0.75);
     setVec(this.owner.targetVisualScale, 1.15, 0.85);
     this.owner.world.events.publish("BOSS_TELEGRAPH", undefined);
@@ -12536,7 +13137,6 @@ export class BossLungeState extends BossState {
     const hitWall = physics ? physics.isOnWallLeft || physics.isOnWallRight : false;
 
     if (hitWall && physics) {
-      // Rebound backward and squash elastically on wall collision
       this.owner.velocity.x = -this.owner.facingDirection * UNITS.BOSS_WALL_REBOUND_VELOCITY;
       setVec(this.owner.visualScale, 0.7, 1.3);
       setVec(this.owner.targetVisualScale, 1.0, 1.0);
@@ -12624,6 +13224,8 @@ import { LancerPatrolState } from "./MinionStates";
 import { TrigLUT } from "@/core/TrigLUT";
 
 export class LancerMinion extends BaseMinion {
+  public lanceExtended = false;
+
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
     this.size = { width: 40, height: 50 };
@@ -12669,9 +13271,34 @@ export class LancerMinion extends BaseMinion {
     }
   }
 }
+`,"src/entities/MinionFactory.ts":`import { BaseMinion, MinionType } from "./BaseMinion";
+import { TurretMinion } from "./TurretMinion";
+import { LancerMinion } from "./LancerMinion";
+import { FlyerMinion } from "./FlyerMinion";
+import { ShielderMinion } from "./ShielderMinion";
+import { IWorld } from "@/core/Interfaces";
+
+export class MinionFactory {
+  public static createMinion(type: MinionType, id: string, position: { x: number; y: number }, world: IWorld): BaseMinion {
+    switch (type) {
+      case "TURRET":
+        return new TurretMinion(id, position, world);
+      case "LANCER":
+        return new LancerMinion(id, position, world);
+      case "FLYER":
+        return new FlyerMinion(id, position, world);
+      case "SHIELDER":
+        return new ShielderMinion(id, position, world);
+      default:
+        throw new Error(\`Unknown minion type: \${type}\`);
+    }
+  }
+}
 `,"src/entities/MinionStates.ts":`import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { BaseMinion } from "./BaseMinion";
+import { LancerMinion } from "./LancerMinion";
+import { Boss } from "./Boss";
 import { setVec, zeroVec } from "@/core/VecUtils";
 
 export abstract class MinionState implements IState {
@@ -12695,16 +13322,45 @@ export class TurretPatrolState extends MinionState {
   public update(_dt: number): void {
     zeroVec(this.owner.velocity);
     const player = this.owner.world.player;
-    const playerValid = player && !player.isDead;
+    if (!player || player.isDead) return;
 
-    if (playerValid) {
-      const dx = player.position.x - this.owner.position.x;
-      const dy = player.position.y - this.owner.position.y;
-      const distSq = dx * dx + dy * dy;
-      if (distSq < 160000 && this.owner.shootTimer <= 0) {
+    const dx = player.position.x - this.owner.position.x;
+    const dy = player.position.y - this.owner.position.y;
+    const distSq = dx * dx + dy * dy;
+
+    if (distSq > 14400 && distSq < 176400 && this.owner.shootTimer <= 0) {
+      if (this.hasLineOfSight(player.position)) {
         this.owner.stateMachine.changeState(new TurretTelegraphState(this.owner));
       }
     }
+  }
+
+  private hasLineOfSight(playerPos: { x: number; y: number }): boolean {
+    const steps = 6;
+    const startX = this.owner.position.x;
+    const startY = this.owner.position.y - 12;
+    const dx = playerPos.x - startX;
+    const dy = playerPos.y - startY;
+
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const checkX = startX + dx * t;
+      const checkY = startY + dy * t;
+
+      const solidCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
+        checkX, checkY, 8, 8, "solid"
+      );
+
+      for (const solid of solidCandidates) {
+        if (
+          checkX > solid.x && checkX < solid.x + solid.width &&
+          checkY > solid.y && checkY < solid.y + solid.height
+        ) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   public exit(): void {}
@@ -12720,11 +13376,50 @@ export class TurretTelegraphState extends MinionState {
   public update(_dt: number): void {
     zeroVec(this.owner.velocity);
     if (this.owner.stateTimer <= 0) {
+      const boss = this.owner.world.boss;
+      const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
+
+      if (phase === 3) {
+        this.owner.stateMachine.changeState(new TurretBurstState(this.owner));
+      } else {
+        const player = this.owner.world.player;
+        if (player && !player.isDead) {
+          this.owner.fireSingleShotAtPlayer(player);
+        }
+        this.owner.shootTimer = 2.5;
+        this.owner.stateMachine.changeState(new TurretPatrolState(this.owner));
+      }
+    }
+  }
+
+  public exit(): void {}
+}
+
+export class TurretBurstState extends MinionState {
+  private shotsFired = 0;
+  private burstTimer = 0;
+
+  public enter(): void {
+    this.owner.attackState = "ATTACK";
+    this.shotsFired = 0;
+    this.burstTimer = 0;
+  }
+
+  public update(dt: number): void {
+    zeroVec(this.owner.velocity);
+    this.burstTimer -= dt;
+
+    if (this.burstTimer <= 0 && this.shotsFired < 3) {
       const player = this.owner.world.player;
       if (player && !player.isDead) {
         this.owner.fireSingleShotAtPlayer(player);
       }
-      this.owner.shootTimer = 2.5;
+      this.shotsFired++;
+      this.burstTimer = 0.16;
+    }
+
+    if (this.shotsFired >= 3) {
+      this.owner.shootTimer = 3.0;
       this.owner.stateMachine.changeState(new TurretPatrolState(this.owner));
     }
   }
@@ -12742,13 +13437,11 @@ export class LancerPatrolState extends MinionState {
     minionPatrolMovement(this.owner, _dt);
 
     const player = this.owner.world.player;
-    const playerValid = player && !player.isDead;
-
-    if (playerValid) {
+    if (player && !player.isDead) {
       const distY = Math.abs(player.position.y - this.owner.position.y);
       const distX = player.position.x - this.owner.position.x;
 
-      if (distY < 40 && Math.abs(distX) < 110 && Math.sign(distX) === this.owner.facingDirection) {
+      if (distY < 40 && Math.abs(distX) < 160 && Math.sign(distX) === this.owner.facingDirection) {
         this.owner.stateMachine.changeState(new LancerTelegraphState(this.owner));
       }
     }
@@ -12779,29 +13472,38 @@ export class LancerTelegraphState extends MinionState {
 export class LancerAttackState extends MinionState {
   public enter(): void {
     this.owner.attackState = "ATTACK";
-    this.owner.stateTimer = 0.2;
-    this.owner.velocity.x = this.owner.facingDirection * 400;
+    this.owner.stateTimer = 0.25;
+    this.owner.velocity.x = this.owner.facingDirection * 450;
     setVec(this.owner.visualScale, 1.26, 0.74);
     setVec(this.owner.targetVisualScale, 1.15, 0.85);
   }
 
   public update(_dt: number): void {
-    this.owner.velocity.x = this.owner.facingDirection * 400;
+    this.owner.velocity.x = this.owner.facingDirection * 450;
     const physics = this.owner.physics;
     const hitWall = physics ? physics.isOnWallLeft || physics.isOnWallRight : false;
+
+    const elapsed = 0.25 - this.owner.stateTimer;
+    if (this.owner instanceof LancerMinion) {
+      this.owner.lanceExtended = elapsed >= 0.05 && elapsed <= 0.22;
+    }
 
     if (this.owner.stateTimer <= 0 || hitWall) {
       this.owner.stateMachine.changeState(new LancerCooldownState(this.owner));
     }
   }
 
-  public exit(): void {}
+  public exit(): void {
+    if (this.owner instanceof LancerMinion) {
+      this.owner.lanceExtended = false;
+    }
+  }
 }
 
 export class LancerCooldownState extends MinionState {
   public enter(): void {
     this.owner.attackState = "COOLDOWN";
-    this.owner.stateTimer = 1.2;
+    this.owner.stateTimer = 1.0;
     this.owner.velocity.x = 0;
     setVec(this.owner.visualScale, 0.85, 1.15);
     setVec(this.owner.targetVisualScale, 1.0, 1.0);
@@ -12850,12 +13552,19 @@ export class FlyerPatrolState extends MinionState {
     }
 
     const player = this.owner.world.player;
-    const playerValid = player && !player.isDead;
-
-    if (playerValid) {
+    if (player && !player.isDead) {
       const dxP = player.position.x - this.owner.position.x;
       const dyP = player.position.y - this.owner.position.y;
       const playerDistSq = dxP * dxP + dyP * dyP;
+
+      const boss = this.owner.world.boss;
+      const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
+
+      if (phase === 3 && playerDistSq < 62500 && this.owner.shootTimer <= -3.0) {
+        this.owner.stateMachine.changeState(new FlyerDiveState(this.owner));
+        return;
+      }
+
       if (playerDistSq < 230400 && this.owner.shootTimer <= 0 && this.owner.volleyCount === 0) {
         this.owner.stateMachine.changeState(new FlyerTelegraphState(this.owner));
       }
@@ -12868,7 +13577,7 @@ export class FlyerPatrolState extends MinionState {
 export class FlyerTelegraphState extends MinionState {
   public enter(): void {
     this.owner.attackState = "TELEGRAPH";
-    this.owner.stateTimer = 0.6;
+    this.owner.stateTimer = 0.5;
     zeroVec(this.owner.velocity);
   }
 
@@ -12885,7 +13594,7 @@ export class FlyerTelegraphState extends MinionState {
 export class FlyerAttackState extends MinionState {
   public enter(): void {
     this.owner.attackState = "ATTACK";
-    this.owner.volleyCount = 3;
+    this.owner.volleyCount = 5;
     this.owner.volleyTimer = 0;
     this.owner.shootTimer = 3.5;
   }
@@ -12893,19 +13602,82 @@ export class FlyerAttackState extends MinionState {
   public update(dt: number): void {
     this.owner.velocity = { x: this.owner.velocity.x * 0.9, y: this.owner.velocity.y * 0.9 };
     const player = this.owner.world.player;
-    const playerValid = player && !player.isDead;
 
     if (this.owner.volleyCount > 0) {
       this.owner.volleyTimer -= dt;
-      if (this.owner.volleyTimer <= 0 && playerValid) {
+      if (this.owner.volleyTimer <= 0 && player && !player.isDead) {
         this.owner.fireSingleShotAtPlayer(player);
         this.owner.volleyCount--;
-        this.owner.volleyTimer = 0.18;
+        this.owner.volleyTimer = 0.16;
       }
     }
 
     if (this.owner.volleyCount === 0) {
       this.owner.stateMachine.changeState(new FlyerPatrolState(this.owner));
+    }
+  }
+
+  public exit(): void {}
+}
+
+export class FlyerDiveState extends MinionState {
+  private diveTimer = 0;
+  private stage: "DIVE" | "PAUSE" | "RECOVER" = "DIVE";
+
+  public enter(): void {
+    this.owner.attackState = "ATTACK";
+    this.stage = "DIVE";
+    this.diveTimer = 0.8;
+    setVec(this.owner.visualScale, 0.85, 1.15);
+
+    const player = this.owner.world.player;
+    if (player) {
+      const dx = player.position.x - this.owner.position.x;
+      const dy = player.position.y - this.owner.position.y;
+      const mag = Math.sqrt(dx * dx + dy * dy);
+      if (mag > 0) {
+        this.owner.velocity.x = (dx / mag) * 650;
+        this.owner.velocity.y = (dy / mag) * 650;
+      }
+    }
+  }
+
+  public update(dt: number): void {
+    if (this.stage === "DIVE") {
+      this.diveTimer -= dt;
+      const hitObstacle = this.owner.physics.isGrounded;
+
+      if (this.diveTimer <= 0 || hitObstacle) {
+        this.stage = "PAUSE";
+        this.diveTimer = 0.5;
+        zeroVec(this.owner.velocity);
+        setVec(this.owner.visualScale, 1.25, 0.75);
+        this.owner.world.events.publishSpark(this.owner.position.x, this.owner.position.y + 12, 0, "hsl(200, 80%, 65%)", true, 10);
+      }
+    } else if (this.stage === "PAUSE") {
+      this.diveTimer -= dt;
+      zeroVec(this.owner.velocity);
+      if (this.diveTimer <= 0) {
+        this.stage = "RECOVER";
+        this.diveTimer = 1.0;
+        setVec(this.owner.targetVisualScale, 1.0, 1.0);
+      }
+    } else if (this.stage === "RECOVER") {
+      this.diveTimer -= dt;
+      const startPos = this.owner.pointA;
+      const dx = startPos.x - this.owner.position.x;
+      const dy = startPos.y - this.owner.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist > 5) {
+        this.owner.velocity.x = (dx / dist) * 180;
+        this.owner.velocity.y = (dy / dist) * 180;
+      }
+
+      if (this.diveTimer <= 0 || dist <= 15) {
+        this.owner.shootTimer = 3.5;
+        this.owner.stateMachine.changeState(new FlyerPatrolState(this.owner));
+      }
     }
   }
 
@@ -13226,7 +13998,8 @@ export class Projectile extends BaseEntity implements IPoolable {
   public ownerId: "player" | "boss" = "player";
   public damage = 1;
   public customColor: string | null = null;
-
+  public pierce = 0;
+  
   private strategy!: IProjectileStrategy;
   private lifespan = 0;
 
@@ -13235,6 +14008,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   private trailCount = 0;
 
   private overlapScratch: Rectangle[] = [];
+  private hitTargetIds = new Set<string>();
 
   constructor() {
     super("projectile", null as unknown as IWorld);
@@ -13263,6 +14037,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.lifespan = lifespan;
     this.world = world;
     this.customColor = customColor || null;
+    this.pierce = ownerId === "player" && damage >= 3 ? 1 : 0;
 
     this.strategy = ownerId === "player" ? playerProjectileStrategy : bossProjectileStrategy;
 
@@ -13270,6 +14045,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.isDead = false;
     this.trailHead = 0;
     this.trailCount = 0;
+    this.hitTargetIds.clear();
   }
 
   public deactivate() {
@@ -13277,6 +14053,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.isDead = true;
     zeroVec(this.velocity);
     this.trailCount = 0;
+    this.hitTargetIds.clear();
   }
 
   public update(dt: number): boolean {
@@ -13325,9 +14102,6 @@ export class Projectile extends BaseEntity implements IPoolable {
       }
 
       if (this.checkEntityCollisions()) {
-        this.releaseEffects();
-        this.isActive = false;
-        this.isDead = true;
         return true;
       }
     }
@@ -13435,6 +14209,8 @@ export class Projectile extends BaseEntity implements IPoolable {
     const pH = this.size.height / 2;
 
     for (const target of targets) {
+      if (this.hitTargetIds.has(target.id)) continue;
+
       const tW = target.size.width / 2;
       const tH = target.size.height / 2;
 
@@ -13449,7 +14225,18 @@ export class Projectile extends BaseEntity implements IPoolable {
         if (targetHealth) {
           const projIntensity = this.strategy.getProjIntensity(this.damage);
           targetHealth.takeDamage(this.damage, this.position.x, this.position.y, projIntensity);
-          return true;
+          this.hitTargetIds.add(target.id);
+
+          if (this.pierce > 0) {
+            this.pierce--;
+            this.damage = Math.max(1, this.damage - 1);
+            this.world.events.publishSpark(this.position.x, this.position.y, 0, "hsl(45, 100%, 65%)", true, 8);
+          } else {
+            this.releaseEffects();
+            this.isActive = false;
+            this.isDead = true;
+            return true;
+          }
         }
       }
     }
@@ -13520,6 +14307,27 @@ export class Projectile extends BaseEntity implements IPoolable {
 }
 `,"src/entities/ProjectileStrategy.ts":`import { IWorld, IEntity, IEventPublisher, EntityStatus } from "@/core/Interfaces";
 import { TrigLUT } from "@/core/TrigLUT";
+
+export type ProjectileKind =
+  | "player-basic"
+  | "player-charged"
+  | "boss-bolt"
+  | "boss-fan"
+  | "boss-ring"
+  | "minion-shot"
+  | "shockwave";
+
+export interface ProjectileOptions {
+  kind: ProjectileKind;
+  radius: number;
+  trailLength: number;
+  trailWidth: number;
+  coreColor: string;
+  rimColor: string;
+  canClash: boolean;
+  pierce: number;
+  maxLifetime: number;
+}
 
 export interface TrailPoint {
   x: number;
@@ -13779,10 +14587,120 @@ export class BossProjectileStrategy implements IProjectileStrategy {
 
 export const playerProjectileStrategy = new PlayerProjectileStrategy();
 export const bossProjectileStrategy = new BossProjectileStrategy();
+`,"src/entities/ShielderMinion.ts":`import { BaseMinion } from "./BaseMinion";
+import { HealthComponent, DamagePayload } from "@/entities/components/HealthComponent";
+import { IWorld } from "@/core/Interfaces";
+import { IState } from "@/core/StateMachine";
+import { UNITS } from "@/core/Units";
+import { TrigLUT } from "@/core/TrigLUT";
+
+export class ShielderPatrolState implements IState {
+  private owner: ShielderMinion;
+
+  constructor(owner: ShielderMinion) {
+    this.owner = owner;
+  }
+
+  public enter(): void {
+    this.owner.attackState = "PATROL";
+  }
+
+  public update(dt: number): void {
+    const targetSpeed = this.owner.facingDirection * this.owner.patrolSpeed;
+    this.owner.velocity.x += (targetSpeed - this.owner.velocity.x) * UNITS.MINION_ACCEL * dt;
+
+    const physics = this.owner.physics;
+    if (physics) {
+      if (physics.isOnWallLeft) {
+        this.owner.facingDirection = 1;
+      } else if (physics.isOnWallRight) {
+        this.owner.facingDirection = -1;
+      }
+    }
+
+    const player = this.owner.world.player;
+    if (player && !player.isDead) {
+      const distX = Math.abs(player.position.x - this.owner.position.x);
+      if (distX < 350) {
+        this.owner.facingDirection = Math.sign(player.position.x - this.owner.position.x) || 1;
+      }
+    }
+  }
+
+  public exit(): void {}
+}
+
+export class ShielderMinion extends BaseMinion {
+  constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
+    super(id, startPos, world);
+    this.size = { width: 44, height: 50 };
+    this.patrolSpeed = 80;
+
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 5,
+      invincibilityDuration: 0.15,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
+    });
+
+    this.bodyColorValue = "hsl(180, 50%, 45%)";
+    this.cageColorValue = "hsla(180,85%,65%,";
+    this.dissolveColorValue = "hsl(180,70%,45%)";
+
+    const originalTakeDamage = this.health.takeDamage.bind(this.health);
+    this.health.takeDamage = (amount: number, sourceX: number = 0, sourceY: number = 0, intensity: number = 1): boolean => {
+      if (this.isSpawning || this.isDying || this.isDead) {
+        return false;
+      }
+
+      if (amount < 3) {
+        const isAttackedFromFront =
+          (this.facingDirection > 0 && sourceX > this.position.x) ||
+          (this.facingDirection < 0 && sourceX < this.position.x);
+
+        if (isAttackedFromFront) {
+          this.world.events.publishSpark(
+            this.position.x + this.facingDirection * 18,
+            this.position.y,
+            this.facingDirection > 0 ? 0 : Math.PI,
+            "hsl(45, 100%, 65%)",
+            true,
+            12
+          );
+          this.world.audio.playErrorTick();
+          
+          this.applyScaleImpulse(-0.15, 0.3);
+          return false;
+        }
+      }
+
+      return originalTakeDamage(amount, sourceX, sourceY, intensity);
+    };
+
+    this.initState(new ShielderPatrolState(this));
+  }
+
+  get minionColor(): string {
+    return "hsl(180, 50%, 45%)";
+  }
+
+  protected updateExhaust(): void {
+    if (Math.abs(this.velocity.x) > 0 && this.physics.isGrounded) {
+      this.exhaustTimer = 0.15;
+      this.world.events.publishSpark(
+        this.position.x - this.facingDirection * (this.size.width / 2),
+        this.position.y + this.size.height / 2,
+        TrigLUT.atan2(0.5, -this.facingDirection) + (TrigLUT.random() * 0.3 - 0.15),
+        "rgba(255, 255, 255, 0.25)",
+        false,
+        1
+      );
+    }
+  }
+}
 `,"src/entities/Spawner.ts":`import { BaseMinion, MinionType } from "./BaseMinion";
-import { TurretMinion } from "./TurretMinion";
-import { LancerMinion } from "./LancerMinion";
-import { FlyerMinion } from "./FlyerMinion";
+import { MinionFactory } from "./MinionFactory";
 import { IWorld } from "@/core/Interfaces";
 
 export class Spawner {
@@ -13823,18 +14741,7 @@ export class Spawner {
 
   private spawnMinion() {
     const minionId = \`minion-\${this.spawnType}-\${Date.now()}-\${Math.floor(Math.random() * 1000000)}\`;
-    let minion: BaseMinion;
-    switch (this.spawnType) {
-      case "TURRET":
-        minion = new TurretMinion(minionId, this.position, this.world);
-        break;
-      case "LANCER":
-        minion = new LancerMinion(minionId, this.position, this.world);
-        break;
-      case "FLYER":
-        minion = new FlyerMinion(minionId, this.position, this.world);
-        break;
-    }
+    const minion = MinionFactory.createMinion(this.spawnType, minionId, this.position, this.world);
     this.activeMinion = minion;
     this.world.minions.push(minion);
   }
