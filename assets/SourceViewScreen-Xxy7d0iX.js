@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CJ2WGmeF.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-abby1vle.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -190,7 +190,7 @@ export default defineConfig([
     },
   },
 ]);
-`,"README.md":"# BOX BATTLE\n\nMega Man / Hollow Knight battle arena prototype.\n\nPorted over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand using Gemini 3.5 Flash\n\nPlay the game here:\n👉 **[GitHub.io](https://stevencasteel.github.io/boxbattle/)**\n👉 **[Itch.io](https://stevencasteel.itch.io/boxbattle)**\n\n---\n\n## Player Controls\n\n- **Move Left / Right**: `Left Arrow` / `Right Arrow` or `A` / `D`\n- **Look / Move Up**: `Up Arrow` or `W`\n- **Crouch / Move Down**: `Down Arrow` or `S`\n- **Jump**: `X` or `.` (Period) or `Space`\n- **Melee Attack**: `C` or `,` (Comma)\n- **Dash**: `Z` or `/` (Slash)\n- **Determination Heal**: Hold `Move Down` + Press `Jump` (Requires 1 active Heal Charge)\n\n_Key bindings are fully customizable inside the Options menu._\n\n---\n\n## Technical Architecture\n\n- **Presentation & UI**: React 19, TypeScript 6, Vite 8, Zustand 5\n- **Physics Simulation**: Custom 60Hz Semi-Implicit Euler accumulator loop with swept collision checks and corner-nudging\n- **Sound Design**: Pure procedural waveform synthesis utilizing native Web Audio API oscillators, filters, and envelope gains (zero external binary audio assets)\n","src/App.css":`.cabinet-outer {
+`,"README.md":"# BOX BATTLE\n\nMega Man / Hollow Knight precision traversal gauntlet prototype.\n\nPorted over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand using Gemini 3.5 Flash\n\nPlay the game here:\n👉 **[GitHub.io](https://stevencasteel.github.io/boxbattle/)**\n👉 **[Itch.io](https://stevencasteel.itch.io/boxbattle)**\n\n---\n\n## Player Controls\n\n- **Move Left / Right**: `Left Arrow` / `Right Arrow` or `A` / `D`\n- **Look / Move Up**: `Up Arrow` or `W`\n- **Crouch / Move Down**: `Down Arrow` or `S`\n- **Jump**: `X` or `.` (Period) or `Space`\n- **Melee Attack**: `C` or `,` (Comma)\n- **Dash**: `Z` or `/` (Slash)\n- **Determination Heal**: Hold `Move Down` + Press `Jump` (Requires 1 active Heal Charge)\n\n_Key bindings are fully customizable inside the Options menu._\n\n---\n\n## Technical Architecture\n\n- **Presentation & UI**: React 19, TypeScript 6, Vite 8, Zustand 5\n- **Physics Simulation**: Custom 60Hz Semi-Implicit Euler accumulator loop with swept collision checks and corner-nudging\n- **Sound Design**: Pure procedural waveform synthesis utilizing native Web Audio API oscillators, filters, and envelope gains (zero external binary audio assets)\n","src/App.css":`.cabinet-outer {
   position: relative;
   width: 740px;
   height: 862px;
@@ -1209,13 +1209,129 @@ export default function App() {
     </svg>
   );
 }
-`,"src/components/DialogueConsole.tsx":`import { motion } from "framer-motion";
+`,"src/components/DialogueConsole.tsx":`import { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { DialogueState } from "@/hooks/useGameDialogue";
+import { useSessionStore } from "@/store/useGameStore";
+import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
 
 interface DialogueConsoleProps {
   playerDialogue: DialogueState;
   bossDialogue: DialogueState;
   isTouchDevice: boolean;
+}
+
+function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typing: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let frameId: number;
+
+    const render = () => {
+      const w = canvas.width;
+      const h = canvas.height;
+      const t = performance.now() / 1000;
+
+      ctx.clearRect(0, 0, w, h);
+
+      if (speaker === "player") {
+        ctx.fillStyle = "hsl(142, 72%, 56%)";
+        ctx.fillRect(4, 4, w - 8, h - 8);
+
+        ctx.strokeStyle = "hsl(142, 100%, 80%)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(4, 4, w - 8, h - 8);
+
+        if (typing) {
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(w / 2, h / 2, 4 + Math.sin(t * 12) * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        const stageIdx = useSessionStore.getState().currentStageIndex;
+
+        ctx.fillStyle = "hsl(350, 82%, 58%)";
+        if (stageIdx === 4) ctx.fillStyle = "hsl(82, 38%, 44%)"; // Marrow King lumpy bruised HSL
+        ctx.fillRect(4, 4, w - 8, h - 8);
+
+        if (stageIdx === 0) {
+          ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(4, 4);
+          ctx.lineTo(w - 4, h - 4);
+          ctx.stroke();
+        } else if (stageIdx === 1) {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+          ctx.fillRect(12, 4, 6, h - 8);
+          ctx.fillRect(21, 4, 6, h - 8);
+          ctx.fillRect(30, 4, 6, h - 8);
+        } else if (stageIdx === 2) {
+          ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(w / 2, h / 2, 10, 0, Math.PI * 2);
+          ctx.arc(w / 2, h / 2, 16, 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (stageIdx === 3) {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+          ctx.beginPath();
+          ctx.moveTo(w / 2, 4);
+          ctx.lineTo(w / 2 + 10, 18);
+          ctx.lineTo(w / 2 - 10, 18);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(w / 2, h - 4);
+          ctx.lineTo(w / 2 + 10, h - 18);
+          ctx.lineTo(w / 2 - 10, h - 18);
+          ctx.closePath();
+          ctx.fill();
+        } else if (stageIdx === 4) {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+          ctx.beginPath();
+          ctx.arc(14, 14, 6 + Math.sin(t * 4) * 1.5, 0, Math.PI * 2);
+          ctx.arc(34, 34, 8 + Math.cos(t * 3.5) * 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (stageIdx === 5) {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+          ctx.fillRect(8, 8, 12, 12);
+          ctx.fillRect(28, 24, 12, 12);
+        } else if (stageIdx === 6) {
+          const split = (t * 8) % 4 === 0;
+          if (split) {
+            ctx.fillStyle = "rgba(0,0,0,0.9)";
+            ctx.fillRect(w / 2 - 8, 4, 16, h - 8);
+          } else {
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(10, 10, w - 20, h - 20);
+          }
+        }
+
+        ctx.strokeStyle = "hsl(0, 100%, 72%)";
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(4, 4, w - 8, h - 8);
+      }
+
+      frameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [speaker, typing]);
+
+  return <canvas ref={canvasRef} width={48} height={48} style={{ width: "48px", height: "48px", borderRadius: "6px" }} />;
 }
 
 export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }: DialogueConsoleProps) {
@@ -1232,6 +1348,10 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
     : playerDialogue.active 
       ? "inactive" 
       : "idle";
+
+  const currentStageIndex = useSessionStore((state) => state.currentStageIndex);
+  const activeStage = GAUNTLET_STAGES[currentStageIndex];
+  const bossName = activeStage ? activeStage.midBossDisplayName : "BOSS";
 
   const getVariants = (speaker: "player" | "boss") => ({
     active: {
@@ -1264,12 +1384,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
         transition={{ type: "spring", stiffness: 220, damping: 25 }}
         className={\`dialogue-box-left neo-pressed \${mobileClass}\`}
       >
-        <div
-          className={\`portrait-square led-green \${playerDialogue.isTyping ? "portrait-rumble" : ""} \${mobileClass}\`}
-          style={{
-            background: playerDialogue.active ? "" : "#07080b",
-          }}
-        />
+        <PortraitCanvas speaker="player" typing={playerDialogue.isTyping} />
         <div className="dialogue-text-container">
           <div className={\`dialogue-speaker-label \${mobileClass}\`}>
             PLAYER
@@ -1291,18 +1406,13 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
             className={\`dialogue-speaker-label \${mobileClass}\`}
             style={{ color: "var(--signal-red)" }}
           >
-            BOSS
+            {bossName}
           </div>
           <div className={\`dialogue-body-text \${mobileClass}\`}>
             {bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}
           </div>
         </div>
-        <div
-          className={\`portrait-square led-red \${bossDialogue.isTyping ? "portrait-rumble" : ""} \${mobileClass}\`}
-          style={{
-            background: bossDialogue.active ? "" : "#07080b",
-          }}
-        />
+        <PortraitCanvas speaker="boss" typing={bossDialogue.isTyping} />
       </motion.div>
     </div>
   );
@@ -5406,7 +5516,7 @@ export function TitleScreen({
   return (
     <MenuContainer hasGridOverlay>
       <div className="title-screen-header">
-        <div className="system-tag">WELCOME TO THE ARENA</div>
+        <div className="system-tag">WELCOME TO THE GAUNTLET</div>
         <MenuHeader title="BOX BATTLE" subtitle="RETRO ACTION GAME" />
       </div>
 
@@ -5471,6 +5581,7 @@ import type { IEventBus, IAudioManager } from "@/core/Interfaces";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { UNITS } from "@/core/Units";
 import { CinematicSystem } from "@/core/CinematicSystem";
+import { useSessionStore } from "@/store/useGameStore";
 
 export class BattleDirector {
   private events: IEventBus;
@@ -5508,29 +5619,68 @@ export class BattleDirector {
 
     const bHealth = boss.getComponent(HealthComponent);
     if (bHealth) {
-      const phase2Threshold = Math.floor(UNITS.BOSS_MAX_HP * UNITS.BOSS_PHASE_2_HP_PCT);
-      const phase3Threshold = Math.floor(UNITS.BOSS_MAX_HP * UNITS.BOSS_PHASE_3_HP_PCT);
+      const maxHp = bHealth.maxHealth;
+      const phase2Threshold = Math.floor(maxHp * UNITS.BOSS_PHASE_2_HP_PCT);
+      const phase3Threshold = Math.floor(maxHp * UNITS.BOSS_PHASE_3_HP_PCT);
 
-      if (bHealth.currentHealth < UNITS.BOSS_MAX_HP && !this.hasTriggeredFirstHit) {
+      const stageIdx = useSessionStore.getState().currentStageIndex;
+
+      if (bHealth.currentHealth < maxHp && !this.hasTriggeredFirstHit) {
         this.hasTriggeredFirstHit = true;
-        this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I found you. This battle ends now!" });
+        if (stageIdx === 0) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "A square returns to be measured." });
+        } else if (stageIdx === 1) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Every exit is a rule." });
+        } else if (stageIdx === 2) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Target locked in orbital coordinates." });
+        } else if (stageIdx === 3) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Jump. Cut. Beg the floor to remember you." });
+        } else if (stageIdx === 4) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "The lumpy marrow deforms. Feel the weight." });
+        } else if (stageIdx === 5) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Cathedral toll rings. Slabs descend." });
+        } else if (stageIdx === 6) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "I can be you." });
+        }
       }
 
       if (bHealth.currentHealth <= phase2Threshold && !this.hasTriggeredPhase2) {
         this.hasTriggeredPhase2 = true;
-        this.events.publish("DIALOGUE_TRIGGERED", {
-          speaker: "boss",
-          text: "You won't beat me! Watch out for my rapid fire!",
-        });
+        if (stageIdx === 0) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Edges teach faster than mercy." });
+        } else if (stageIdx === 1) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Lock step! Modulo columns commit!" });
+        } else if (stageIdx === 2) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Perihelion dive. No intersection." });
+        } else if (stageIdx === 3) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Sine-offset splines activated. Accelerate!" });
+        } else if (stageIdx === 4) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Pulsing blister cells, mutate!" });
+        } else if (stageIdx === 5) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Cathedral toll commits. Sickness lean." });
+        } else if (stageIdx === 6) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Glitches fracture. Replicate previous forms." });
+        }
         this.events.publish("BOSS_PHASE_SHIFT", undefined);
       }
 
       if (bHealth.currentHealth <= phase3Threshold && !this.hasTriggeredPhase3) {
         this.hasTriggeredPhase3 = true;
-        this.events.publish("DIALOGUE_TRIGGERED", {
-          speaker: "boss",
-          text: "This is my final stand! Prepare yourself!",
-        });
+        if (stageIdx === 0) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Good. Now the pit gets a vote." });
+        } else if (stageIdx === 1) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Align or compress!" });
+        } else if (stageIdx === 2) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Aphelion ring contracting." });
+        } else if (stageIdx === 3) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Pogo taxes. Dissolving choir screams." });
+        } else if (stageIdx === 4) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Contamination limits full." });
+        } else if (stageIdx === 5) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Falling Nave commits." });
+        } else if (stageIdx === 6) {
+          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Unstable square fails." });
+        }
         this.events.publish("BOSS_PHASE_SHIFT", undefined);
       }
     }
@@ -5551,7 +5701,7 @@ export class BattleDirector {
           {
             triggerTime: 2.5,
             action: () => {
-              this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't go on..." });
+              this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't hold my shape..." });
             },
           },
           {
@@ -5559,7 +5709,7 @@ export class BattleDirector {
             action: () => {
               this.events.publish("DIALOGUE_TRIGGERED", {
                 speaker: "boss",
-                text: "You fought well... but I am victorious.",
+                text: "purity bends to the rules.",
               });
             },
           },
@@ -5574,6 +5724,8 @@ export class BattleDirector {
         ]
       );
     } else if (boss.isDead && !this.cinematic.isActive()) {
+      const stageIdx = useSessionStore.getState().currentStageIndex;
+
       this.cinematic.startSequence(
         boss.position,
         () => {
@@ -5589,16 +5741,25 @@ export class BattleDirector {
           {
             triggerTime: 2.5,
             action: () => {
-              this.events.publish("DIALOGUE_TRIGGERED", {
-                speaker: "boss",
-                text: "No... How could I lose this fight...",
-              });
+              if (stageIdx === 0) {
+                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... You were meant to bend." });
+              } else if (stageIdx === 6) {
+                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Purity... restored." });
+              } else {
+                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "The outline... fractures..." });
+              }
             },
           },
           {
             triggerTime: 4.8,
             action: () => {
-              this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "It is over. The area is secure." });
+              if (stageIdx === 0) {
+                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I did. I came back square." });
+              } else if (stageIdx === 6) {
+                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I only copy the truth." });
+              } else {
+                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "The gauntlet records the measurement." });
+              }
             },
           },
           {
@@ -5783,15 +5944,17 @@ export class CinematicSystem {
   }
 }
 `,"src/core/EncounterDirector.ts":`import { IWorld } from "./Interfaces";
-import { SpawnAnchor, defaultLevelConfig, MinionType } from "./levelData";
+import { SpawnAnchor, MinionType } from "./levelData";
 import { MinionFactory } from "@/entities/MinionFactory";
 import { TrigLUT } from "./TrigLUT";
+import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
 
 export class EncounterDirector {
   private world: IWorld;
   private currentPhase = 1;
   private elapsedFightTime = 0;
   private spawnCooldownTimer = 12.0;
+  private activeStageConfig: StageConfig = GAUNTLET_STAGES[0];
 
   private unsubs: (() => void)[] = [];
 
@@ -5813,6 +5976,11 @@ export class EncounterDirector {
         this.despawnAllMinions();
       })
     );
+  }
+
+  public loadStage(stage: StageConfig) {
+    this.activeStageConfig = stage;
+    this.reset();
   }
 
   public update(dt: number) {
@@ -5844,7 +6012,7 @@ export class EncounterDirector {
   }
 
   private triggerNextWave() {
-    const waves = defaultLevelConfig.encounterWaves.filter(
+    const waves = this.activeStageConfig.encounterWaves.filter(
       (w) => w.phase === this.currentPhase && this.elapsedFightTime >= (w.earliestTime || 0)
     );
 
@@ -5885,7 +6053,7 @@ export class EncounterDirector {
   }
 
   private findSafeAnchor(ids?: string[], tags?: string[]): SpawnAnchor | null {
-    let candidates = defaultLevelConfig.spawnAnchors;
+    let candidates = this.activeStageConfig.spawnAnchors;
 
     if (ids && ids.length > 0) {
       candidates = candidates.filter((a) => ids.includes(a.id));
@@ -5940,24 +6108,19 @@ export class EncounterDirector {
   }
 
   private spawnInitialPlaytestMinions() {
-    const turretAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "left-catwalk");
+    const turretAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("catwalk") || a.id.includes("perch"));
     if (turretAnchor) {
       this.spawnMinion("TURRET", turretAnchor);
     }
 
-    const lancerAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "center-bridge");
+    const lancerAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("bridge") || a.id.includes("mid"));
     if (lancerAnchor) {
       this.spawnMinion("LANCER", lancerAnchor);
     }
 
-    const flyerAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "upper-air-left");
+    const flyerAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("air") || a.id.includes("ambush"));
     if (flyerAnchor) {
       this.spawnMinion("FLYER", flyerAnchor);
-    }
-
-    const shielderAnchor = defaultLevelConfig.spawnAnchors.find(a => a.id === "left-ground");
-    if (shielderAnchor) {
-      this.spawnMinion("SHIELDER", shielderAnchor);
     }
   }
 
@@ -5993,7 +6156,6 @@ import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { Rectangle } from "@/core/Interfaces";
 import { BaseEntity } from "@/entities/BaseEntity";
-import { defaultLevelConfig, LevelConfig } from "@/core/levelData";
 import { WorldRenderer } from "@/core/WorldRenderer";
 import { ParticleSystem } from "@/core/ParticleSystem";
 import { BattleDirector } from "@/core/BattleDirector";
@@ -6001,6 +6163,9 @@ import { StateProjectionSystem } from "@/core/StateProjectionSystem";
 import { MinionCollisionSystem } from "@/core/systems/MinionCollisionSystem";
 import { EntityResetService } from "@/core/systems/EntityResetService";
 import { setVec, copyVec, zeroVec } from "@/core/VecUtils";
+import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
+import { useSessionStore } from "@/store/useGameStore";
+import { DissolvePlatform, PogoPost, DashResetGate } from "./systems/TraversalHazards";
 
 export class Engine {
   private renderer: WorldRenderer;
@@ -6020,24 +6185,31 @@ export class Engine {
   private encounterDirector!: EncounterDirector;
   private springPlatforms: { rect: Rectangle; offsetY: number; velocityY: number }[] = [];
   private unsubPlatformImpact!: () => void;
+  private unsubLoadStage!: () => void;
+
+  public activeDissolvePlatforms: DissolvePlatform[] = [];
+  public activePogoPosts: PogoPost[] = [];
+  public activeDashResetGates: DashResetGate[] = [];
 
   public isPaused: boolean = false;
   private accumulator: number = 0;
   private currentScale: number = 1.0;
   private readonly fixedTimeStep: number = 1 / 60;
 
-  private levelConfig: LevelConfig;
+  private levelConfig: StageConfig;
   private solids: Rectangle[] = [];
   private onewayPlatforms: Rectangle[] = [];
   private hazards: Rectangle[] = [];
 
-  constructor(world: World, renderer: WorldRenderer, levelConfig: LevelConfig = defaultLevelConfig) {
+  constructor(world: World, renderer: WorldRenderer) {
     this.world = world;
     this.renderer = renderer;
-    this.levelConfig = levelConfig;
     this.stateProjection = new StateProjectionSystem(this.world.events);
     this.minionCollisionSystem = new MinionCollisionSystem();
     this.entityResetService = new EntityResetService();
+
+    const activeStageIdx = useSessionStore.getState().currentStageIndex;
+    this.levelConfig = GAUNTLET_STAGES[activeStageIdx] || GAUNTLET_STAGES[0];
 
     this.solids = this.levelConfig.solids;
     this.onewayPlatforms = this.levelConfig.onewayPlatforms;
@@ -6069,6 +6241,7 @@ export class Engine {
     this.world.boss = this.boss;
 
     this.encounterDirector = new EncounterDirector(this.world);
+    this.encounterDirector.loadStage(this.levelConfig);
 
     Camera.reset();
 
@@ -6077,7 +6250,11 @@ export class Engine {
     this.particleSystem = new ParticleSystem(this.world.events);
     this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
 
-    this.springPlatforms = this.levelConfig.onewayPlatforms.map((rect) => ({
+    this.activeDissolvePlatforms = (this.levelConfig.dissolvePlatforms || []).map((r) => new DissolvePlatform(r));
+    this.activePogoPosts = (this.levelConfig.pogoPosts || []).map((r) => new PogoPost(r));
+    this.activeDashResetGates = (this.levelConfig.dashResetGates || []).map((r) => new DashResetGate(r));
+
+    this.springPlatforms = this.onewayPlatforms.map((rect) => ({
       rect,
       offsetY: 0,
       velocityY: 0,
@@ -6090,10 +6267,74 @@ export class Engine {
       }
     });
 
+    this.unsubLoadStage = this.world.events.subscribe("LOAD_STAGE", ({ stageIndex }) => {
+      this.loadStage(stageIndex);
+    });
+
+    this.rebuildPhysics();
+
     this.loop = new GameLoop(
       (dt) => this.update(dt),
       () => this.render()
     );
+  }
+
+  private rebuildPhysics() {
+    const activeSolids = [
+      ...this.solids,
+      ...this.activeDissolvePlatforms
+        .filter((dp) => dp.state === "idle" || dp.state === "cracking")
+        .map((dp) => dp.rect)
+    ];
+    this.world.physicsWorld.rebuild(activeSolids, this.hazards, this.onewayPlatforms);
+  }
+
+  public loadStage(stageIndex: number) {
+    const stage = GAUNTLET_STAGES[stageIndex];
+    if (!stage) return;
+
+    this.levelConfig = stage;
+    this.solids = stage.solids;
+    this.onewayPlatforms = stage.onewayPlatforms;
+    this.hazards = stage.hazards;
+
+    this.activeDissolvePlatforms = (stage.dissolvePlatforms || []).map((r) => new DissolvePlatform(r));
+    this.activePogoPosts = (stage.pogoPosts || []).map((r) => new PogoPost(r));
+    this.activeDashResetGates = (stage.dashResetGates || []).map((r) => new DashResetGate(r));
+
+    this.rebuildPhysics();
+    this.renderer.resetCache();
+
+    this.isPaused = false;
+    this.accumulator = 0;
+    Camera.reset();
+    this.pool.clear();
+
+    this.springPlatforms = this.onewayPlatforms.map((rect) => ({
+      rect,
+      offsetY: 0,
+      velocityY: 0,
+    }));
+
+    this.entityResetService.resetPlayer(this.player, stage.playerStart, 1);
+    this.entityResetService.resetBoss(this.boss, stage.bossStart, -1);
+
+    this.boss.currentPhase = 1;
+    this.boss.patrolSpeed = 200;
+    this.boss.lungeSpeed = 1200;
+    this.boss.stateMachine.changeState(this.boss.cooldownState);
+
+    this.encounterDirector.loadStage(stage);
+
+    this.particleSystem.cleanup();
+    this.particleSystem = new ParticleSystem(this.world.events);
+    this.battleDirector.cleanup();
+    this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
+    this.stateProjection.reset();
+
+    this.stateProjection.project(this.player, this.boss);
+    this.world.events.publish("CLEAR_DIALOGUES", undefined);
+    this.world.events.publish("SESSION_RESET", undefined);
   }
 
   public start() {
@@ -6105,43 +6346,8 @@ export class Engine {
   }
 
   public reset() {
-    this.isPaused = false;
-    this.accumulator = 0;
-    Camera.reset();
-    this.pool.clear();
-
-    const overlay = this.renderer.getCanvas().parentElement?.querySelector(".vignette-overlay") as HTMLDivElement | null;
-    if (overlay) {
-      overlay.classList.remove("vignette-pulse");
-    }
-
-    this.encounterDirector.reset();
-
-    if (this.world.audio.stopCrowdSounds) {
-      this.world.audio.stopCrowdSounds();
-    }
-    this.entityResetService.resetPlayer(this.player, this.levelConfig.playerStart, 1);
-    this.entityResetService.resetBoss(this.boss, this.levelConfig.bossStart, -1);
-    this.boss.currentPhase = 1;
-    this.boss.patrolSpeed = 200;
-    this.boss.lungeSpeed = 1200;
-    this.boss.stateMachine.changeState(this.boss.cooldownState);
-
-    this.particleSystem.cleanup();
-    this.particleSystem = new ParticleSystem(this.world.events);
-    this.battleDirector.cleanup();
-    this.battleDirector = new BattleDirector(this.world.events, this.world.audio, () => {});
-    this.stateProjection.reset();
-
-    this.world.events.publish("SESSION_RESET", undefined);
-
-    this.stateProjection.project(this.player, this.boss);
-    this.world.events.publish("CLEAR_DIALOGUES", undefined);
-
-    this.render();
-    requestAnimationFrame(() => {
-      this.start();
-    });
+    const activeStageIdx = useSessionStore.getState().currentStageIndex;
+    this.loadStage(activeStageIdx);
   }
 
   private update(dt: number) {
@@ -6228,6 +6434,26 @@ export class Engine {
       return;
     }
 
+    let rebuildNeeded = false;
+    for (const dp of this.activeDissolvePlatforms) {
+      const oldState = dp.state;
+      dp.update(dt, this.player);
+      if (dp.state !== oldState) {
+        rebuildNeeded = true;
+      }
+    }
+    if (rebuildNeeded) {
+      this.rebuildPhysics();
+    }
+
+    for (const post of this.activePogoPosts) {
+      post.update(dt, this.player);
+    }
+
+    for (const gate of this.activeDashResetGates) {
+      gate.update(dt, this.player);
+    }
+
     this.particleSystem.update(dt);
 
     this.player.update(dt);
@@ -6260,7 +6486,10 @@ export class Engine {
       this.battleDirector.getDeathVisuals().timer,
       this.battleDirector.getDeathVisuals().pos,
       this.springPlatforms,
-      alpha
+      alpha,
+      this.activeDissolvePlatforms,
+      this.activePogoPosts,
+      this.activeDashResetGates
     );
   }
 
@@ -6277,6 +6506,9 @@ export class Engine {
 
     if (this.unsubPlatformImpact) {
       this.unsubPlatformImpact();
+    }
+    if (this.unsubLoadStage) {
+      this.unsubLoadStage();
     }
 
     this.encounterDirector.teardown();
@@ -6497,6 +6729,44 @@ export class EntityRenderer {
 }
 
 export default GameLoop;
+`,"src/core/GauntletDirector.ts":`import { eventBroker } from "./eventBroker";
+import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
+import { GAUNTLET_STAGES } from "./design/GauntletStages";
+
+export class GauntletDirector {
+  private static initialized = false;
+
+  public static init() {
+    if (GauntletDirector.initialized) return;
+    GauntletDirector.initialized = true;
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("keydown", (e) => {
+        const code = e.code;
+        if (code.startsWith("Digit")) {
+          const num = parseInt(code.replace("Digit", ""));
+          if (num >= 1 && num <= 7) {
+            e.preventDefault();
+            GauntletDirector.warpToStage(num - 1);
+          }
+        }
+      });
+    }
+  }
+
+  public static warpToStage(stageIndex: number) {
+    const stage = GAUNTLET_STAGES[stageIndex];
+    if (!stage) return;
+
+    useGameplayStore.getState().resetGameSession();
+    useSessionStore.getState().setCurrentStageIndex(stageIndex);
+    useSessionStore.getState().navTo("PLAYING");
+
+    setTimeout(() => {
+      eventBroker.publish("LOAD_STAGE", { stageIndex });
+    }, 100);
+  }
+}
 `,"src/core/GreedyMerger.ts":`import { Rectangle } from "./Interfaces";
 
 export class GreedyMerger {
@@ -6941,6 +7211,7 @@ export const inputProvider = new InputProvider();
 `,"src/core/Interfaces.ts":`import { IEntityComponent } from "@/entities/EntityComponent";
 
 export type GameEventMap = {
+  LOAD_STAGE: { stageIndex: number };
   PLAYER_HURT: { amount: number; currentHealth: number; maxHealth: number };
   BOSS_HURT: { amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
   MINION_HURT: { id: string; amount: number; currentHealth: number; maxHealth: number; sourceX: number; sourceY: number; intensity: number };
@@ -7107,6 +7378,7 @@ export interface IPhysicsWorld {
     type: "solid" | "platform" | "hazard",
     outResult?: Rectangle[]
   ): Rectangle[];
+  rebuild(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]): void;
 }
 
 export interface IEventPublisher {
@@ -7627,6 +7899,20 @@ export class PhysicsWorld implements IPhysicsWorld {
     this.solids = GreedyMerger.merge(solids);
     this.hazards = GreedyMerger.merge(hazards);
     this.onewayPlatforms = onewayPlatforms;
+
+    this.indexGeometry(this.solids, this.solidGrid);
+    this.indexGeometry(this.onewayPlatforms, this.platformGrid);
+    this.indexGeometry(this.hazards, this.hazardGrid);
+  }
+
+  public rebuild(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
+    this.solids = GreedyMerger.merge(solids);
+    this.hazards = GreedyMerger.merge(hazards);
+    this.onewayPlatforms = onewayPlatforms;
+
+    this.solidGrid.clear();
+    this.platformGrid.clear();
+    this.hazardGrid.clear();
 
     this.indexGeometry(this.solids, this.solidGrid);
     this.indexGeometry(this.onewayPlatforms, this.platformGrid);
@@ -8541,9 +8827,9 @@ export class StaticMapRenderer {
         const spikeWidth = 20;
         const spikeCount = Math.floor(hazard.width / spikeWidth);
         for (let i = 0; i < spikeCount; i++) {
-          sctx.moveTo(hazard.x + i * spikeWidth, 960);
-          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, 920);
-          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, 960);
+          sctx.moveTo(hazard.x + i * spikeWidth, hazard.y + hazard.height);
+          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, hazard.y);
+          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, hazard.y + hazard.height);
         }
       }
       sctx.fill();
@@ -8563,11 +8849,11 @@ export class StaticMapRenderer {
     sctx.shadowBlur = 6.4;
     
     sctx.beginPath();
-    this.drawInnerPerimeterPath(sctx, 1.6);
-    
-    const floatingPlatform = solids.find(s => s.x === 340 && s.y === 640);
-    if (floatingPlatform) {
-      this.drawRoundedRectPath(sctx, floatingPlatform.x + 1.6, floatingPlatform.y + 1.6, floatingPlatform.width - 3.2, floatingPlatform.height - 3.2, 6.4);
+    for (const solid of solids) {
+      const isBoundary = solid.x <= 40 || solid.x + solid.width >= 960 || solid.y <= 40 || solid.y + solid.height >= 920;
+      if (!isBoundary) {
+        this.drawRoundedRectPath(sctx, solid.x + 1.6, solid.y + 1.6, solid.width - 3.2, solid.height - 3.2, 6.4);
+      }
     }
     sctx.stroke();
     sctx.shadowBlur = 0;
@@ -8575,10 +8861,11 @@ export class StaticMapRenderer {
     sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
     sctx.lineWidth = 0.8;
     sctx.beginPath();
-    this.drawInnerPerimeterPath(sctx, 2.8);
-    
-    if (floatingPlatform) {
-      this.drawRoundedRectPath(sctx, floatingPlatform.x + 4, floatingPlatform.y + 4, floatingPlatform.width - 8, floatingPlatform.height - 8, 4);
+    for (const solid of solids) {
+      const isBoundary = solid.x <= 40 || solid.x + solid.width >= 960 || solid.y <= 40 || solid.y + solid.height >= 920;
+      if (!isBoundary) {
+        this.drawRoundedRectPath(sctx, solid.x + 4, solid.y + 4, solid.width - 8, solid.height - 8, 4);
+      }
     }
     sctx.stroke();
 
@@ -8596,27 +8883,6 @@ export class StaticMapRenderer {
     ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
     ctx.lineTo(x, y + rad);
     ctx.quadraticCurveTo(x, y, x + rad, y);
-  }
-
-  private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number) {
-    const ceilingY = 40 - inset;
-    const leftWallX = 40 - inset;
-    const rightWallX = 960 + inset;
-    const leftFloorY = 920 + inset;
-    const rightFloorY = 920 + inset;
-    const leftPitWallX = 320 - inset;
-    const rightPitWallX = 680 + inset;
-    const pitFloorY = 960 + inset;
-
-    ctx.moveTo(leftWallX, ceilingY);
-    ctx.lineTo(rightWallX, ceilingY);
-    ctx.lineTo(rightWallX, rightFloorY);
-    ctx.lineTo(rightPitWallX, rightFloorY);
-    ctx.lineTo(rightPitWallX, pitFloorY);
-    ctx.lineTo(leftPitWallX, pitFloorY);
-    ctx.lineTo(leftPitWallX, leftFloorY);
-    ctx.lineTo(leftWallX, leftFloorY);
-    ctx.closePath();
   }
 
   public renderBackground(): void {
@@ -8918,6 +9184,7 @@ import { UNITS } from "@/core/Units";
 import { StaticMapRenderer } from "@/core/StaticMapRenderer";
 import { EntityRenderer } from "@/core/EntityRenderer";
 import { ParticleRenderer } from "@/core/ParticleRenderer";
+import { DissolvePlatform, PogoPost, DashResetGate } from "./systems/TraversalHazards";
 
 export class WorldRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -8936,6 +9203,10 @@ export class WorldRenderer {
     return this.ctx.canvas;
   }
 
+  public resetCache(): void {
+    this.staticMap.resetCache();
+  }
+
   public render(
     world: World,
     particles: readonly Particle[],
@@ -8947,7 +9218,10 @@ export class WorldRenderer {
     bossDeathTimer: number,
     bossDeathPos: { x: number; y: number } | null,
     springPlatforms: { rect: Rectangle; offsetY: number }[],
-    alpha: number
+    alpha: number,
+    dissolvePlatforms?: DissolvePlatform[],
+    pogoPosts?: PogoPost[],
+    dashResetGates?: DashResetGate[]
   ) {
     this.staticMap.buildStaticCache(solids, hazards);
 
@@ -8956,6 +9230,110 @@ export class WorldRenderer {
 
     this.staticMap.renderBackground();
     this.staticMap.renderOnewayPlatforms(onewayPlatforms, springPlatforms);
+
+    if (dissolvePlatforms) {
+      for (const dp of dissolvePlatforms) {
+        if (dp.state === "gone") continue;
+        this.ctx.save();
+        if (dp.state === "idle") {
+          this.ctx.fillStyle = "hsl(215, 10%, 12%)";
+          this.ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
+          this.ctx.lineWidth = 2.0;
+          this.ctx.fillRect(dp.rect.x, dp.rect.y, dp.rect.width, dp.rect.height);
+          this.ctx.strokeRect(dp.rect.x, dp.rect.y, dp.rect.width, dp.rect.height);
+        } else if (dp.state === "cracking") {
+          this.ctx.fillStyle = "hsl(215, 10%, 8%)";
+          this.ctx.fillRect(dp.rect.x, dp.rect.y, dp.rect.width, dp.rect.height);
+          this.ctx.strokeStyle = "hsl(45, 100%, 60%)";
+          this.ctx.lineWidth = 2.5;
+          this.ctx.strokeRect(dp.rect.x, dp.rect.y, dp.rect.width, dp.rect.height);
+
+          this.ctx.beginPath();
+          this.ctx.moveTo(dp.rect.x + 10, dp.rect.y);
+          this.ctx.lineTo(dp.rect.x + dp.rect.width / 3, dp.rect.y + dp.rect.height);
+          this.ctx.moveTo(dp.rect.x + dp.rect.width - 20, dp.rect.y);
+          this.ctx.lineTo(dp.rect.x + dp.rect.width / 2, dp.rect.y + dp.rect.height / 2);
+          this.ctx.stroke();
+        } else if (dp.state === "respawning") {
+          this.ctx.strokeStyle = "rgba(34, 197, 94, 0.4)";
+          this.ctx.lineWidth = 1.5;
+          this.ctx.setLineDash([4, 4]);
+          this.ctx.strokeRect(dp.rect.x, dp.rect.y, dp.rect.width, dp.rect.height);
+        }
+        this.ctx.restore();
+      }
+    }
+
+    if (pogoPosts) {
+      for (const post of pogoPosts) {
+        this.ctx.save();
+        const cx = post.rect.x + post.rect.width / 2;
+        const cy = post.rect.y + post.rect.height / 2;
+        const w = post.rect.width;
+        const h = post.rect.height;
+
+        this.ctx.translate(cx, cy);
+        this.ctx.rotate(performance.now() * 0.001);
+        
+        this.ctx.fillStyle = "hsl(286, 85%, 62%)";
+        this.ctx.strokeStyle = "hsl(194, 62%, 52%)";
+        this.ctx.lineWidth = 2.0;
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, -h / 2);
+        this.ctx.lineTo(w / 2, 0);
+        this.ctx.lineTo(0, h / 2);
+        this.ctx.lineTo(-w / 2, 0);
+        this.ctx.closePath();
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        this.ctx.fillStyle = "hsl(350, 82%, 58%)";
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.restore();
+      }
+    }
+
+    if (dashResetGates) {
+      for (const gate of dashResetGates) {
+        this.ctx.save();
+        const cx = gate.rect.x + gate.rect.width / 2;
+        const cy = gate.rect.y + gate.rect.height / 2;
+        const w = gate.rect.width;
+        const h = gate.rect.height;
+
+        this.ctx.translate(cx, cy);
+        this.ctx.rotate(-performance.now() * 0.002);
+
+        if (gate.active) {
+          this.ctx.strokeStyle = "hsl(142, 72%, 56%)";
+          this.ctx.lineWidth = 2.5;
+          this.ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
+          this.ctx.shadowBlur = 10;
+        } else {
+          this.ctx.strokeStyle = "rgba(113, 128, 150, 0.4)";
+          this.ctx.lineWidth = 1.5;
+          this.ctx.shadowBlur = 0;
+        }
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, -h / 2);
+        this.ctx.lineTo(w / 2, 0);
+        this.ctx.lineTo(0, h / 2);
+        this.ctx.lineTo(-w / 2, 0);
+        this.ctx.closePath();
+        this.ctx.stroke();
+
+        if (gate.active) {
+          this.ctx.fillStyle = "#ffffff";
+          this.ctx.fillRect(-3, -3, 6, 6);
+        }
+        this.ctx.restore();
+      }
+    }
 
     this.entityRenderer.renderEntities(world, projectilePool, alpha);
     this.particleRenderer.renderParticles(particles);
@@ -10491,6 +10869,594 @@ export const SFX_PRESETS = {
     },
   },
 };
+`,"src/core/design/ColorRoles.ts":`export type ColorRole =
+  | "player-agency"
+  | "boss-lethal"
+  | "minion-logic"
+  | "minion-organic"
+  | "telegraph"
+  | "determination"
+  | "arena-stone"
+  | "arena-infection"
+  | "hazard"
+  | "neutral-ui"
+  | "impact-white";
+
+export const COLOR_ROLES = {
+  "player-agency": {
+    core: "hsl(142, 72%, 56%)",
+    light: "hsl(142, 100%, 78%)",
+    dark: "hsl(148, 65%, 24%)",
+  },
+  "boss-lethal": {
+    core: "hsl(350, 82%, 58%)",
+    light: "hsl(0, 100%, 72%)",
+    dark: "hsl(348, 70%, 28%)",
+  },
+  "hazard": {
+    core: "hsl(358, 92%, 52%)",
+    light: "hsl(12, 100%, 66%)",
+    dark: "hsl(350, 80%, 22%)",
+  },
+  "telegraph": {
+    core: "hsl(45, 100%, 60%)",
+    light: "hsl(52, 100%, 78%)",
+    dark: "hsl(34, 90%, 36%)",
+  },
+  "determination": {
+    core: "hsl(286, 85%, 62%)",
+    light: "hsl(292, 100%, 80%)",
+    dark: "hsl(276, 75%, 26%)",
+  },
+  "minion-logic": {
+    core: "hsl(194, 62%, 52%)",
+    light: "hsl(188, 85%, 70%)",
+    dark: "hsl(204, 45%, 24%)",
+  },
+  "minion-organic": {
+    core: "hsl(82, 38%, 44%)",
+    light: "hsl(90, 50%, 62%)",
+    dark: "hsl(76, 34%, 22%)",
+  },
+  "arena-stone": {
+    core: "hsl(220, 10%, 12%)",
+    light: "hsl(215, 12%, 22%)",
+    dark: "hsl(230, 12%, 5%)",
+  },
+  "arena-infection": {
+    core: "hsl(330, 28%, 25%)",
+    light: "hsl(336, 42%, 38%)",
+    dark: "hsl(322, 30%, 12%)",
+  },
+  "neutral-ui": {
+    core: "hsl(215, 15%, 75%)",
+    light: "hsl(215, 20%, 90%)",
+    dark: "hsl(215, 12%, 35%)",
+  },
+  "impact-white": {
+    core: "hsl(0, 0%, 100%)",
+    light: "hsl(0, 0%, 100%)",
+    dark: "hsl(0, 0%, 90%)",
+  }
+} as const;
+
+export function getColorHSL(role: ColorRole, variant: "core" | "light" | "dark" = "core", opacity?: number): string {
+  const colors = COLOR_ROLES[role];
+  if (!colors) return "hsl(0, 0%, 100%)";
+  const base = colors[variant];
+  if (opacity !== undefined) {
+    return base.replace("hsl", "hsla").replace(")", \`, \${opacity})\`);
+  }
+  return base;
+}
+`,"src/core/design/GauntletStages.ts":`import { LevelConfig } from "../levelData";
+import { Rectangle } from "../Interfaces";
+
+export interface StageConfig extends LevelConfig {
+  id: string;
+  title: string;
+  subtitle: string;
+  midBossId: string;
+  midBossDisplayName: string;
+  midBossMaxHp: number;
+  dissolvePlatforms?: Rectangle[];
+  pogoPosts?: Rectangle[];
+  dashResetGates?: Rectangle[];
+}
+
+export const GAUNTLET_STAGES: StageConfig[] = [
+  {
+    id: "stage-1",
+    title: "THE OLD PIT",
+    subtitle: "STAGE 1 - TRADITIONAL COMBAT",
+    midBossId: "prime-wound",
+    midBossDisplayName: "PRIME WOUND",
+    midBossMaxHp: 38,
+    solids: [
+      { x: 0, y: 920, width: 320, height: 80 },
+      { x: 680, y: 920, width: 320, height: 80 },
+      { x: 320, y: 960, width: 360, height: 40 },
+      { x: 0, y: 0, width: 1000, height: 40 },
+      { x: 0, y: 0, width: 40, height: 1000 },
+      { x: 960, y: 0, width: 40, height: 1000 },
+      { x: 340, y: 640, width: 320, height: 32 },
+    ],
+    onewayPlatforms: [
+      { x: 40, y: 440, width: 240, height: 16 },
+      { x: 720, y: 440, width: 240, height: 16 },
+    ],
+    hazards: [{ x: 320, y: 920, width: 360, height: 80 }],
+    spawners: [],
+    spawnAnchors: [
+      { id: "left-catwalk", x: 140, y: 392, tags: ["high", "left", "perch"] },
+      { id: "right-catwalk", x: 860, y: 392, tags: ["high", "right", "perch"] },
+      { id: "center-bridge", x: 500, y: 592, tags: ["mid", "center", "ground"] },
+      { id: "left-ground", x: 184, y: 872, tags: ["low", "left", "ground"] },
+      { id: "right-ground", x: 816, y: 872, tags: ["low", "right", "ground"] },
+      { id: "upper-air-left", x: 288, y: 304, tags: ["air", "left", "ambush"] },
+      { id: "upper-air-right", x: 712, y: 304, tags: ["air", "right", "ambush"] },
+      { id: "center-air", x: 500, y: 264, tags: ["air", "center", "elite"] },
+      { id: "pit-warning-left", x: 344, y: 864, tags: ["low", "hazard-edge"] },
+      { id: "pit-warning-right", x: 656, y: 864, tags: ["low", "hazard-edge"] }
+    ],
+    encounterWaves: [
+      {
+        id: "s1-w1",
+        phase: 1,
+        earliestTime: 2,
+        cooldownRange: [6, 9],
+        maxActiveMinions: 2,
+        entries: [
+          { type: "TURRET", anchorIds: ["left-catwalk", "right-catwalk"], weight: 70 },
+          { type: "LANCER", anchorIds: ["center-bridge"], weight: 30 }
+        ]
+      },
+      {
+        id: "s1-w2",
+        phase: 2,
+        cooldownRange: [5, 8],
+        maxActiveMinions: 3,
+        entries: [
+          { type: "TURRET", anchorTags: ["perch"], weight: 40 },
+          { type: "LANCER", anchorTags: ["ground"], weight: 40 },
+          { type: "SHIELDER", anchorIds: ["center-bridge"], weight: 20 }
+        ]
+      },
+      {
+        id: "s1-w3",
+        phase: 3,
+        cooldownRange: [4, 7],
+        maxActiveMinions: 4,
+        entries: [
+          { type: "FLYER", anchorTags: ["air"], weight: 30 },
+          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
+          { type: "TURRET", anchorTags: ["perch"], weight: 20 },
+          { type: "SHIELDER", anchorTags: ["ground"], weight: 20 }
+        ]
+      }
+    ],
+    playerStart: { x: 120, y: 800 },
+    bossStart: { x: 840, y: 800 },
+  },
+  {
+    id: "stage-2",
+    title: "THE NARROW REDOUBT",
+    subtitle: "STAGE 2 - VERTICAL COMPRESSION",
+    midBossId: "scarlet-lock",
+    midBossDisplayName: "SCARLET LOCK",
+    midBossMaxHp: 48,
+    solids: [
+      { x: 0, y: 0, width: 220, height: 1000 },
+      { x: 780, y: 0, width: 220, height: 1000 },
+      { x: 220, y: 920, width: 560, height: 80 },
+      { x: 220, y: 0, width: 560, height: 40 },
+      { x: 220, y: 680, width: 140, height: 32 },
+      { x: 640, y: 440, width: 140, height: 32 },
+      { x: 220, y: 220, width: 140, height: 32 },
+    ],
+    onewayPlatforms: [
+      { x: 360, y: 560, width: 280, height: 16 },
+      { x: 360, y: 320, width: 280, height: 16 },
+    ],
+    hazards: [
+      { x: 220, y: 880, width: 100, height: 40 },
+      { x: 680, y: 880, width: 100, height: 40 },
+    ],
+    spawners: [],
+    spawnAnchors: [
+      { id: "redoubt-floor", x: 500, y: 840, tags: ["low", "ground"] },
+      { id: "redoubt-mid-left", x: 280, y: 600, tags: ["mid", "left", "perch"] },
+      { id: "redoubt-mid-right", x: 720, y: 360, tags: ["mid", "right", "perch"] },
+      { id: "redoubt-air-center", x: 500, y: 400, tags: ["air", "center"] },
+    ],
+    encounterWaves: [
+      {
+        id: "s2-w1",
+        phase: 1,
+        earliestTime: 2,
+        cooldownRange: [5, 8],
+        maxActiveMinions: 2,
+        entries: [
+          { type: "TURRET", anchorIds: ["redoubt-mid-left", "redoubt-mid-right"], weight: 60 },
+          { type: "LANCER", anchorIds: ["redoubt-floor"], weight: 40 }
+        ]
+      },
+      {
+        id: "s2-w2",
+        phase: 2,
+        cooldownRange: [4, 7],
+        maxActiveMinions: 2,
+        entries: [
+          { type: "FLYER", anchorTags: ["air"], weight: 50 },
+          { type: "SHIELDER", anchorTags: ["ground"], weight: 50 }
+        ]
+      },
+      {
+        id: "s2-w3",
+        phase: 3,
+        cooldownRange: [3, 6],
+        maxActiveMinions: 3,
+        entries: [
+          { type: "FLYER", anchorTags: ["air"], weight: 40 },
+          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
+          { type: "TURRET", anchorTags: ["perch"], weight: 30 }
+        ]
+      }
+    ],
+    playerStart: { x: 300, y: 800 },
+    bossStart: { x: 700, y: 800 },
+  },
+  {
+    id: "stage-3",
+    title: "THE ORBITAL GALLOWS",
+    subtitle: "STAGE 3 - ARC READING",
+    midBossId: "carminal-orbit",
+    midBossDisplayName: "CARMINAL ORBIT",
+    midBossMaxHp: 58,
+    solids: [
+      { x: 0, y: 920, width: 1000, height: 80 },
+      { x: 0, y: 0, width: 1000, height: 40 },
+      { x: 0, y: 0, width: 40, height: 1000 },
+      { x: 960, y: 0, width: 40, height: 1000 },
+      { x: 380, y: 480, width: 240, height: 32 },
+    ],
+    onewayPlatforms: [
+      { x: 140, y: 640, width: 180, height: 16 },
+      { x: 680, y: 640, width: 180, height: 16 },
+      { x: 140, y: 320, width: 180, height: 16 },
+      { x: 680, y: 320, width: 180, height: 16 },
+    ],
+    hazards: [
+      { x: 40, y: 880, width: 200, height: 40 },
+      { x: 760, y: 880, width: 200, height: 40 },
+    ],
+    spawners: [],
+    spawnAnchors: [
+      { id: "orbit-center-block", x: 500, y: 420, tags: ["mid", "center", "ground"] },
+      { id: "orbit-low-mid", x: 500, y: 840, tags: ["low", "center"] },
+      { id: "orbit-left-cat", x: 230, y: 580, tags: ["mid", "left", "perch"] },
+      { id: "orbit-right-cat", x: 770, y: 580, tags: ["mid", "right", "perch"] },
+      { id: "orbit-air-high", x: 500, y: 200, tags: ["air", "center"] },
+    ],
+    encounterWaves: [
+      {
+        id: "s3-w1",
+        phase: 1,
+        earliestTime: 2,
+        cooldownRange: [5, 8],
+        maxActiveMinions: 2,
+        entries: [
+          { type: "FLYER", anchorTags: ["air"], weight: 70 },
+          { type: "LANCER", anchorIds: ["orbit-center-block"], weight: 30 }
+        ]
+      },
+      {
+        id: "s3-w2",
+        phase: 2,
+        cooldownRange: [4, 7],
+        maxActiveMinions: 3,
+        entries: [
+          { type: "TURRET", anchorTags: ["perch"], weight: 40 },
+          { type: "SHIELDER", anchorIds: ["orbit-low-mid"], weight: 40 },
+          { type: "FLYER", anchorTags: ["air"], weight: 20 }
+        ]
+      },
+      {
+        id: "s3-w3",
+        phase: 3,
+        cooldownRange: [3, 6],
+        maxActiveMinions: 4,
+        entries: [
+          { type: "FLYER", anchorTags: ["air"], weight: 45 },
+          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
+          { type: "SHIELDER", anchorTags: ["ground"], weight: 25 }
+        ]
+      }
+    ],
+    playerStart: { x: 500, y: 800 },
+    bossStart: { x: 500, y: 400 },
+  },
+  {
+    id: "stage-4",
+    title: "THE DISSOLVING CHOIR",
+    subtitle: "STAGE 4 - PLATFORM DECAY",
+    midBossId: "vermilion-needle",
+    midBossDisplayName: "VERMILION NEEDLE",
+    midBossMaxHp: 64,
+    solids: [
+      { x: 0, y: 920, width: 260, height: 80 },
+      { x: 740, y: 920, width: 260, height: 80 },
+      { x: 260, y: 960, width: 480, height: 40 },
+      { x: 0, y: 0, width: 1000, height: 40 },
+      { x: 0, y: 0, width: 40, height: 1000 },
+      { x: 960, y: 0, width: 40, height: 1000 },
+      { x: 40, y: 400, width: 160, height: 32 },
+      { x: 800, y: 400, width: 160, height: 32 },
+    ],
+    onewayPlatforms: [],
+    hazards: [{ x: 260, y: 920, width: 480, height: 80 }],
+    spawners: [],
+    spawnAnchors: [
+      { id: "choir-left-solid", x: 130, y: 340, tags: ["high", "left", "perch"] },
+      { id: "choir-right-solid", x: 870, y: 340, tags: ["high", "right", "perch"] },
+      { id: "choir-mid-ledge-l", x: 350, y: 590, tags: ["mid", "left"] },
+      { id: "choir-mid-ledge-r", x: 650, y: 590, tags: ["mid", "right"] },
+      { id: "choir-air-mid", x: 500, y: 280, tags: ["air", "center"] },
+    ],
+    encounterWaves: [
+      {
+        id: "s4-w1",
+        phase: 1,
+        earliestTime: 2,
+        cooldownRange: [5, 8],
+        maxActiveMinions: 2,
+        entries: [
+          { type: "TURRET", anchorIds: ["choir-left-solid", "choir-right-solid"], weight: 70 },
+          { type: "FLYER", anchorTags: ["air"], weight: 30 }
+        ]
+      },
+      {
+        id: "s4-w2",
+        phase: 2,
+        cooldownRange: [4, 7],
+        maxActiveMinions: 3,
+        entries: [
+          { type: "LANCER", anchorIds: ["choir-mid-ledge-l", "choir-mid-ledge-r"], weight: 50 },
+          { type: "SHIELDER", anchorTags: ["high"], weight: 50 }
+        ]
+      },
+      {
+        id: "s4-w3",
+        phase: 3,
+        cooldownRange: [3, 6],
+        maxActiveMinions: 4,
+        entries: [
+          { type: "FLYER", anchorTags: ["air"], weight: 40 },
+          { type: "TURRET", anchorTags: ["high"], weight: 30 },
+          { type: "LANCER", anchorTags: ["mid"], weight: 30 }
+        ]
+      }
+    ],
+    playerStart: { x: 120, y: 800 },
+    bossStart: { x: 880, y: 800 },
+    dissolvePlatforms: [
+      { x: 260, y: 640, width: 140, height: 16 },
+      { x: 600, y: 640, width: 140, height: 16 },
+    ],
+    pogoPosts: [
+      { x: 470, y: 720, width: 60, height: 32 },
+    ],
+    dashResetGates: [
+      { x: 480, y: 460, width: 40, height: 40 },
+    ]
+  },
+  {
+    id: "stage-5",
+    title: "THE MARROW ROT",
+    subtitle: "STAGE 5 - GEOMETRIC CONTAMINATION",
+    midBossId: "marrow-king",
+    midBossDisplayName: "MARROW KING",
+    midBossMaxHp: 74,
+    solids: [
+      { x: 0, y: 920, width: 340, height: 80 },
+      { x: 660, y: 920, width: 340, height: 80 },
+      { x: 340, y: 960, width: 320, height: 40 },
+      { x: 0, y: 0, width: 1000, height: 40 },
+      { x: 0, y: 0, width: 40, height: 1000 },
+      { x: 960, y: 0, width: 40, height: 1000 },
+      { x: 260, y: 580, width: 480, height: 32 },
+    ],
+    onewayPlatforms: [
+      { x: 40, y: 380, width: 220, height: 16 },
+      { x: 740, y: 380, width: 220, height: 16 },
+    ],
+    hazards: [{ x: 340, y: 920, width: 320, height: 80 }],
+    spawners: [],
+    spawnAnchors: [
+      { id: "marrow-high-left", x: 150, y: 320, tags: ["high", "left", "perch"] },
+      { id: "marrow-high-right", x: 850, y: 320, tags: ["high", "right", "perch"] },
+      { id: "marrow-center-growth", x: 500, y: 520, tags: ["mid", "center", "ground"] },
+      { id: "marrow-low-l", x: 180, y: 860, tags: ["low", "left", "ground"] },
+      { id: "marrow-low-r", x: 820, y: 860, tags: ["low", "right", "ground"] },
+      { id: "marrow-air", x: 500, y: 220, tags: ["air", "center"] },
+    ],
+    encounterWaves: [
+      {
+        id: "s5-w1",
+        phase: 1,
+        earliestTime: 2,
+        cooldownRange: [5, 8],
+        maxActiveMinions: 2,
+        entries: [
+          { type: "LANCER", anchorIds: ["marrow-center-growth"], weight: 60 },
+          { type: "FLYER", anchorTags: ["air"], weight: 40 }
+        ]
+      },
+      {
+        id: "s5-w2",
+        phase: 2,
+        cooldownRange: [4, 7],
+        maxActiveMinions: 3,
+        entries: [
+          { type: "SHIELDER", anchorTags: ["low"], weight: 40 },
+          { type: "TURRET", anchorTags: ["high"], weight: 40 },
+          { type: "FLYER", anchorTags: ["air"], weight: 20 }
+        ]
+      },
+      {
+        id: "s5-w3",
+        phase: 3,
+        cooldownRange: [3, 6],
+        maxActiveMinions: 4,
+        entries: [
+          { type: "FLYER", anchorTags: ["air"], weight: 30 },
+          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
+          { type: "SHIELDER", anchorTags: ["ground"], weight: 20 },
+          { type: "TURRET", anchorTags: ["high"], weight: 20 }
+        ]
+      }
+    ],
+    playerStart: { x: 120, y: 800 },
+    bossStart: { x: 880, y: 800 },
+  },
+  {
+    id: "stage-6",
+    title: "THE RUST CATHEDRAL",
+    subtitle: "STAGE 6 - SLAB COMPRESSION",
+    midBossId: "rust-cathedral",
+    midBossDisplayName: "RUST CATHEDRAL",
+    midBossMaxHp: 88,
+    solids: [
+      { x: 0, y: 900, width: 1000, height: 100 },
+      { x: 0, y: 0, width: 1000, height: 40 },
+      { x: 0, y: 0, width: 40, height: 1000 },
+      { x: 960, y: 0, width: 40, height: 1000 },
+      { x: 120, y: 440, width: 180, height: 120 },
+      { x: 700, y: 440, width: 180, height: 120 },
+      { x: 400, y: 550, width: 200, height: 40 },
+    ],
+    onewayPlatforms: [
+      { x: 300, y: 400, width: 100, height: 16 },
+      { x: 600, y: 400, width: 100, height: 16 },
+    ],
+    hazards: [],
+    spawners: [],
+    spawnAnchors: [
+      { id: "cath-high-left", x: 210, y: 380, tags: ["high", "left", "perch"] },
+      { id: "cath-high-right", x: 790, y: 380, tags: ["high", "right", "perch"] },
+      { id: "cath-center-slab", x: 500, y: 490, tags: ["mid", "center", "ground"] },
+      { id: "cath-low-l", x: 350, y: 840, tags: ["low", "left", "ground"] },
+      { id: "cath-low-r", x: 650, y: 840, tags: ["low", "right", "ground"] },
+    ],
+    encounterWaves: [
+      {
+        id: "s6-w1",
+        phase: 1,
+        earliestTime: 2,
+        cooldownRange: [5, 8],
+        maxActiveMinions: 2,
+        entries: [
+          { type: "SHIELDER", anchorIds: ["cath-center-slab"], weight: 60 },
+          { type: "TURRET", anchorTags: ["high"], weight: 40 }
+        ]
+      },
+      {
+        id: "s6-w2",
+        phase: 2,
+        cooldownRange: [4, 7],
+        maxActiveMinions: 3,
+        entries: [
+          { type: "LANCER", anchorTags: ["low"], weight: 45 },
+          { type: "FLYER", anchorIds: ["cath-high-left", "cath-high-right"], weight: 40 },
+          { type: "SHIELDER", anchorTags: ["ground"], weight: 15 }
+        ]
+      },
+      {
+        id: "s6-w3",
+        phase: 3,
+        cooldownRange: [3, 6],
+        maxActiveMinions: 4,
+        entries: [
+          { type: "LANCER", anchorTags: ["ground"], weight: 35 },
+          { type: "SHIELDER", anchorTags: ["ground"], weight: 30 },
+          { type: "TURRET", anchorTags: ["high"], weight: 20 },
+          { type: "FLYER", anchorTags: ["high"], weight: 15 }
+        ]
+      }
+    ],
+    playerStart: { x: 300, y: 800 },
+    bossStart: { x: 700, y: 800 },
+  },
+  {
+    id: "stage-7",
+    title: "THE PANTHEON BOX",
+    subtitle: "STAGE 7 - FINAL SYNTHESIS",
+    midBossId: "false-square",
+    midBossDisplayName: "THE FALSE SQUARE",
+    midBossMaxHp: 110,
+    solids: [
+      { x: 0, y: 920, width: 320, height: 80 },
+      { x: 680, y: 920, width: 320, height: 80 },
+      { x: 320, y: 960, width: 360, height: 40 },
+      { x: 0, y: 0, width: 1000, height: 40 },
+      { x: 0, y: 0, width: 40, height: 1000 },
+      { x: 960, y: 0, width: 40, height: 1000 },
+      { x: 340, y: 640, width: 320, height: 32 },
+    ],
+    onewayPlatforms: [
+      { x: 40, y: 440, width: 240, height: 16 },
+      { x: 720, y: 440, width: 240, height: 16 },
+    ],
+    hazards: [{ x: 320, y: 920, width: 360, height: 80 }],
+    spawners: [],
+    spawnAnchors: [
+      { id: "pantheon-cat-l", x: 140, y: 392, tags: ["high", "left", "perch"] },
+      { id: "pantheon-cat-r", x: 860, y: 392, tags: ["high", "right", "perch"] },
+      { id: "pantheon-center-bridge", x: 500, y: 592, tags: ["mid", "center", "ground"] },
+      { id: "pantheon-low-l", x: 184, y: 872, tags: ["low", "left", "ground"] },
+      { id: "pantheon-low-r", x: 816, y: 872, tags: ["low", "right", "ground"] },
+    ],
+    encounterWaves: [
+      {
+        id: "s7-w1",
+        phase: 1,
+        earliestTime: 2,
+        cooldownRange: [5, 8],
+        maxActiveMinions: 3,
+        entries: [
+          { type: "TURRET", anchorTags: ["perch"], weight: 40 },
+          { type: "LANCER", anchorTags: ["ground"], weight: 40 },
+          { type: "FLYER", anchorIds: ["pantheon-center-bridge"], weight: 20 }
+        ]
+      },
+      {
+        id: "s7-w2",
+        phase: 2,
+        cooldownRange: [4, 7],
+        maxActiveMinions: 4,
+        entries: [
+          { type: "FLYER", anchorTags: ["high"], weight: 35 },
+          { type: "SHIELDER", anchorTags: ["ground"], weight: 35 },
+          { type: "LANCER", anchorTags: ["ground"], weight: 30 }
+        ]
+      },
+      {
+        id: "s7-w3",
+        phase: 3,
+        cooldownRange: [3, 6],
+        maxActiveMinions: 5,
+        entries: [
+          { type: "FLYER", anchorTags: ["high"], weight: 30 },
+          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
+          { type: "SHIELDER", anchorTags: ["ground"], weight: 20 },
+          { type: "TURRET", anchorTags: ["perch"], weight: 20 }
+        ]
+      }
+    ],
+    playerStart: { x: 120, y: 800 },
+    bossStart: { x: 840, y: 800 },
+  }
+];
 `,"src/core/effects/CinematicDeathRenderer.ts":`import { Software3DRenderer } from "../visuals/Software3DRenderer";
 import { UNITS } from "@/core/Units";
 import { World } from "@/core/World";
@@ -11056,7 +12022,17 @@ class EventBroker implements IEventBus {
 export const eventBroker = new EventBroker();
 `,"src/core/levelData.ts":`import { Rectangle } from "@/core/Interfaces";
 
-export type MinionType = "TURRET" | "LANCER" | "FLYER" | "SHIELDER";
+export type MinionType =
+  | "TURRET"
+  | "LANCER"
+  | "FLYER"
+  | "SHIELDER"
+  | "PIT_LANCER"
+  | "COMPASS_WASP"
+  | "CLAMPJAW"
+  | "HYMN_NAIL"
+  | "BLISTER_OX"
+  | "BELL_HAMMER";
 
 export interface SpawnerConfig {
   type: MinionType;
@@ -11676,8 +12652,173 @@ export class MinionCollisionSystem {
     }
   }
 }
+`,"src/core/systems/TraversalHazards.ts":`import { Rectangle } from "../Interfaces";
+import { Player } from "@/entities/Player";
+import { HealthComponent } from "@/entities/components/HealthComponent";
+
+export class DissolvePlatform {
+  public rect: Rectangle;
+  public state: "idle" | "cracking" | "gone" | "respawning" = "idle";
+  public timer: number = 0;
+
+  constructor(rect: Rectangle) {
+    this.rect = { ...rect };
+  }
+
+  public update(dt: number, player: Player): void {
+    const halfW = player.size.width / 2;
+    const halfH = player.size.height / 2;
+    const feetY = player.position.y + halfH;
+
+    const playerOnTop =
+      player.position.x + halfW > this.rect.x &&
+      player.position.x - halfW < this.rect.x + this.rect.width &&
+      Math.abs(feetY - this.rect.y) <= 6 &&
+      player.velocity.y >= 0;
+
+    if (this.state === "idle") {
+      if (playerOnTop) {
+        this.state = "cracking";
+        this.timer = 0.45;
+        player.world.events.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.15 });
+      }
+    } else if (this.state === "cracking") {
+      this.timer -= dt;
+      if (this.timer <= 0) {
+        this.state = "gone";
+        this.timer = 1.6;
+        player.world.events.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.25 });
+        player.world.events.publishSpark(
+          this.rect.x + this.rect.width / 2,
+          this.rect.y,
+          -Math.PI / 2,
+          "hsl(45, 100%, 60%)",
+          true,
+          12,
+          "line"
+        );
+        player.world.audio.playErrorTick();
+      }
+    } else if (this.state === "gone") {
+      this.timer -= dt;
+      if (this.timer <= 0) {
+        this.state = "respawning";
+        this.timer = 0.5;
+      }
+    } else if (this.state === "respawning") {
+      this.timer -= dt;
+      if (this.timer <= 0) {
+        this.state = "idle";
+      }
+    }
+  }
+}
+
+export class PogoPost {
+  public rect: Rectangle;
+
+  constructor(rect: Rectangle) {
+    this.rect = { ...rect };
+  }
+
+  public update(_dt: number, player: Player): void {
+    const pW = player.size.width / 2;
+    const pH = player.size.height / 2;
+
+    const isOverlapping =
+      player.position.x + pW > this.rect.x &&
+      player.position.x - pW < this.rect.x + this.rect.width &&
+      player.position.y + pH > this.rect.y &&
+      player.position.y - pH < this.rect.y + this.rect.height;
+
+    if (isOverlapping) {
+      const isPogoActive = player.meleeComponent.attackActive && player.meleeComponent.attackDirection === "down";
+      if (isPogoActive && player.velocity.y >= 0) {
+        player.velocity.y = -450;
+        player.position.y -= 4;
+        player.meleeComponent.hasHitEnemyThisSwing = true;
+        player.hasDoubleJump = true;
+        player.dashComponent.resetDashCharge();
+        player.world.events.publish("PLAYER_POGOED", undefined);
+        player.world.events.publishSpark(
+          this.rect.x + this.rect.width / 2,
+          this.rect.y,
+          -Math.PI / 2,
+          "hsl(280, 100%, 75%)",
+          true,
+          12
+        );
+      } else {
+        const health = player.getComponent(HealthComponent);
+        if (health && !health.isInvincible()) {
+          const damaged = health.takeDamage(1, this.rect.x + this.rect.width / 2, this.rect.y + this.rect.height / 2);
+          if (damaged) {
+            const dir = Math.sign(player.position.x - (this.rect.x + this.rect.width / 2)) || 1;
+            player.velocity.x = dir * 450;
+            player.velocity.y = -350;
+          }
+        }
+      }
+    }
+  }
+}
+
+export class DashResetGate {
+  public rect: Rectangle;
+  public active: boolean = true;
+  public cooldownTimer: number = 0;
+
+  constructor(rect: Rectangle) {
+    this.rect = { ...rect };
+  }
+
+  public update(dt: number, player: Player): void {
+    if (this.cooldownTimer > 0) {
+      this.cooldownTimer -= dt;
+      if (this.cooldownTimer <= 0) {
+        this.active = true;
+      }
+    }
+
+    if (!this.active) return;
+
+    const pW = player.size.width / 2;
+    const pH = player.size.height / 2;
+
+    const isOverlapping =
+      player.position.x + pW > this.rect.x &&
+      player.position.x - pW < this.rect.x + this.rect.width &&
+      player.position.y + pH > this.rect.y &&
+      player.position.y - pH < this.rect.y + this.rect.height;
+
+    if (isOverlapping && this.active) {
+      this.active = false;
+      this.cooldownTimer = 2.0;
+
+      player.dashComponent.resetDashCharge();
+      player.hasDoubleJump = true;
+
+      player.world.events.publishSpark(
+        this.rect.x + this.rect.width / 2,
+        this.rect.y + this.rect.height / 2,
+        0,
+        "hsl(142, 72%, 56%)",
+        true,
+        16,
+        "line"
+      );
+      player.world.events.publishBlast(
+        this.rect.x + this.rect.width / 2,
+        this.rect.y + this.rect.height / 2,
+        "hsl(142, 100%, 80%)"
+      );
+      player.world.audio.playDashRecharge();
+    }
+  }
+}
 `,"src/core/visuals/BossVisuals.ts":`import { Boss } from "@/entities/Boss";
-import { Software3DRenderer } from "./Software3DRenderer";
+import { drawVisualProfile, VisualProfile } from "./ShapeRenderer";
+import { useSessionStore } from "@/store/useGameStore";
 
 export class BossVisuals {
   static draw(ctx: CanvasRenderingContext2D, boss: Boss, alpha: number): void {
@@ -11690,56 +12831,62 @@ export class BossVisuals {
     const activeState = boss.activeStateName;
 
     ctx.save();
+
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+
+    const profile: VisualProfile = {
+      shapeFamily: "corrupted-box",
+      danger: boss.currentPhase === 3 ? 0.9 : 0.4,
+      weight: 0.8,
+      corruption: 0.15,
+      hueRole: "boss-lethal",
+      strokePx: 3.0,
+      spinRate: 0.05,
+      wobbleAmp: 0.1,
+      cornerRadius: 0,
+      phaseOffset: stageIdx * 10
+    };
+
+    if (stageIdx === 1) { // Scarlet Lock
+      profile.shapeFamily = "corrupted-box";
+      profile.corruption = 0.35;
+    } else if (stageIdx === 2) { // Carminal Orbit
+      profile.shapeFamily = "diamond";
+      profile.spinRate = 1.0;
+    } else if (stageIdx === 3) { // Vermilion Needle
+      profile.shapeFamily = "needle";
+      profile.hueRole = "hazard";
+      profile.spinRate = 2.0;
+    } else if (stageIdx === 4) { // Marrow King
+      profile.shapeFamily = "blister";
+      profile.hueRole = "minion-organic";
+      profile.corruption = 0.65;
+    } else if (stageIdx === 5) { // Rust Cathedral
+      profile.shapeFamily = "corrupted-box";
+      profile.corruption = 0.55;
+    } else if (stageIdx === 6) { // False Square
+      profile.shapeFamily = "perfect-square";
+      profile.spinRate = Math.sin(performance.now() * 0.005) * 0.4;
+      profile.wobbleAmp = 0.4;
+      profile.hueRole = performance.now() % 1000 < 500 ? "boss-lethal" : "hazard";
+    }
+
     if (boss.health.isFlashing()) {
-      ctx.fillStyle = "white";
+      profile.hueRole = "impact-white";
     } else if (activeState === "TELEGRAPH") {
-      ctx.fillStyle = "hsl(45, 100%, 50%)";
-      ctx.shadowColor = "rgba(234, 179, 8, 0.8)";
-      ctx.shadowBlur = 20;
-    } else {
-      ctx.fillStyle = "hsl(350, 80%, 60%)";
-      if (boss.currentPhase === 3) {
-        ctx.shadowColor = "rgba(239, 68, 68, 0.8)";
-        ctx.shadowBlur = 25;
-      }
+      profile.hueRole = "telegraph";
     }
 
     const feetY = drawY + boss.size.height / 2;
+    const drawW = boss.size.width * boss.visualScale.x;
+    const drawH = boss.size.height * boss.visualScale.y;
 
-    ctx.translate(drawX, feetY);
-    ctx.rotate(boss.rotation);
+    drawVisualProfile(ctx, drawX, feetY - boss.size.height / 2, drawW, drawH, profile, performance.now() / 1000);
 
-    const yaw = 0.15 * boss.facingDirection + (boss.velocity.x / boss.lungeSpeed) * 0.45;
-    const pitch = 0.08 + (boss.velocity.y / 1200) * 0.25;
-    let baseColor = "hsl(350, 80%, 60%)";
-    if (boss.health.isFlashing()) {
-      baseColor = "hsl(0, 0%, 100%)";
-    } else if (activeState === "TELEGRAPH") {
-      baseColor = "hsl(45, 100%, 50%)";
-    }
-
-    Software3DRenderer.drawGeometry(
-      ctx,
-      Software3DRenderer.BOX_GEOMETRY,
-      0,
-      0,
-      boss.size.width,
-      boss.size.height,
-      boss.visualScale.x,
-      boss.visualScale.y,
-      yaw,
-      pitch,
-      0,
-      baseColor,
-      1.0,
-      "feet"
-    );
-
-    ctx.shadowBlur = 0;
     ctx.restore();
   }
 }
-`,"src/core/visuals/MinionVisuals.ts":`import { Software3DRenderer } from "./Software3DRenderer";
+`,"src/core/visuals/MinionVisuals.ts":`import { drawVisualProfile } from "./ShapeRenderer";
 import { TrigLUT } from "@/core/TrigLUT";
 import { BaseMinion } from "@/entities/BaseMinion";
 import { Boss } from "@/entities/Boss";
@@ -11778,68 +12925,96 @@ export class MinionVisuals {
 
       const boss = minion.world.boss;
       const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
-      let mColor = \`hsla(180, 85%, 65%, \${cageAlpha})\`;
+      let mColor = \`hsla(194, 62%, 52%, \${cageAlpha})\`;
       if (phase === 2) {
-        mColor = \`hsla(35, 95%, 60%, \${cageAlpha})\`;
+        mColor = \`hsla(45, 100%, 60%, \${cageAlpha})\`;
       } else if (phase === 3) {
-        mColor = \`hsla(0, 100%, 60%, \${cageAlpha})\`;
+        mColor = \`hsla(350, 82%, 58%, \${cageAlpha})\`;
       }
 
       const H = minion.size.height;
       const W = minion.size.width;
       const R = W * 0.72;
 
-      const rotation = nowTime * 0.005;
       const hMid = H / 2;
 
       const hBottom = hMid - hMid * accordionScale;
-      const hMiddle = hMid;
       const hTop = hMid + hMid * accordionScale;
 
-      const ringHeights = [hBottom, hMiddle, hTop];
-      const segments = 24;
-      const step = (Math.PI * 2) / segments;
+      const isHex = minion.id.includes("TURRET") || minion.id.includes("SHIELDER") || minion.id.includes("BELL_HAMMER");
+      const isTri = minion.id.includes("LANCER") || minion.id.includes("PIT_LANCER");
+      const isFork = minion.id.includes("HYMN_NAIL");
+      const isBubble = minion.id.includes("BLISTER_OX");
 
-      for (let rIdx = 0; rIdx < ringHeights.length; rIdx++) {
-        const h = ringHeights[rIdx];
-        const dir = rIdx % 2 === 0 ? 1 : -1;
-        const ringRotation = rotation * dir;
-
+      if (isHex) {
+        const segments = 6;
+        const step = (Math.PI * 2) / segments;
         for (let i = 0; i < segments; i++) {
-          const theta1 = i * step + ringRotation;
-          const theta2 = (i + 1) * step + ringRotation;
-
+          const theta1 = i * step + nowTime * 0.001;
+          const theta2 = (i + 1) * step + nowTime * 0.001;
           const x1 = R * TrigLUT.cos(theta1);
-          const y1 = -h + R * TrigLUT.sin(theta1) * 0.28;
-
+          const y1 = -hBottom + R * TrigLUT.sin(theta1) * 0.28;
           const x2 = R * TrigLUT.cos(theta2);
-          const y2 = -h + R * TrigLUT.sin(theta2) * 0.28;
+          const y2 = -hBottom + R * TrigLUT.sin(theta2) * 0.28;
 
-          const midAngle = (theta1 + theta2) / 2;
-          const isBehind = TrigLUT.sin(midAngle) < 0;
-
-          const segment = { x1, y1, x2, y2, color: mColor, width: 1.5 };
-          if (isBehind) {
-            backCageScratch.push(segment);
-          } else {
-            frontCageScratch.push(segment);
-          }
+          const isBehind = TrigLUT.sin((theta1 + theta2) / 2) < 0;
+          const seg = { x1, y1, x2, y2, color: mColor, width: 2.0 };
+          if (isBehind) backCageScratch.push(seg);
+          else frontCageScratch.push(seg);
         }
-      }
+      } else if (isTri) {
+        const segments = 3;
+        const step = (Math.PI * 2) / segments;
+        for (let i = 0; i < segments; i++) {
+          const theta1 = i * step + nowTime * 0.0015;
+          const theta2 = (i + 1) * step + nowTime * 0.0015;
+          const x1 = R * 1.2 * TrigLUT.cos(theta1);
+          const y1 = -hBottom + R * 0.8 * TrigLUT.sin(theta1) * 0.28;
+          const x2 = R * 1.2 * TrigLUT.cos(theta2);
+          const y2 = -hBottom + R * 0.8 * TrigLUT.sin(theta2) * 0.28;
 
-      const strutAngles = [0, Math.PI / 2, Math.PI, (Math.PI * 3) / 2];
-      for (const angle of strutAngles) {
-        const theta = angle + rotation;
-        const x = R * TrigLUT.cos(theta);
-        const yBottom = -hBottom + R * TrigLUT.sin(theta) * 0.28;
-        const yTop = -hTop + R * TrigLUT.sin(theta) * 0.28;
+          const isBehind = TrigLUT.sin((theta1 + theta2) / 2) < 0;
+          const seg = { x1, y1, x2, y2, color: mColor, width: 2.5 };
+          if (isBehind) backCageScratch.push(seg);
+          else frontCageScratch.push(seg);
+        }
+      } else if (isFork) {
+        const xLeft = -W * 0.4;
+        const xRight = W * 0.4;
+        backCageScratch.push({ x1: xLeft, y1: -hBottom, x2: xLeft, y2: -hTop, color: mColor, width: 2.0 });
+        frontCageScratch.push({ x1: xRight, y1: -hBottom, x2: xRight, y2: -hTop, color: mColor, width: 2.0 });
+      } else if (isBubble) {
+        const segments = 16;
+        const step = (Math.PI * 2) / segments;
+        for (let i = 0; i < segments; i++) {
+          const theta1 = i * step;
+          const theta2 = (i + 1) * step;
+          const rPulse = R * (1.0 + 0.1 * Math.sin(nowTime * 0.008 + i));
+          const x1 = rPulse * TrigLUT.cos(theta1);
+          const y1 = -hBottom + rPulse * TrigLUT.sin(theta1) * 0.35;
+          const x2 = rPulse * TrigLUT.cos(theta2);
+          const y2 = -hBottom + rPulse * TrigLUT.sin(theta2) * 0.35;
 
-        const isBehind = TrigLUT.sin(theta) < 0;
-        const segment = { x1: x, y1: yBottom, x2: x, y2: yTop, color: mColor, width: 2.0 };
-        if (isBehind) {
-          backCageScratch.push(segment);
-        } else {
-          frontCageScratch.push(segment);
+          const isBehind = TrigLUT.sin((theta1 + theta2) / 2) < 0;
+          const seg = { x1, y1, x2, y2, color: mColor, width: 1.5 };
+          if (isBehind) backCageScratch.push(seg);
+          else frontCageScratch.push(seg);
+        }
+      } else {
+        const segments = 12;
+        const step = (Math.PI * 2) / segments;
+        for (let i = 0; i < segments; i++) {
+          const theta1 = i * step + nowTime * 0.002;
+          const theta2 = (i + 1) * step + nowTime * 0.002;
+          const x1 = R * TrigLUT.cos(theta1);
+          const y1 = -hBottom + R * TrigLUT.sin(theta1) * 0.28;
+          const x2 = R * TrigLUT.cos(theta2);
+          const y2 = -hBottom + R * TrigLUT.sin(theta2) * 0.28;
+
+          const isBehind = TrigLUT.sin((theta1 + theta2) / 2) < 0;
+          const seg = { x1, y1, x2, y2, color: mColor, width: 1.5 };
+          if (isBehind) backCageScratch.push(seg);
+          else frontCageScratch.push(seg);
         }
       }
     }
@@ -11881,62 +13056,21 @@ export class MinionVisuals {
       ctx.translate(0, minion.size.height / 2);
     }
 
-        const geom = (minion.id.includes("TURRET") || minion.id.includes("SHIELDER"))
-          ? Software3DRenderer.HEXAGON_GEOMETRY
-          : Software3DRenderer.BOX_GEOMETRY;
+    const profile = minion.getVisualProfile();
+    const isTelegraph = minion.attackState === "TELEGRAPH";
 
-        const yaw = 0.15 * minion.facingDirection + (minion.velocity.x / 450) * 0.35;
-        const pitch = 0.08 + (minion.velocity.y / 1000) * 0.22;
-        const pivotY = minion.squashPivot === "feet" ? "feet" : "center";
-        const posY = pivotY === "feet" ? 0 : -minion.size.height / 2;
-        const localY = minion.squashPivot === "feet" ? -minion.size.height / 2 : 0;
+    if (minion.health.isFlashing()) {
+      profile.hueRole = "impact-white";
+    } else if (isTelegraph) {
+      profile.hueRole = "telegraph";
+    }
 
-        if (minion.isDying) {
-          const shrapnelProgress = 1.0 - minion.dissolveTimer / 0.5;
-          Software3DRenderer.drawFragments(
-            ctx,
-            geom,
-            0,
-            posY,
-            minion.size.width,
-            minion.size.height,
-            minion.visualScale.x,
-            minion.visualScale.y,
-            yaw,
-            pitch,
-            0,
-            minion.minionColor,
-            shrapnelProgress,
-            180,
-            minion.dissolveTimer / 0.5,
-            pivotY
-          );
-        } else {
-          let baseColor = minion.minionColor;
-          if (minion.health.isFlashing()) {
-            baseColor = "hsl(0, 0%, 100%)";
-          } else if (minion.attackState === "TELEGRAPH") {
-            baseColor = "hsl(45, 100%, 50%)";
-          }
+    const drawW = minion.size.width * minion.visualScale.x;
+    const drawH = minion.size.height * minion.visualScale.y;
 
-          Software3DRenderer.drawGeometry(
-            ctx,
-            geom,
-            0,
-            posY,
-            minion.size.width,
-            minion.size.height,
-            minion.visualScale.x,
-            minion.visualScale.y,
-            yaw,
-            pitch,
-            0,
-            baseColor,
-            1.0,
-            pivotY
-          );
-        }
+    drawVisualProfile(ctx, 0, -minion.size.height / 2, drawW, drawH, profile, nowTime / 1000);
 
+    const localY = -minion.size.height / 2;
     ctx.fillStyle = "black";
     ctx.fillRect(minion.facingDirection * 6.4 - 1.6, localY - 9.6, 4.8, 3.2);
     ctx.restore();
@@ -11951,6 +13085,276 @@ export class MinionVisuals {
 
     ctx.restore();
   }
+}
+`,"src/core/visuals/ShapeRenderer.ts":`import { getColorHSL, ColorRole } from "../design/ColorRoles";
+
+export type ShapeFamily =
+  | "perfect-square"
+  | "corrupted-box"
+  | "hex"
+  | "diamond"
+  | "kite"
+  | "needle"
+  | "saw"
+  | "orb"
+  | "blister"
+  | "cage"
+  | "organic-platform";
+
+export interface VisualProfile {
+  shapeFamily: ShapeFamily;
+  danger: number;          // 0 round/safe, 1 spiked/lethal
+  weight: number;          // 0 light, 1 massive
+  corruption: number;      // 0 clean, 1 heavily deformed
+  hueRole: ColorRole;
+  patternId?: string;
+  strokePx: number;
+  spinRate: number;        // radians/sec
+  wobbleAmp: number;       // pixels or normalized path deformation
+  cornerRadius: number;    // 0 for perfect, larger for round
+  spikeCount?: number;
+  phaseOffset: number;
+}
+
+export function spikyRadius(theta: number, base: number, points: number, amp: number, sharpness = 3): number {
+  const wave = Math.pow(Math.abs(Math.cos(theta * points * 0.5)), sharpness);
+  return base * (1 + amp * wave);
+}
+
+export function organicRadius(theta: number, base: number, seed: number, contamination: number): number {
+  return base * (
+    1
+    + 0.06 * Math.sin(theta * 2 + seed)
+    + 0.04 * Math.sin(theta * 3.7 + seed * 1.9)
+    + contamination * 0.10 * Math.sin(theta * 7 + seed * 0.6)
+  );
+}
+
+export function corruptedBoxPoint(x: number, y: number, corruption: number, time: number, seed: number) {
+  const shear = corruption * 0.16 * Math.sin(seed);
+  const wobbleX = corruption * 3.0 * Math.sin(time * 4 + y * 0.08 + seed);
+  const wobbleY = corruption * 2.0 * Math.cos(time * 3 + x * 0.07 + seed);
+  return { x: x + y * shear + wobbleX, y: y + wobbleY };
+}
+
+export function drawVisualProfile(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  profile: VisualProfile,
+  time: number
+) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  const angle = profile.phaseOffset + time * profile.spinRate;
+  ctx.rotate(angle);
+
+  const coreColor = getColorHSL(profile.hueRole, "core");
+  const lightColor = getColorHSL(profile.hueRole, "light");
+  ctx.fillStyle = coreColor;
+  ctx.strokeStyle = lightColor;
+  ctx.lineWidth = profile.strokePx;
+
+  const halfW = width / 2;
+  const halfH = height / 2;
+
+  switch (profile.shapeFamily) {
+    case "perfect-square": {
+      ctx.beginPath();
+      if (profile.cornerRadius > 0) {
+        const r = Math.min(profile.cornerRadius, halfW, halfH);
+        ctx.roundRect(-halfW, -halfH, width, height, r);
+      } else {
+        ctx.rect(-halfW, -halfH, width, height);
+      }
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+
+    case "corrupted-box": {
+      ctx.beginPath();
+      const segments = 10;
+      const seed = profile.phaseOffset;
+      const points: { x: number; y: number }[] = [];
+
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const px = -halfW + width * t;
+        const py = -halfH;
+        points.push(corruptedBoxPoint(px, py, profile.corruption, time, seed));
+      }
+      for (let i = 1; i <= segments; i++) {
+        const t = i / segments;
+        const px = halfW;
+        const py = -halfH + height * t;
+        points.push(corruptedBoxPoint(px, py, profile.corruption, time, seed + 1));
+      }
+      for (let i = 1; i <= segments; i++) {
+        const t = i / segments;
+        const px = halfW - width * t;
+        const py = halfH;
+        points.push(corruptedBoxPoint(px, py, profile.corruption, time, seed + 2));
+      }
+      for (let i = 1; i < segments; i++) {
+        const t = i / segments;
+        const px = -halfW;
+        const py = halfH - height * t;
+        points.push(corruptedBoxPoint(px, py, profile.corruption, time, seed + 3));
+      }
+
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+
+    case "hex": {
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const theta = (i * Math.PI) / 3;
+        const px = halfW * Math.cos(theta);
+        const py = halfH * Math.sin(theta);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+
+    case "diamond": {
+      ctx.beginPath();
+      ctx.moveTo(0, -halfH);
+      ctx.lineTo(halfW, 0);
+      ctx.lineTo(0, halfH);
+      ctx.lineTo(-halfW, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+
+    case "kite": {
+      ctx.beginPath();
+      ctx.moveTo(0, -halfH);
+      ctx.lineTo(halfW, -halfH * 0.2);
+      ctx.lineTo(0, halfH);
+      ctx.lineTo(-halfW, -halfH * 0.2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+
+    case "needle": {
+      ctx.beginPath();
+      ctx.moveTo(0, -halfH);
+      ctx.lineTo(halfW * 0.15, 0);
+      ctx.lineTo(0, halfH);
+      ctx.lineTo(-halfW * 0.15, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+
+    case "saw": {
+      ctx.beginPath();
+      const spikes = profile.spikeCount || 8;
+      const baseRadius = Math.min(halfW, halfH);
+      const steps = 60;
+      for (let i = 0; i < steps; i++) {
+        const theta = (i * Math.PI * 2) / steps;
+        const r = spikyRadius(theta, baseRadius, spikes, profile.wobbleAmp || 0.35, 3);
+        const px = r * Math.cos(theta);
+        const py = r * Math.sin(theta);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+
+    case "orb": {
+      ctx.beginPath();
+      const radius = Math.min(halfW, halfH);
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+
+    case "blister": {
+      ctx.beginPath();
+      const baseRadius = Math.min(halfW, halfH);
+      const steps = 40;
+      const seed = profile.phaseOffset;
+      for (let i = 0; i < steps; i++) {
+        const theta = (i * Math.PI * 2) / steps;
+        const r = organicRadius(theta, baseRadius, seed + time * 2, profile.corruption || 0.5);
+        const px = r * Math.cos(theta);
+        const py = r * Math.sin(theta);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+
+    case "cage": {
+      ctx.beginPath();
+      ctx.moveTo(-halfW, -halfH + 8);
+      ctx.lineTo(-halfW, -halfH);
+      ctx.lineTo(-halfW + 8, -halfH);
+
+      ctx.moveTo(halfW - 8, -halfH);
+      ctx.lineTo(halfW, -halfH);
+      ctx.lineTo(halfW, -halfH + 8);
+
+      ctx.moveTo(halfW, halfH - 8);
+      ctx.lineTo(halfW, halfH);
+      ctx.lineTo(halfW - 8, halfH);
+
+      ctx.moveTo(-halfW + 8, halfH);
+      ctx.lineTo(-halfW, halfH);
+      ctx.lineTo(-halfW, halfH - 8);
+      ctx.stroke();
+      break;
+    }
+
+    case "organic-platform": {
+      ctx.beginPath();
+      const baseRadius = Math.min(halfW, halfH);
+      const steps = 30;
+      for (let i = 0; i < steps; i++) {
+        const theta = (i * Math.PI * 2) / steps;
+        const r = organicRadius(theta, baseRadius, profile.phaseOffset, profile.corruption || 0.4);
+        const px = r * Math.cos(theta);
+        const py = r * Math.sin(theta);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+  }
+
+  ctx.restore();
 }
 `,"src/core/visuals/Software3DRenderer.ts":`import { TrigLUT } from "../TrigLUT";
 
@@ -12392,8 +13796,19 @@ import { IState } from "@/core/StateMachine";
 import { HazardSystem } from "@/core/systems/HazardSystem";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import { TrigLUT } from "@/core/TrigLUT";
+import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 
-export type MinionType = "TURRET" | "LANCER" | "FLYER" | "SHIELDER";
+export type MinionType =
+  | "TURRET"
+  | "LANCER"
+  | "FLYER"
+  | "SHIELDER"
+  | "PIT_LANCER"
+  | "COMPASS_WASP"
+  | "CLAMPJAW"
+  | "HYMN_NAIL"
+  | "BLISTER_OX"
+  | "BELL_HAMMER";
 
 export abstract class BaseMinion extends BaseEntity {
   private unsubHurt!: () => void;
@@ -12458,6 +13873,7 @@ export abstract class BaseMinion extends BaseEntity {
   }
 
   public abstract get minionColor(): string;
+  public abstract getVisualProfile(): VisualProfile;
 
   public startDeathSequence() {
     this.world.events.publish("MINION_DISSOLVING", undefined);
@@ -12631,9 +14047,10 @@ import { HealthComponent, DamagePayload } from "@/entities/components/HealthComp
 import { IWorld } from "@/core/Interfaces";
 import { StateMachine } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
-import { TrigLUT } from "@/core/TrigLUT";
-import { HazardSystem } from "@/core/systems/HazardSystem";
 import { setVec, zeroVec } from "@/core/VecUtils";
+import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
+import { useSessionStore } from "@/store/useGameStore";
+import { HazardSystem } from "@/core/systems/HazardSystem";
 import {
   BossCooldownState,
   BossPatrolState,
@@ -12674,9 +14091,13 @@ export class Boss extends BaseEntity {
     zeroVec(this.position);
     zeroVec(this.previousPosition);
 
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+    const stage = GAUNTLET_STAGES[stageIdx] || GAUNTLET_STAGES[0];
+    const maxHp = stage.midBossMaxHp;
+
     this.physics = this.addComponent(PhysicsComponent, new PhysicsComponent());
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
-      maxHealth: UNITS.BOSS_MAX_HP,
+      maxHealth: maxHp,
       invincibilityDuration: 0.25,
       onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
         this.world.events.publish("BOSS_HURT", { amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
@@ -12738,7 +14159,7 @@ export class Boss extends BaseEntity {
 
     const dx = player.position.x - this.position.x;
     const dy = player.position.y - this.position.y;
-    const mag = TrigLUT.fastSqrt(dx * dx + dy * dy);
+    const mag = Math.sqrt(dx * dx + dy * dy);
     if (mag === 0) return;
 
     const dirX = dx / mag;
@@ -12825,7 +14246,7 @@ export class Boss extends BaseEntity {
 
     const dx = this.position.x - sourceX;
     const dy = this.position.y - sourceY;
-    const dist = TrigLUT.fastSqrt(dx * dx + dy * dy);
+    const dist = Math.sqrt(dx * dx + dy * dy);
 
     const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
 
@@ -12848,6 +14269,7 @@ export class Boss extends BaseEntity {
   }
 }
 `,"src/entities/BossAttackPatterns.ts":`import { Boss } from "./Boss";
+import { useSessionStore } from "@/store/useGameStore";
 
 export type AttackTag = "projectile-heavy" | "melee" | "arena-denial" | "reposition";
 
@@ -12989,6 +14411,19 @@ export const ALL_PATTERNS: AttackPattern[] = [
 ];
 
 export function selectBestAttack(ctx: BossAttackContext): AttackPattern {
+  const stageIdx = useSessionStore.getState().currentStageIndex;
+
+  if (stageIdx === 1) { // Scarlet Lock loves Volleys
+    return ALL_PATTERNS.find(p => p.id === "VOLLEY") || ALL_PATTERNS[0];
+  } else if (stageIdx === 2) { // Carminal Orbit loves Fan Burst
+    return ALL_PATTERNS.find(p => p.id === "FAN_BURST") || ALL_PATTERNS[0];
+  } else if (stageIdx === 3) { // Vermilion Needle loves Predictive
+    return ALL_PATTERNS.find(p => p.id === "PREDICTIVE_SHOT") || ALL_PATTERNS[0];
+  } else if (stageIdx === 6) { // False Square Glitches to Gap Ring
+    const rand = Math.random();
+    if (rand < 0.35) return ALL_PATTERNS.find(p => p.id === "GAP_RING") || ALL_PATTERNS[0];
+  }
+
   let bestPattern = ALL_PATTERNS[0];
   let highestScore = -1;
 
@@ -13011,6 +14446,7 @@ import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { setVec } from "@/core/VecUtils";
 import { selectBestAttack, BossAttackContext, IBossAttackState } from "./BossAttackPatterns";
+import { useSessionStore } from "@/store/useGameStore";
 
 export abstract class BossState implements IState {
   protected owner: Boss;
@@ -13209,10 +14645,14 @@ export class BossAttackState extends BossState implements IBossAttackState {
     const projectileCount = phase === 1 ? 12 : phase === 2 ? 18 : 24;
     const angleStep = (Math.PI * 2) / projectileCount;
 
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+
     for (let i = 0; i < projectileCount; i++) {
       const angle = i * angleStep;
       const dirX = TrigLUT.cos(angle);
       const dirY = TrigLUT.sin(angle);
+
+      const color = stageIdx === 4 ? "hsl(82, 38%, 44%)" : undefined; // Marrow King color
 
       this.owner.world.spawnProjectile(
         this.owner.position.x + dirX * 40,
@@ -13222,7 +14662,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
         "boss",
         1,
         280,
-        4.0
+        4.0,
+        color
       );
     }
   }
@@ -13241,10 +14682,14 @@ export class BossAttackState extends BossState implements IBossAttackState {
     const startAngle = centerAngle - totalSpread / 2;
     const step = totalSpread / (count - 1);
 
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+
     for (let i = 0; i < count; i++) {
       const angle = startAngle + i * step;
       const dirX = TrigLUT.cos(angle);
       const dirY = TrigLUT.sin(angle);
+
+      const color = stageIdx === 2 ? "hsl(338, 76%, 55%)" : undefined; // Carminal Orbit color
 
       this.owner.world.spawnProjectile(
         this.owner.position.x + dirX * 40,
@@ -13254,7 +14699,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
         "boss",
         1,
         300,
-        5.0
+        5.0,
+        color
       );
     }
   }
@@ -13275,6 +14721,9 @@ export class BossAttackState extends BossState implements IBossAttackState {
     const dirX = dx / mag;
     const dirY = dy / mag;
 
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+    const color = stageIdx === 3 ? "hsl(356, 94%, 62%)" : undefined; // Vermilion Needle
+
     const proj = this.owner.world.spawnProjectile(
       this.owner.position.x + dirX * 45,
       this.owner.position.y + dirY * 45,
@@ -13283,7 +14732,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
       "boss",
       2,
       450,
-      6.0
+      6.0,
+      color
     );
 
     proj.size = { width: 17.6, height: 17.6 };
@@ -13426,6 +14876,7 @@ import { HealthComponent, DamagePayload } from "@/entities/components/HealthComp
 import { IWorld } from "@/core/Interfaces";
 import { FlyerPatrolState } from "./MinionStates";
 import { setVec } from "@/core/VecUtils";
+import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 
 export class FlyerMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
@@ -13453,6 +14904,21 @@ export class FlyerMinion extends BaseMinion {
     return "hsl(200, 70%, 55%)";
   }
 
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "needle",
+      danger: 0.3,
+      weight: 0.1,
+      corruption: 0.3,
+      hueRole: "minion-logic",
+      strokePx: 1.5,
+      spinRate: 1.2,
+      wobbleAmp: 0.2,
+      cornerRadius: 0,
+      phaseOffset: 0
+    };
+  }
+
   protected updateExhaust(): void {
     const isTelegraph = this.attackState === "TELEGRAPH";
     this.exhaustTimer = isTelegraph ? 0.04 : 0.08;
@@ -13472,6 +14938,7 @@ import { HealthComponent, DamagePayload } from "@/entities/components/HealthComp
 import { IWorld } from "@/core/Interfaces";
 import { LancerPatrolState } from "./MinionStates";
 import { TrigLUT } from "@/core/TrigLUT";
+import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 
 export class LancerMinion extends BaseMinion {
   public lanceExtended = false;
@@ -13495,6 +14962,21 @@ export class LancerMinion extends BaseMinion {
 
   get minionColor(): string {
     return "hsl(280, 60%, 55%)";
+  }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "kite",
+      danger: 0.5,
+      weight: 0.4,
+      corruption: 0.2,
+      hueRole: "determination",
+      strokePx: 2,
+      spinRate: 0,
+      wobbleAmp: 0,
+      cornerRadius: 0,
+      phaseOffset: 0
+    };
   }
 
   protected updateNonTelegraphRotation(): void {
@@ -13527,6 +15009,14 @@ import { LancerMinion } from "./LancerMinion";
 import { FlyerMinion } from "./FlyerMinion";
 import { ShielderMinion } from "./ShielderMinion";
 import { IWorld } from "@/core/Interfaces";
+import {
+  PitLancerMinion,
+  CompassWaspMinion,
+  ClampjawMinion,
+  HymnNailMinion,
+  BlisterOxMinion,
+  BellHammerMinion
+} from "./NewGauntletMinions";
 
 export class MinionFactory {
   public static createMinion(type: MinionType, id: string, position: { x: number; y: number }, world: IWorld): BaseMinion {
@@ -13539,6 +15029,18 @@ export class MinionFactory {
         return new FlyerMinion(id, position, world);
       case "SHIELDER":
         return new ShielderMinion(id, position, world);
+      case "PIT_LANCER":
+        return new PitLancerMinion(id, position, world);
+      case "COMPASS_WASP":
+        return new CompassWaspMinion(id, position, world);
+      case "CLAMPJAW":
+        return new ClampjawMinion(id, position, world);
+      case "HYMN_NAIL":
+        return new HymnNailMinion(id, position, world);
+      case "BLISTER_OX":
+        return new BlisterOxMinion(id, position, world);
+      case "BELL_HAMMER":
+        return new BellHammerMinion(id, position, world);
       default:
         throw new Error(\`Unknown minion type: \${type}\`);
     }
@@ -13984,6 +15486,506 @@ export class FlyerDiveState extends MinionState {
 
   public exit(): void {}
 }
+`,"src/entities/NewGauntletMinions.ts":`import { BaseMinion } from "./BaseMinion";
+import { HealthComponent, DamagePayload } from "@/entities/components/HealthComponent";
+import { IWorld } from "@/core/Interfaces";
+import { IState } from "@/core/StateMachine";
+import { UNITS } from "@/core/Units";
+import { TrigLUT } from "@/core/TrigLUT";
+import { VisualProfile } from "@/core/visuals/ShapeRenderer";
+import { zeroVec } from "@/core/VecUtils";
+import { Player } from "@/entities/Player";
+
+export class SimplePatrolState implements IState {
+  private owner: BaseMinion;
+  constructor(owner: BaseMinion) { this.owner = owner; }
+  public enter(): void { this.owner.attackState = "PATROL"; }
+  public update(dt: number): void {
+    const targetSpeed = this.owner.facingDirection * this.owner.patrolSpeed;
+    this.owner.velocity.x += (targetSpeed - this.owner.velocity.x) * UNITS.MINION_ACCEL * dt;
+
+    const physics = this.owner.physics;
+    if (physics) {
+      if (physics.isOnWallLeft) this.owner.facingDirection = 1;
+      else if (physics.isOnWallRight) this.owner.facingDirection = -1;
+    }
+  }
+  public exit(): void {}
+}
+
+export class PitLancerMinion extends BaseMinion {
+  constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
+    super(id, startPos, world);
+    this.size = { width: 32, height: 42 };
+    this.patrolSpeed = 120;
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 6,
+      invincibilityDuration: 0.15,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
+    });
+    this.squashPivot = "feet";
+    this.bodyColorValue = "hsl(350, 82%, 58%)";
+    this.dissolveColorValue = "hsl(350, 80%, 40%)";
+    this.initState(new SimplePatrolState(this));
+  }
+
+  get minionColor(): string { return "hsl(350, 82%, 58%)"; }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "kite",
+      danger: 0.8,
+      weight: 0.5,
+      corruption: 0.3,
+      hueRole: "boss-lethal",
+      strokePx: 2.5,
+      spinRate: 0,
+      wobbleAmp: 0,
+      cornerRadius: 0,
+      phaseOffset: 0
+    };
+  }
+
+  protected updateExhaust(): void {
+    if (Math.abs(this.velocity.x) > 0 && this.physics.isGrounded) {
+      this.exhaustTimer = 0.12;
+      this.world.events.publishSpark(
+        this.position.x - this.facingDirection * (this.size.width / 2),
+        this.position.y + this.size.height / 2,
+        TrigLUT.atan2(0.5, -this.facingDirection) + (TrigLUT.random() * 0.3 - 0.15),
+        "rgba(255, 255, 255, 0.25)",
+        false,
+        1
+      );
+    }
+  }
+}
+
+export class CompassWaspMinion extends BaseMinion {
+  private angle = 0;
+  private orbitRadius = 110;
+  private diveTimer = 0;
+  private state: "orbit" | "diving" = "orbit";
+
+  constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
+    super(id, startPos, world);
+    this.size = { width: 24, height: 24 };
+    this.physics.gravity = 0;
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 3,
+      invincibilityDuration: 0.12,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
+    });
+    this.squashPivot = "center";
+    this.bodyColorValue = "hsl(45, 100%, 60%)";
+    this.dissolveColorValue = "hsl(45, 100%, 40%)";
+    this.angle = TrigLUT.random() * Math.PI * 2;
+  }
+
+  get minionColor(): string { return "hsl(45, 100%, 60%)"; }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "diamond",
+      danger: 0.9,
+      weight: 0.1,
+      corruption: 0.2,
+      hueRole: "telegraph",
+      strokePx: 2,
+      spinRate: 3.5,
+      wobbleAmp: 0.3,
+      cornerRadius: 0,
+      phaseOffset: 0
+    };
+  }
+
+  public update(dt: number) {
+    if (this.isSpawning || this.isDying || this.isDead) {
+      super.update(dt);
+      return;
+    }
+
+    if (this.state === "orbit") {
+      this.angle += 1.8 * dt;
+      const targetX = this.pointA.x + Math.cos(this.angle) * this.orbitRadius;
+      const targetY = this.pointA.y + Math.sin(this.angle) * this.orbitRadius * 0.6;
+      this.position.x += (targetX - this.position.x) * 4.0 * dt;
+      this.position.y += (targetY - this.position.y) * 4.0 * dt;
+
+      const player = this.world.player;
+      if (player && !player.isDead) {
+        const dx = player.position.x - this.position.x;
+        const dy = player.position.y - this.position.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 260) {
+          this.state = "diving";
+          this.diveTimer = 1.5;
+          this.velocity.x = (dx / dist) * 580;
+          this.velocity.y = (dy / dist) * 580;
+          this.world.events.publish("CAMERA_SHAKE", { amplitude: 3, duration: 0.12 });
+        }
+      }
+    } else {
+      this.diveTimer -= dt;
+      this.position.x += this.velocity.x * dt;
+      this.position.y += this.velocity.y * dt;
+      if (this.diveTimer <= 0) {
+        this.state = "orbit";
+        this.pointA = { x: this.position.x, y: this.position.y };
+        zeroVec(this.velocity);
+      }
+    }
+
+    super.update(dt);
+  }
+
+  protected updateExhaust(): void {
+    this.exhaustTimer = 0.06;
+    this.world.events.publishSpark(
+      this.position.x,
+      this.position.y,
+      Math.PI,
+      "hsl(45, 100%, 60%)",
+      false,
+      1
+    );
+  }
+}
+
+export class ClampjawMinion extends BaseMinion {
+  constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
+    super(id, startPos, world);
+    this.size = { width: 44, height: 35 };
+    this.patrolSpeed = 70;
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 10,
+      invincibilityDuration: 0.2,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
+    });
+    this.squashPivot = "feet";
+    this.bodyColorValue = "hsl(82, 38%, 44%)";
+    this.dissolveColorValue = "hsl(82, 30%, 30%)";
+    this.initState(new SimplePatrolState(this));
+  }
+
+  get minionColor(): string { return "hsl(82, 38%, 44%)"; }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "corrupted-box",
+      danger: 0.3,
+      weight: 0.9,
+      corruption: 0.4,
+      hueRole: "minion-organic",
+      strokePx: 3,
+      spinRate: 0,
+      wobbleAmp: 0.15,
+      cornerRadius: 3,
+      phaseOffset: 0
+    };
+  }
+
+  protected updateExhaust(): void {
+    if (Math.abs(this.velocity.x) > 0 && this.physics.isGrounded) {
+      this.exhaustTimer = 0.18;
+      this.world.events.publishSpark(
+        this.position.x - this.facingDirection * (this.size.width / 2),
+        this.position.y + this.size.height / 2,
+        Math.PI,
+        "rgba(255, 255, 255, 0.15)",
+        false,
+        1
+      );
+    }
+  }
+}
+
+export class HymnNailMinion extends BaseMinion {
+  private pogoCount = 0;
+
+  constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
+    super(id, startPos, world);
+    this.size = { width: 30, height: 60 };
+    this.physics.gravity = 0;
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 4,
+      invincibilityDuration: 0.15,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
+    });
+    this.squashPivot = "center";
+    this.bodyColorValue = "hsl(286, 85%, 62%)";
+    this.dissolveColorValue = "hsl(286, 80%, 40%)";
+  }
+
+  get minionColor(): string { return "hsl(286, 85%, 62%)"; }
+
+  public getVisualProfile(): VisualProfile {
+    const isEnraged = this.pogoCount >= 3;
+    return {
+      shapeFamily: "needle",
+      danger: isEnraged ? 0.9 : 0.1,
+      weight: 0.3,
+      corruption: isEnraged ? 0.6 : 0.1,
+      hueRole: isEnraged ? "boss-lethal" : "determination",
+      strokePx: 2,
+      spinRate: isEnraged ? 2.5 : 0.1,
+      wobbleAmp: isEnraged ? 0.4 : 0,
+      cornerRadius: 0,
+      phaseOffset: 0
+    };
+  }
+
+  public update(dt: number) {
+    if (this.isSpawning || this.isDying || this.isDead) {
+      super.update(dt);
+      return;
+    }
+
+    const player = this.world.player;
+    if (player && !player.isDead) {
+      const isRebounding = player.velocity.y < 0 && (player as Player).meleeComponent.hasHitEnemyThisSwing;
+      if (isRebounding && Math.abs(player.position.x - this.position.x) < 40 && player.position.y < this.position.y) {
+        this.pogoCount++;
+        if (this.pogoCount >= 3) {
+          this.world.events.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.2 });
+          this.world.events.publishSpark(this.position.x, this.position.y, 0, "hsl(350, 82%, 58%)", true, 8);
+        }
+      }
+    }
+
+    if (this.pogoCount >= 3) {
+      if (player && !player.isDead) {
+        const dx = player.position.x - this.position.x;
+        const dy = player.position.y - this.position.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 0) {
+          this.velocity.x = (dx / dist) * 180;
+          this.velocity.y = (dy / dist) * 180;
+        }
+      }
+    }
+
+    this.position.x += this.velocity.x * dt;
+    this.position.y += this.velocity.y * dt;
+
+    super.update(dt);
+  }
+
+  protected updateExhaust(): void {
+    this.exhaustTimer = 0.1;
+    this.world.events.publishSpark(
+      this.position.x,
+      this.position.y,
+      Math.PI / 2,
+      "hsl(286, 85%, 62%)",
+      false,
+      1
+    );
+  }
+}
+
+export class BlisterOxMinion extends BaseMinion {
+  private jumpCooldown = 2.0;
+
+  constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
+    super(id, startPos, world);
+    this.size = { width: 56, height: 48 };
+    this.patrolSpeed = 40;
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 12,
+      invincibilityDuration: 0.2,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
+    });
+    this.squashPivot = "feet";
+    this.bodyColorValue = "hsl(82, 38%, 44%)";
+    this.dissolveColorValue = "hsl(82, 30%, 30%)";
+  }
+
+  get minionColor(): string { return "hsl(82, 38%, 44%)"; }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "blister",
+      danger: 0.1,
+      weight: 1.0,
+      corruption: 0.5,
+      hueRole: "minion-organic",
+      strokePx: 3.5,
+      spinRate: 0.05,
+      wobbleAmp: 0.25,
+      cornerRadius: 8,
+      phaseOffset: 0
+    };
+  }
+
+  public update(dt: number) {
+    if (this.isSpawning || this.isDying || this.isDead) {
+      super.update(dt);
+      return;
+    }
+
+    this.jumpCooldown -= dt;
+
+    if (this.physics.isGrounded) {
+      const speed = this.facingDirection * this.patrolSpeed;
+      this.velocity.x += (speed - this.velocity.x) * 3.0 * dt;
+
+      if (this.jumpCooldown <= 0) {
+        this.jumpCooldown = 2.5 + TrigLUT.random() * 1.5;
+        this.velocity.y = -480;
+        this.velocity.x = this.facingDirection * 150;
+        this.physics.isGrounded = false;
+        this.applyScaleImpulse(0.3, -0.3);
+      }
+    }
+
+    const wasAirborne = !this.physics.isGrounded;
+    super.update(dt);
+
+    if (wasAirborne && this.physics.isGrounded) {
+      this.world.events.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.2 });
+      this.applyScaleImpulse(-0.4, 0.4);
+
+      this.world.spawnProjectile(
+        this.position.x - 20,
+        this.position.y + 12,
+        -1,
+        0,
+        "boss",
+        1,
+        250,
+        1.5,
+        this.minionColor
+      );
+      this.world.spawnProjectile(
+        this.position.x + 20,
+        this.position.y + 12,
+        1,
+        0,
+        "boss",
+        1,
+        250,
+        1.5,
+        this.minionColor
+      );
+    }
+  }
+
+  protected updateExhaust(): void {
+    if (!this.physics.isGrounded) {
+      this.exhaustTimer = 0.08;
+      this.world.events.publishSpark(
+        this.position.x,
+        this.position.y + 12,
+        Math.PI / 2,
+        "rgba(255,255,255,0.25)",
+        false,
+        2
+      );
+    }
+  }
+}
+
+export class BellHammerMinion extends BaseMinion {
+  private slamTimer = 1.5;
+
+  constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
+    super(id, startPos, world);
+    this.size = { width: 44, height: 44 };
+    this.patrolSpeed = 60;
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 8,
+      invincibilityDuration: 0.15,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
+    });
+    this.squashPivot = "feet";
+    this.bodyColorValue = "hsl(358, 92%, 52%)";
+    this.dissolveColorValue = "hsl(358, 80%, 30%)";
+  }
+
+  get minionColor(): string { return "hsl(358, 92%, 52%)"; }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "hex",
+      danger: 0.8,
+      weight: 0.9,
+      corruption: 0.3,
+      hueRole: "hazard",
+      strokePx: 3,
+      spinRate: 0.5,
+      wobbleAmp: 0.1,
+      cornerRadius: 0,
+      phaseOffset: 0
+    };
+  }
+
+  public update(dt: number) {
+    if (this.isSpawning || this.isDying || this.isDead) {
+      super.update(dt);
+      return;
+    }
+
+    this.slamTimer -= dt;
+
+    if (this.physics.isGrounded) {
+      const speed = this.facingDirection * this.patrolSpeed;
+      this.velocity.x += (speed - this.velocity.x) * 4.0 * dt;
+
+      if (this.slamTimer <= 0) {
+        this.slamTimer = 2.0;
+        this.velocity.y = -550;
+        this.velocity.x = this.facingDirection * 180;
+        this.physics.isGrounded = false;
+        this.applyScaleImpulse(0.2, -0.2);
+      }
+    }
+
+    const wasAirborne = !this.physics.isGrounded;
+    super.update(dt);
+
+    if (wasAirborne && this.physics.isGrounded) {
+      this.world.events.publish("CAMERA_SHAKE", { amplitude: 8, duration: 0.25 });
+      this.applyScaleImpulse(-0.5, 0.5);
+
+      this.world.events.publishSpark(
+        this.position.x,
+        this.position.y + 12,
+        0,
+        "hsl(358, 92%, 52%)",
+        true,
+        18,
+        "line"
+      );
+    }
+  }
+
+  protected updateExhaust(): void {
+    if (!this.physics.isGrounded) {
+      this.exhaustTimer = 0.08;
+      this.world.events.publishSpark(
+        this.position.x,
+        this.position.y + 12,
+        Math.PI / 2,
+        "hsl(358, 92%, 52%)",
+        false,
+        2
+      );
+    }
+  }
+}
 `,"src/entities/Player.ts":`import { BaseEntity } from "./BaseEntity";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent, DamagePayload } from "@/entities/components/HealthComponent";
@@ -14048,7 +16050,7 @@ export class Player extends BaseEntity {
 
   constructor(id: string, world: IWorld) {
     super(id, world);
-    this.size = { width: 32, height: 64 };
+    this.size = { width: 40, height: 40 };
     this.squashPivot = "center";
 
     zeroVec(this.position);
@@ -14605,6 +16607,7 @@ export class Projectile extends BaseEntity implements IPoolable {
         damage: this.damage,
         customColor: this.customColor,
         projWidth: this.size.width,
+            kind: this.kind,
       });
 
       ctx.restore();
@@ -14673,6 +16676,7 @@ export interface TrailDrawData {
   damage: number;
   customColor: string | null;
   projWidth: number;
+  kind?: string;
 }
 
 export interface BodyDrawData {
@@ -14680,6 +16684,7 @@ export interface BodyDrawData {
   height: number;
   damage: number;
   customColor: string | null;
+  kind?: string;
 }
 
 export interface IProjectileStrategy {
@@ -14799,48 +16804,36 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
   drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void {
     const isLvl2 = data.damage >= 3;
     const radius = data.width / 2;
-
+    ctx.save();
     if (isLvl2) {
-      ctx.shadowColor = "rgba(34, 197, 94, 0.8)";
-      ctx.shadowBlur = 24;
-
-      const radialGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
-      radialGrad.addColorStop(0.0, "hsl(45, 100%, 65%)");
-      radialGrad.addColorStop(0.65, "hsl(45, 100%, 65%)");
-      radialGrad.addColorStop(1.0, "hsl(142, 71%, 58%)");
-      ctx.fillStyle = radialGrad;
+      ctx.fillStyle = "hsl(45, 100%, 60%)";
+      ctx.strokeStyle = "hsl(142, 72%, 56%)";
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.ellipse(0, 0, radius, radius * 0.75, 0, 0, Math.PI * 2);
+      ctx.moveTo(-radius, -radius);
+      ctx.quadraticCurveTo(0, -radius * 1.5, radius, -radius);
+      ctx.quadraticCurveTo(radius * 1.5, 0, radius, radius);
+      ctx.quadraticCurveTo(0, radius * 1.5, -radius, radius);
+      ctx.quadraticCurveTo(-radius * 1.5, 0, -radius, -radius);
+      ctx.closePath();
       ctx.fill();
+      ctx.stroke();
 
-      ctx.shadowBlur = 0;
       ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.ellipse(0, 0, radius * 0.45, radius * 0.35, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.fillRect(-radius * 0.45, -radius * 0.45, radius * 0.9, radius * 0.9);
+    } else {
+      ctx.fillStyle = "hsl(142, 72%, 56%)";
+      ctx.strokeStyle = "hsl(142, 100%, 80%)";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(0, 0, radius * 0.85, -Math.PI / 4, Math.PI / 4);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(0, 0, radius * 0.85, Math.PI * 0.75, Math.PI * 1.25);
-      ctx.stroke();
-    } else {
-      ctx.shadowColor = "rgba(34, 197, 94, 0.75)";
-      ctx.shadowBlur = 14;
-      ctx.fillStyle = "hsl(142, 71%, 58%)";
-      ctx.beginPath();
-      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.rect(-radius, -radius, data.width, data.height);
       ctx.fill();
+      ctx.stroke();
 
-      ctx.shadowBlur = 0;
       ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(0, 0, radius * 0.55, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillRect(-radius * 0.4, -radius * 0.4, radius * 0.8, radius * 0.8);
     }
+    ctx.restore();
   }
 }
 
@@ -14898,17 +16891,22 @@ export class BossProjectileStrategy implements IProjectileStrategy {
   }
 
   drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void {
-    const bodyColor = data.customColor || "hsl(350, 80%, 60%)";
-    const shadowCol = bodyColor.startsWith("hsl")
-      ? bodyColor.replace("hsl", "hsla").replace(")", ", 0.6)")
-      : "rgba(239, 68, 68, 0.6)";
-
+    const radius = data.width / 2;
+    ctx.save();
+    const bodyColor = data.customColor || "hsl(350, 82%, 58%)";
     ctx.fillStyle = bodyColor;
-    ctx.shadowColor = shadowCol;
-    ctx.shadowBlur = 10;
+    ctx.strokeStyle = "hsl(0, 100%, 72%)";
+    ctx.lineWidth = 1.5;
+
     ctx.beginPath();
-    ctx.arc(0, 0, data.width / 2, 0, Math.PI * 2);
+    ctx.moveTo(-radius * 1.8, 0);
+    ctx.lineTo(0, -radius * 0.35);
+    ctx.lineTo(radius * 1.2, 0);
+    ctx.lineTo(0, radius * 0.35);
+    ctx.closePath();
     ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
 }
 
@@ -14920,6 +16918,7 @@ import { IWorld } from "@/core/Interfaces";
 import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { TrigLUT } from "@/core/TrigLUT";
+import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 
 export class ShielderPatrolState implements IState {
   private owner: ShielderMinion;
@@ -15012,6 +17011,21 @@ export class ShielderMinion extends BaseMinion {
     return "hsl(180, 50%, 45%)";
   }
 
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "hex",
+      danger: 0.1,
+      weight: 0.8,
+      corruption: 0.2,
+      hueRole: "minion-logic",
+      strokePx: 2.5,
+      spinRate: 0,
+      wobbleAmp: 0,
+      cornerRadius: 4,
+      phaseOffset: 0
+    };
+  }
+
   protected updateExhaust(): void {
     if (Math.abs(this.velocity.x) > 0 && this.physics.isGrounded) {
       this.exhaustTimer = 0.15;
@@ -15091,6 +17105,7 @@ import { HealthComponent, DamagePayload } from "@/entities/components/HealthComp
 import { IWorld } from "@/core/Interfaces";
 import { TurretPatrolState } from "./MinionStates";
 import { TrigLUT } from "@/core/TrigLUT";
+import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 
 export class TurretMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
@@ -15114,6 +17129,21 @@ export class TurretMinion extends BaseMinion {
 
   get minionColor(): string {
     return "hsl(215, 20%, 65%)";
+  }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "hex",
+      danger: 0.2,
+      weight: 0.4,
+      corruption: 0.1,
+      hueRole: "minion-logic",
+      strokePx: 2,
+      spinRate: 0.2,
+      wobbleAmp: 0,
+      cornerRadius: 0,
+      phaseOffset: 0
+    };
   }
 
   protected updateExhaust(): void {
@@ -16566,7 +18596,7 @@ export class PlayerInputHandler {
     return false;
   }
 }
-`,"src/entities/handlers/PlayerVisuals.ts":`import { Software3DRenderer } from "../../core/visuals/Software3DRenderer";
+`,"src/entities/handlers/PlayerVisuals.ts":`import { drawVisualProfile, VisualProfile } from "../../core/visuals/ShapeRenderer";
 import { Player } from "@/entities/Player";
 import { PlayerFxRenderer } from "@/core/effects/PlayerFxRenderer";
 import { UNITS } from "@/core/Units";
@@ -16629,11 +18659,26 @@ export class PlayerVisuals {
     const drawY = this.player.previousPosition.y + (this.player.position.y - this.player.previousPosition.y) * alphaVal;
 
     for (const ghost of this.player.dashComponent.ghosts) {
-      ctx.fillStyle = \`hsla(142, 71%, 58%, \${ghost.opacity})\`;
+      ctx.save();
       const gWidth = this.player.size.width * this.player.visualScale.x;
       const gHeight = this.player.size.height * this.player.visualScale.y;
       const gFeetY = ghost.y + this.player.size.height / 2;
-      ctx.fillRect(ghost.x - gWidth / 2, gFeetY - gHeight, gWidth, gHeight);
+
+      const ghostProfile: VisualProfile = {
+        shapeFamily: "perfect-square",
+        danger: 0,
+        weight: 0,
+        corruption: 0,
+        hueRole: "player-agency",
+        strokePx: 2,
+        spinRate: 0,
+        wobbleAmp: 0,
+        cornerRadius: 0,
+        phaseOffset: 0,
+      };
+      ctx.globalAlpha = ghost.opacity;
+      drawVisualProfile(ctx, ghost.x, gFeetY - gHeight / 2, gWidth, gHeight, ghostProfile, performance.now() / 1000);
+      ctx.restore();
     }
 
     if (this.player.doubleJumpDiskTimer > 0) {
@@ -16660,8 +18705,6 @@ export class PlayerVisuals {
       ctx.restore();
     }
 
-    
-    
     const feetY = drawY + this.player.size.height / 2;
 
     const nowTime = performance.now();
@@ -16697,24 +18740,23 @@ export class PlayerVisuals {
       ctx.restore();
     }
 
-        const yaw = 0.15 * this.player.facingDirection + (this.player.velocity.x / 1120) * 0.35;
-    const pitch = 0.08 + (this.player.velocity.y / 1200) * 0.22;
-    Software3DRenderer.drawGeometry(
-      ctx,
-      Software3DRenderer.BOX_GEOMETRY,
-      0,
-      0,
-      this.player.size.width,
-      this.player.size.height,
-      this.player.visualScale.x,
-      this.player.visualScale.y,
-      yaw,
-      pitch,
-      0,
-      this.player.health.isFlashing() ? "hsl(0, 0%, 100%)" : "hsl(142, 71%, 58%)",
-      1.0,
-      "feet"
-    );
+    const playerProfile: VisualProfile = {
+      shapeFamily: "perfect-square",
+      danger: 0,
+      weight: 0,
+      corruption: 0,
+      hueRole: this.player.health.isFlashing() ? "impact-white" : "player-agency",
+      strokePx: 3,
+      spinRate: 0,
+      wobbleAmp: 0,
+      cornerRadius: 0,
+      phaseOffset: 0,
+    };
+
+    const drawW = this.player.size.width * this.player.visualScale.x;
+    const drawH = this.player.size.height * this.player.visualScale.y;
+
+    drawVisualProfile(ctx, 0, -this.player.size.height / 2, drawW, drawH, playerProfile, nowTime / 1000);
 
     const localCenterX = 0;
     const localCenterY = -this.player.size.height / 2;
@@ -17658,6 +19700,9 @@ body {
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
+import { GauntletDirector } from "@/core/GauntletDirector";
+
+GauntletDirector.init();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -17717,6 +19762,8 @@ interface SessionState {
   gameResult: GameResultState;
   retryCount: number;
   transitionActive: "SHUTDOWN" | "POWER_ON" | "NONE";
+  currentStageIndex: number;
+  setCurrentStageIndex: (index: number) => void;
   navTo: (screen: ScreenState) => void;
   setMenuIndex: (index: number) => void;
   setGameResult: (result: GameResultState) => void;
@@ -17729,6 +19776,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   gameResult: "PLAYING",
   retryCount: 0,
   transitionActive: "NONE",
+  currentStageIndex: 0,
+  setCurrentStageIndex: (index) => set({ currentStageIndex: index }),
   navTo: (screen) => {
     const current = get().currentScreen;
     if (current === screen && screen !== "PLAYING") return;
