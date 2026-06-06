@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-B_fyOkEK.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CozEBRP_.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -249,7 +249,7 @@ export default defineConfig([
   width: 100%;
   height: 100%;
   background: var(--void-bg);
-  border-radius: 20px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1819,14 +1819,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     };
   }, [gameResult]);
 
-  const initialRetryCountRef = useRef(retryCount);
-
-  useEffect(() => {
-    if (currentScreen === "PLAYING" && retryCount > initialRetryCountRef.current) {
-      engineRef.current?.reset();
-    }
-  }, [retryCount, currentScreen]);
-
   useEffect(() => {
     if (gameResult === "PLAYING") return;
 
@@ -1864,7 +1856,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
           fireConfetti();
           const intervalId = setInterval(fireConfetti, 3000);
 
-          // Constant celebratory streamers (downward rain) centering around the main jets, behind the modal
           let rainIndex = 0;
           const victoryColors = ["#22c55e", "#4ade80", "#86efac", "#ffffff"];
           const rainIntervalId = setInterval(() => {
@@ -1936,6 +1927,14 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     };
   }, [gameResult]);
 
+  const initialRetryCountRef = useRef(retryCount);
+
+  useEffect(() => {
+    if (currentScreen === "PLAYING" && retryCount > initialRetryCountRef.current) {
+      engineRef.current?.reset();
+    }
+  }, [retryCount, currentScreen]);
+
   return (
     <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
       <div
@@ -1961,18 +1960,23 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
             height={1250}
             className="crt-scanlines crt-flicker"
             style={{
-              background: "#0c0d11",
+              background: "#07080b",
               display: "block",
               width: "100%",
               height: "100%",
               objectFit: "contain",
+              borderRadius: "16px",
+              overflow: "hidden"
             }}
           />
 
-          <div className="vignette-overlay" />
+          <div className="vignette-overlay" style={{ borderRadius: "16px" }} />
 
           {gameResult !== "PLAYING" && stagger >= 1 && (
-            <div className="absolute inset-0 bg-black/94 backdrop-blur-md flex flex-col items-center justify-center z-[99] p-3 sm:p-6 animate-overlay-fade-in opacity-0 will-change-opacity">
+            <div 
+              className="absolute inset-0 bg-black/94 backdrop-blur-md flex flex-col items-center justify-center z-[99] p-3 sm:p-6 animate-overlay-fade-in opacity-0 will-change-opacity"
+              style={{ borderRadius: "16px", overflow: "hidden" }}
+            >
               <canvas id="confetti-canvas" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1 }} />
               <AnimatePresence>
                 <motion.div
@@ -8780,7 +8784,7 @@ export class StaticMapRenderer {
     if (this.staticCacheBuilt) return;
     const sctx = this.staticCtx;
 
-    sctx.fillStyle = "#0c0d11";
+    sctx.fillStyle = "#07080b";
     sctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
 
     if (hazards.length > 0) {
@@ -8805,31 +8809,29 @@ export class StaticMapRenderer {
     }
     sctx.fill();
 
-    sctx.strokeStyle = "rgba(34, 197, 94, 0.4)";
+    sctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
     sctx.lineWidth = 4;
     sctx.lineJoin = "round";
     sctx.shadowColor = "rgba(34, 197, 94, 0.25)";
     sctx.shadowBlur = 8;
     
     sctx.beginPath();
-    for (const solid of solids) {
-      this.drawRoundedRectPath(sctx, solid.x + 2, solid.y + 2, solid.width - 4, solid.height - 4, 8);
+    this.drawInnerPerimeterPath(sctx, 2);
+    
+    const floatingPlatform = solids.find(s => s.x === 425 && s.y === 800);
+    if (floatingPlatform) {
+      this.drawRoundedRectPath(sctx, floatingPlatform.x + 2, floatingPlatform.y + 2, floatingPlatform.width - 4, floatingPlatform.height - 4, 8);
     }
     sctx.stroke();
     sctx.shadowBlur = 0;
 
-    sctx.fillStyle = "#13151a";
-    sctx.beginPath();
-    for (const solid of solids) {
-      this.drawRoundedRectPath(sctx, solid.x + 4, solid.y + 4, solid.width - 8, solid.height - 8, 6);
-    }
-    sctx.fill();
-
     sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
     sctx.lineWidth = 1;
     sctx.beginPath();
-    for (const solid of solids) {
-      this.drawRoundedRectPath(sctx, solid.x + 5, solid.y + 5, solid.width - 10, solid.height - 10, 5);
+    this.drawInnerPerimeterPath(sctx, 3.5);
+    
+    if (floatingPlatform) {
+      this.drawRoundedRectPath(sctx, floatingPlatform.x + 5, floatingPlatform.y + 5, floatingPlatform.width - 10, floatingPlatform.height - 10, 5);
     }
     sctx.stroke();
 
@@ -8847,6 +8849,27 @@ export class StaticMapRenderer {
     ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
     ctx.lineTo(x, y + rad);
     ctx.quadraticCurveTo(x, y, x + rad, y);
+  }
+
+  private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number) {
+    const ceilingY = 50 - inset;
+    const leftWallX = 50 - inset;
+    const rightWallX = 1200 + inset;
+    const leftFloorY = 1150 + inset;
+    const rightFloorY = 1150 + inset;
+    const leftPitWallX = 400 - inset;
+    const rightPitWallX = 850 + inset;
+    const pitFloorY = 1200 + inset;
+
+    ctx.moveTo(leftWallX, ceilingY);
+    ctx.lineTo(rightWallX, ceilingY);
+    ctx.lineTo(rightWallX, rightFloorY);
+    ctx.lineTo(rightPitWallX, rightFloorY);
+    ctx.lineTo(rightPitWallX, pitFloorY);
+    ctx.lineTo(leftPitWallX, pitFloorY);
+    ctx.lineTo(leftPitWallX, leftFloorY);
+    ctx.lineTo(leftWallX, leftFloorY);
+    ctx.closePath();
   }
 
   public renderBackground(): void {
