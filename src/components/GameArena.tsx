@@ -241,14 +241,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     };
   }, [gameResult]);
 
-  const initialRetryCountRef = useRef(retryCount);
-
-  useEffect(() => {
-    if (currentScreen === "PLAYING" && retryCount > initialRetryCountRef.current) {
-      engineRef.current?.reset();
-    }
-  }, [retryCount, currentScreen]);
-
   useEffect(() => {
     if (gameResult === "PLAYING") return;
 
@@ -286,7 +278,6 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
           fireConfetti();
           const intervalId = setInterval(fireConfetti, 3000);
 
-          // Constant celebratory streamers (downward rain) centering around the main jets, behind the modal
           let rainIndex = 0;
           const victoryColors = ["#22c55e", "#4ade80", "#86efac", "#ffffff"];
           const rainIntervalId = setInterval(() => {
@@ -358,6 +349,14 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
     };
   }, [gameResult]);
 
+  const initialRetryCountRef = useRef(retryCount);
+
+  useEffect(() => {
+    if (currentScreen === "PLAYING" && retryCount > initialRetryCountRef.current) {
+      engineRef.current?.reset();
+    }
+  }, [retryCount, currentScreen]);
+
   return (
     <div className="w-full" style={{ display: "flex", flexDirection: "column", flexGrow: 1, minHeight: 0 }}>
       <div
@@ -383,18 +382,23 @@ export function GameArena({ playHoverTick }: GameArenaProps) {
             height={1250}
             className="crt-scanlines crt-flicker"
             style={{
-              background: "#0c0d11",
+              background: "#07080b",
               display: "block",
               width: "100%",
               height: "100%",
               objectFit: "contain",
+              borderRadius: "16px",
+              overflow: "hidden"
             }}
           />
 
-          <div className="vignette-overlay" />
+          <div className="vignette-overlay" style={{ borderRadius: "16px" }} />
 
           {gameResult !== "PLAYING" && stagger >= 1 && (
-            <div className="absolute inset-0 bg-black/94 backdrop-blur-md flex flex-col items-center justify-center z-[99] p-3 sm:p-6 animate-overlay-fade-in opacity-0 will-change-opacity">
+            <div 
+              className="absolute inset-0 bg-black/94 backdrop-blur-md flex flex-col items-center justify-center z-[99] p-3 sm:p-6 animate-overlay-fade-in opacity-0 will-change-opacity"
+              style={{ borderRadius: "16px", overflow: "hidden" }}
+            >
               <canvas id="confetti-canvas" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1 }} />
               <AnimatePresence>
                 <motion.div

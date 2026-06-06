@@ -21,7 +21,7 @@ export class StaticMapRenderer {
     if (this.staticCacheBuilt) return;
     const sctx = this.staticCtx;
 
-    sctx.fillStyle = "#0c0d11";
+    sctx.fillStyle = "#07080b";
     sctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
 
     if (hazards.length > 0) {
@@ -46,31 +46,29 @@ export class StaticMapRenderer {
     }
     sctx.fill();
 
-    sctx.strokeStyle = "rgba(34, 197, 94, 0.4)";
+    sctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
     sctx.lineWidth = 4;
     sctx.lineJoin = "round";
     sctx.shadowColor = "rgba(34, 197, 94, 0.25)";
     sctx.shadowBlur = 8;
     
     sctx.beginPath();
-    for (const solid of solids) {
-      this.drawRoundedRectPath(sctx, solid.x + 2, solid.y + 2, solid.width - 4, solid.height - 4, 8);
+    this.drawInnerPerimeterPath(sctx, 2);
+    
+    const floatingPlatform = solids.find(s => s.x === 425 && s.y === 800);
+    if (floatingPlatform) {
+      this.drawRoundedRectPath(sctx, floatingPlatform.x + 2, floatingPlatform.y + 2, floatingPlatform.width - 4, floatingPlatform.height - 4, 8);
     }
     sctx.stroke();
     sctx.shadowBlur = 0;
 
-    sctx.fillStyle = "#13151a";
-    sctx.beginPath();
-    for (const solid of solids) {
-      this.drawRoundedRectPath(sctx, solid.x + 4, solid.y + 4, solid.width - 8, solid.height - 8, 6);
-    }
-    sctx.fill();
-
     sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
     sctx.lineWidth = 1;
     sctx.beginPath();
-    for (const solid of solids) {
-      this.drawRoundedRectPath(sctx, solid.x + 5, solid.y + 5, solid.width - 10, solid.height - 10, 5);
+    this.drawInnerPerimeterPath(sctx, 3.5);
+    
+    if (floatingPlatform) {
+      this.drawRoundedRectPath(sctx, floatingPlatform.x + 5, floatingPlatform.y + 5, floatingPlatform.width - 10, floatingPlatform.height - 10, 5);
     }
     sctx.stroke();
 
@@ -88,6 +86,27 @@ export class StaticMapRenderer {
     ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
     ctx.lineTo(x, y + rad);
     ctx.quadraticCurveTo(x, y, x + rad, y);
+  }
+
+  private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number) {
+    const ceilingY = 50 - inset;
+    const leftWallX = 50 - inset;
+    const rightWallX = 1200 + inset;
+    const leftFloorY = 1150 + inset;
+    const rightFloorY = 1150 + inset;
+    const leftPitWallX = 400 - inset;
+    const rightPitWallX = 850 + inset;
+    const pitFloorY = 1200 + inset;
+
+    ctx.moveTo(leftWallX, ceilingY);
+    ctx.lineTo(rightWallX, ceilingY);
+    ctx.lineTo(rightWallX, rightFloorY);
+    ctx.lineTo(rightPitWallX, rightFloorY);
+    ctx.lineTo(rightPitWallX, pitFloorY);
+    ctx.lineTo(leftPitWallX, pitFloorY);
+    ctx.lineTo(leftPitWallX, leftFloorY);
+    ctx.lineTo(leftWallX, leftFloorY);
+    ctx.closePath();
   }
 
   public renderBackground(): void {
