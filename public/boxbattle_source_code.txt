@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/6/2026, 11:44:47 AM
+ [SYSTEM] Generated: 6/6/2026, 12:19:51 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -16,7 +16,6 @@
 │   ├── boxbattle_source_code.txt
 │   ├── BOXBATTLE_SYSTEMS_ARCHITECTURE.txt
 │   ├── DESIGN_EXCLUSIONS.txt
-│   ├── FIRST_BATTLE_OVERHAUL_REPORT.txt
 │   ├── MUSIC_ARCHITECTURE.txt
 │   └── TODO.txt
 ├── node_modules/ (contents skipped)
@@ -110,6 +109,7 @@
 │   │   ├── EntityRenderer.ts
 │   │   ├── eventBroker.ts
 │   │   ├── GameLoop.ts
+│   │   ├── GreedyMerger.ts
 │   │   ├── InputProvider.ts
 │   │   ├── Interfaces.ts
 │   │   ├── levelData.ts
@@ -1176,451 +1176,6 @@ Any future layout adjustments must honor these exclusions. The screen area
 will remain fully visible at all times, with visual movement limited strictly 
 to screenshakes (cam-tremors) during high-impact events (such as damage, 
 dashes, or boss phase changes).
-
-
-
-● ./docs/FIRST_BATTLE_OVERHAUL_REPORT.txt
-────────────────────────────────────────────────────
-================================================================================ FIRST BATTLE OVERHAUL HANDOFF REPORT
-
-This report is designed for the next AI session. The objective is to transition
-the current first battle from a static arena with four fixed respawning minions
-into a more robust vertical slice featuring:
-
-  - Authored encounter pacing
-  - Readable enemy roles and silhouettes
-  - Stronger boss attack patterns
-  - Richer projectile presentations
-  - A clear technical architecture for enemy wave management and placements.
-
-1.  CURRENT IMPLEMENTATION SNAPSHOT
-
-The first battle is currently driven by the following files:
-
-  - src/core/levelData.ts: Handles arena geometry, player/boss starting
-    positions, and four static spawners.
-
-  - src/entities/Spawner.ts: Each spawner immediately creates one minion, then
-    respawns that same type after a hard-coded 5.0-second delay when the active
-    minion is defeated.
-
-  - src/core/Engine.ts: Creates activeSpawners from levelConfig.spawners,
-    updates every spawner each fixed tick, and resets them on retry.
-
-  - src/core/BattleDirector.ts: Handles dialogue, boss phase thresholds, and
-    victory/defeat cinematics.
-
-  - src/entities/Boss.ts & src/entities/BossStates.ts: Handles boss movement and
-    attack states.
-
-  - src/entities/BaseMinion.ts, src/entities/MinionStates.ts, & subclasses:
-    Drives individual turret, lancer, and flyer behaviors.
-
-  - src/entities/Projectile.ts & src/entities/ProjectileStrategy.ts: Handles
-    pooled projectile behavior, collisions, trail rendering, and body rendering.
-
-  - src/entities/components/FireballComponent.ts: Manages player charge shot
-    timing, damage, projectile size, and firing.
-
-  - src/core/visuals/MinionVisuals.ts & src/core/visuals/BossVisuals.ts: Renders
-    simple silhouettes.
-
-Current static spawns in use:
-
-  - TURRET at (175, 490)
-  - TURRET at (1075, 490)
-  - LANCER at (625, 740)
-  - FLYER at (625, 400)
-
-The main limitation of the current encounter is the lack of pacing: spawners are
-active immediately, spawners only track one minion at a time, respawn rates are
-globally uniform, and the boss does not coordinate with active minion pressure.
-
-2.  TARGET EXPERIENCE
-
-The goal is to design an experience that resembles a polished vertical slice:
-
-  - An opening segment that teaches the arena layout and basic boss patterns
-    before adding more complex hazards.
-
-  - Minions that appear from logical, authored "threat lanes" rather than
-    constant, arbitrary respawns.
-
-  - A boss that creates high-intensity moments, recovery windows, phase
-    escalations, and memorable patterns.
-
-  - Distinct enemy silhouettes and attacks to communicate roles clearly.
-
-  - Projectiles that are highly readable at speed and visually differentiated by
-    owner, damage, and pattern.
-
-  - Balanced variance to keep repeated attempts engaging and fair.
-
-  - Target Fight Length: 90 to 150 seconds for an average successful attempt.
-
-  - Target Active Enemy Budget:
-
-      - Phase 1: Boss + 0 to 1 active minion.
-      - Phase 2: Boss + 1 to 2 active minions.
-      - Phase 3: Boss + 2 to 3 active minions (during brief pressure windows).
-
-3.  RECOMMENDED ARENA SPAWN PLACEMENTS
-
-The existing arena geometry will remain unchanged for the initial pass. The
-static spawners array will be replaced with named spawn anchors and encounter
-waves. These coordinates are tuned to the 1250 x 1250 arena and current platform
-configuration:
-
-Anchor ID          | Position    | Tags                | Intended Role
-
-left-catwalk       | (175, 490)  | high, left, perch   | Turret tutorial and |             |                     | safe ranged pressure.
-
-right-catwalk      | (1075, 490) | high, right, perch  | Phase 2/3 crossfire; |             |                     | rarely paired with |             |                     | left catwalk.
-
-center-bridge      | (625, 740)  | mid, center, ground | Lancer duel lane on the |             |                     | center platform.
-
-left-ground        | (230, 1090) | low, left, ground   | Chaser/lancer pressure |             |                     | near player starting zone.
-
-right-ground       | (1020, 1090)| low, right, ground  | Boss-side flank pressure.
-
-upper-air-left     | (360, 380)  | air, left, ambush   | Flyer patrol start above |             |                     | player escape routes.
-
-upper-air-right    | (890, 380)  | air, right, ambush  | Flyer patrol start, |             |                     | mirroring left pressure.
-
-center-air         | (625, 330)  | air, center, elite  | Phase 3 flyer or support |             |                     | drone anchor.
-
-pit-warning-left   | (430, 1080) | low, hazard-edge    | Warning pressure encouraging |             |                     | careful platform movement.
-
-pit-warning-right  | (820, 1080) | low, hazard-edge    | Mirrored hazard pressure.
-
-  - Safety Check Rule: Do not spawn melee minions directly on top of the player
-    or boss. Use a minimum player distance threshold of 260 units and a minimum
-    boss distance threshold of 120 units before selecting a spawn point.
-
-4.  ENCOUNTER PACING PLAN
-
-Instead of autonomous, independent spawners, the encounter will be driven by an
-Encounter Director using the following pacing structure:
-
-  - Beat: intro
-
-      - Trigger: Fight start, 0 to 8 seconds.
-      - Spawn Behavior: No minions for the first 3 seconds. Spawn exactly one
-        TURRET at left-catwalk or right-catwalk after the first boss attack.
-      - Boss Behavior: Restricted to single shots or basic lunges.
-
-  - Beat: phase1-learn
-
-      - Trigger: Boss HP between 100% and 70%.
-      - Spawn Behavior: Maintain a maximum of 1 active minion. Prefer a single
-        turret or lancer. Spawn cooldown: 10 to 14 seconds.
-      - Boss Behavior: Uses standard single shot and lunge attacks.
-
-  - Beat: phase2-crossfire
-
-      - Trigger: Boss HP between 70% and 40%.
-      - Spawn Behavior: Maintain a maximum of 2 active minions. Rotate between
-        turret + lancer or flyer + lancer. Spawn cooldown: 7 to 11 seconds.
-      - Boss Behavior: Introduces aimed volleys and lane denial attacks.
-
-  - Beat: phase2-recovery
-
-      - Trigger: Player HP falls to 2 or fewer, or player takes 2 hits within
-        an 8-second window.
-      - Spawn Behavior: Pause spawning for 6 seconds and clear queued waves.
-      - Boss Behavior: Favors melee/lunge attacks over projectile spam to allow
-        player recovery.
-
-  - Beat: phase3-surge
-
-      - Trigger: Boss HP falls below 40%.
-      - Spawn Behavior: High-pressure windows (maximum of 3 minions) lasting 12
-        seconds, followed by a 6-second quiet window. Spawn cooldown: 6 to 9s.
-      - Boss Behavior: Adds radial burst and fan-shaped projectile attacks.
-
-  - Beat: final-burn
-
-      - Trigger: Boss HP falls below 15%.
-      - Spawn Behavior: No new minions unless the arena is completely empty for
-        8 seconds.
-      - Boss Behavior: Highly active patterns to emphasize the boss encounter.
-
-5.  ARCHITECTURE CHANGE: ENCOUNTER DIRECTOR
-
-A new system will be introduced to coordinate these waves:
-
-  - New File: src/core/EncounterDirector.ts
-
-Spawn timing decisions will be shifted out of Spawner.ts. Spawner will be
-treated as a low-level factory or replaced with an EnemySpawnService.
-
-Recommended Types in src/core/levelData.ts:
-
-export interface SpawnAnchor {
-  id: string;
-  x: number;
-  y: number;
-  tags: string[];
-}
-
-export interface EncounterWave {
-  id: string;
-  phase: 1 | 2 | 3;
-  minBossHpPct?: number;
-  maxBossHpPct?: number;
-  earliestTime?: number;
-  cooldownRange: [number, number];
-  maxActiveMinions: number;
-  entries: EncounterSpawnEntry[];
-}
-
-export interface EncounterSpawnEntry {
-  type: MinionType;
-  anchorTags?: string[];
-  anchorIds?: string[];
-  weight: number;
-  maxAliveOfType?: number;
-}
-
-EncounterDirector Responsibilities:
-
-1.  Track total elapsed fight time.
-2.  Monitor boss HP ratio and player HP status.
-3.  Enforce a phase-based active minion budget.
-4.  Select valid encounter waves and spawn anchors.
-5.  Enforce safety checks (minimum player/boss distances, hazard avoidance, and
-    per-type minion limits).
-6.  Perform weighted random selections using TrigLUT.randomGameplay() to ensure
-    determinism within the gameplay RNG.
-7.  Publish events (e.g., ENCOUNTER_BEAT_STARTED, MINION_SPAWNED) for feedback,
-    SFX, or debugging systems.
-
-Engine Integration Steps:
-
-  - In Engine.init: Instantiate encounterDirector.
-  - In Engine.fixedUpdate: Update the director after battleDirector and before
-    minion collision systems.
-  - On Reset/Retry: Invoke encounterDirector.reset() to clear state.
-  - Cleanup: Ensure active minions are cleaned up properly during transitions.
-
-Modifications to Spawner.ts:
-
-  - Remove automatic spawning in the constructor.
-  - Remove the hard-coded respawn delay.
-  - Expose a factory method such as spawnMinion(type, position, world), or
-    delegate this to a dedicated src/entities/MinionFactory.ts.
-
-6.  PROPOSED ENCOUNTER DATA SET
-
-An initial set of wave definitions to be balanced during playtesting:
-
-  - Phase 1 Waves:
-
-      - p1-first-perch: Earliest time 3s, max 1 active minion, cooldown 12-16s.
-        Spawns TURRET at left-catwalk or right-catwalk.
-      - p1-lancer-check: Earliest time 14s, max 1 active minion,
-        cooldown 14-18s. Spawns LANCER at center-bridge.
-
-  - Phase 2 Waves:
-
-      - p2-crossfire-left: Max 2 active minions, cooldown 8-12s. Spawns TURRET
-        on one catwalk and LANCER on the opposite ground anchor.
-      - p2-air-skirmish: Max 2 active minions, cooldown 9-13s. Spawns FLYER at
-        upper-air-left or upper-air-right, with an optional LANCER at
-        center-bridge.
-      - p2-hazard-tempt: Low weight, cooldown 12-16s. Spawns LANCER at
-        pit-warning-left or pit-warning-right.
-
-  - Phase 3 Waves:
-
-      - p3-surge: Max 3 active minions, cooldown 6-9s during active windows.
-        Spawns one FLYER, one LANCER, and an optional TURRET.
-      - p3-center-air: Low weight. Spawns FLYER or a support SHIELDER at
-        center-air.
-      - Rules: Avoid allowing two active turrets simultaneously unless the boss
-        is in a non-projectile attack state.
-
-7.  BOSS IMPROVEMENTS
-
-Adjustments to Projectile Counts (to be configured as constants in
-src/entities/BossAttackPatterns.ts rather than inline literals):
-
-  - Radial Omni Burst:
-
-      - Phase 1: 8 projectiles (existing).
-      - Phase 2: Increase to 12 projectiles.
-      - Phase 3: Increase to 16 projectiles.
-
-  - Boss Volley attacks:
-
-      - Phase 2: Increase from 3 to 4 shots, with a spacing of 0.18s.
-      - Phase 3: Increase from 5 to 7 shots, with a spacing of 0.14s.
-
-New Attack Patterns:
-
-  - FAN_BURST: Spawns 5 to 9 projectiles in an arc centered on the player's
-    direction, using a spread of 50 to 80 degrees.
-  - PREDICTIVE_SHOT: Fires at the estimated position of the player after 0.35
-    seconds based on player velocity. Clamp the lead distance so it remains
-    dodgeable.
-  - GROUND_SWEEP: Low horizontal projectile or shockwave launched at the boss's
-    feet, requiring the player to jump.
-  - RING_WITH_GAP: A radial projectile burst containing a single open gap
-    oriented away from the player's natural escape route.
-  - LUNGE_CHAIN: In Phase 3, links a short lunge with a retreat hop or fan burst
-    rather than repeated direct lunges.
-
-AI Decision-Making Upgrades:
-
-  - Implement an attack selection utility scorer. Score options based on player
-    distance, relative height, recent attack history, phase, active minion
-    pressure, and player health.
-  - Introduce cooldown tags for attack categories (e.g., 'projectile-heavy',
-    'melee', 'arena-denial').
-  - Use a short attack history ring buffer to prevent repetitive patterns.
-  - Build in explicit recovery windows following high-intensity phases to give
-    the fight a natural rhythm.
-  - Read player state context (e.g., if player is airborne, favor fan bursts; if
-    player is close and grounded, favor lunges or ground sweeps; if player is
-    low health, prioritize spectacle over minion pressure).
-
-8.  MINION IMPROVEMENTS
-
-  - Lancer (Close-Range Charger):
-
-      - Render an active lance graphic in MinionVisuals.draw when active.
-      - Establish an active attack hitbox during LancerAttackState extending
-        beyond the body.
-      - Clearer telegraph: Lance pulls back and glows yellow before lunging
-        forward.
-      - Implement basic edge detection so lancers halt or turn back at platform
-        edges rather than falling off.
-      - Implementation details: Use a specialized attack hitbox (width 90,
-        height 18, horizontal offset facingDirection * 55, vertical offset -24)
-        that inflicts standard damage but has increased knockback.
-
-  - Turret (Stationary Shooter):
-
-      - Render a rotating barrel pointing toward the player's coordinates.
-      - Implement standard line-of-sight checks against solid terrain before
-        firing.
-      - Add a phase 3 burst variant: 2 rapid shots with a minor aim adjustment
-        between them.
-      - Set a minimum-range dead zone where the turret cannot fire, allowing
-        aggressive close-range play.
-
-  - Flyer (Airborne Patrol):
-
-      - Make patrol paths data-driven using spawn anchor coordinates instead of
-        a fixed vertical offset.
-      - Introduce a strafe state where the flyer moves horizontally while
-        firing.
-      - Introduce a dive-bomb attack with clear visual telegraphs and recovery
-        stiffness in Phase 3.
-      - Marginally reduce projectile speed when firing on the move for
-        readability.
-
-9.  NEW MINION TYPE: SHIELDER
-
-One new support type will be introduced in the first pass:
-
-  - Role: A slow-moving support minion that projects a forward-facing shield arc
-    oriented toward the player.
-
-  - Gameplay Purpose: Forces the player to reposition, jump, or utilize charge
-    shots.
-
-  - Behavior: Patrols slowly between nearby anchors, faces the player, and
-    periodically braces.
-
-  - Vulnerability: Vulnerable from behind; charged shots pierce its shield.
-
-10. PROJECTILE RENDERING & CLARITY
-
-Establish distinct projectile classifications:
-
-export type ProjectileKind =
-  | "player-basic"
-  | "player-charged"
-  | "boss-bolt"
-  | "boss-fan"
-  | "boss-ring"
-  | "minion-shot"
-  | "shockwave";
-
-Introduce projectile-specific parameters: kind, radius, trailLength, trailWidth,
-coreColor, rimColor, canClash, pierce, and homingStrength.
-
-  - System Upgrades:
-
-      - Allow World.spawnProjectile to accept an options object for cleaner
-        calls.
-      - Centralize projectile dimensions at activation rather than modifying
-        them externally.
-      - Render boss fan/ring projectiles as distinct shapes (e.g., small
-        diamonds or capsules) to differentiate them from standard red spheres.
-
-  - Charged Shot Enhancements:
-
-      - Render a distinct muzzle flash ring upon firing.
-      - Expand the motion trail length (8-12 samples).
-      - Style with a bright hot core, a gold mid-layer, and a green outer aura.
-      - Generate a more pronounced spark effect when clashing with and
-        destroying enemy projectiles.
-      - Enable pierce: 1 for minions, allowing a level 2 charged shot to
-        penetrate one minion and continue toward the boss.
-
-11. VERICAL SLICE POLISH AND INTEGRATION
-
-Additional quality-of-life additions:
-
-  - Camera settle or boss roar visual effect for 2 seconds at start of battle.
-  - A brief freezeframe/hit-stop effect, boss color shift, and arena sparks upon
-    boss phase transitions.
-  - An active warning indicator (0.6 seconds) at the spawn anchor before a
-    minion materializes.
-  - An optional debug overlay displaying active wave status, active minions, and
-    wave timers.
-  - Automated cleanup to despawn active minions immediately when the boss
-    reaches 0 HP.
-  - Distinct sound effects for minion warning, minion spawn, boss fan bursts,
-    radial bursts, and projectile clashes.
-
-12. SUGGESTED IMPLEMENTATION ORDER
-
-1.  Define the new encounter data types in src/core/levelData.ts.
-2.  Migrate from defaultLevelConfig.spawners to spawnAnchors and encounterWaves.
-3.  Create src/entities/MinionFactory.ts.
-4.  Build src/core/EncounterDirector.ts.
-5.  Integrate EncounterDirector within Engine lifecycle methods.
-6.  Phase out or bypass the legacy activeSpawners loop.
-7.  Assign minion types dynamically to branch collision/rendering logic.
-8.  Add lancer animations and custom hitboxes.
-9.  Move boss attack parameters to src/entities/BossAttackPatterns.ts.
-10. Implement fan burst and predictive shot patterns.
-11. Add projectile kinds and update the player's charged shot visual logic.
-12. Integrate the SHIELDER minion type.
-13. Verify compilation passes (npm run build).
-14. Perform balance passes based on test runs.
-
-13. CONCRETE ACCEPTANCE CRITERIA
-
-The implementation is verified when:
-
-  - No minions spawn during the first 3 seconds of the encounter.
-  - Phase 1 active minion count is capped at 1.
-  - Phase 2 active minion count remains at 1-2, rotating between multiple spawn
-    anchor locations.
-  - Phase 3 spawns waves of up to 3 minions during designated pressure windows,
-    separated by readable recovery periods.
-  - Lancers render a visible weapon and apply damage/knockback via the lance
-    hitbox.
-  - Boss Phase 3 features at least one pattern releasing 12 or more projectiles
-    with clear, readable dodge paths.
-  - The player's charged shot is visually distinct from standard shots and
-    clears enemy projectiles readably.
-  - Projectile pool is stable under maximum load, and npm run build succeeds.
-    ================================================================================
 
 
 
@@ -8992,6 +8547,78 @@ export default GameLoop;
 
 
 
+● ./src/core/GreedyMerger.ts
+────────────────────────────────────────────────────
+import { Rectangle } from "./Interfaces";
+
+export class GreedyMerger {
+  public static merge(rects: Rectangle[]): Rectangle[] {
+    if (rects.length <= 1) return [...rects];
+
+    const list = rects.map((r) => ({ ...r, merged: false }));
+    let changed = true;
+
+    while (changed) {
+      changed = false;
+
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].merged) continue;
+        const r1 = list[i];
+
+        for (let j = 0; j < list.length; j++) {
+          if (i === j || list[j].merged) continue;
+          const r2 = list[j];
+
+          const touchH = (r1.x + r1.width === r2.x) || (r2.x + r2.width === r1.x);
+          const identicalY = (r1.y === r2.y) && (r1.height === r2.height);
+
+          if (touchH && identicalY) {
+            const minX = Math.min(r1.x, r2.x);
+            const maxX = Math.max(r1.x + r1.width, r2.x + r2.width);
+            r1.x = minX;
+            r1.width = maxX - minX;
+            r2.merged = true;
+            changed = true;
+          }
+        }
+      }
+
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].merged) continue;
+        const r1 = list[i];
+
+        for (let j = 0; j < list.length; j++) {
+          if (i === j || list[j].merged) continue;
+          const r2 = list[j];
+
+          const touchV = (r1.y + r1.height === r2.y) || (r2.y + r2.height === r1.y);
+          const identicalX = (r1.x === r2.x) && (r1.width === r2.width);
+
+          if (touchV && identicalX) {
+            const minY = Math.min(r1.y, r2.y);
+            const maxY = Math.max(r1.y + r1.height, r2.y + r2.height);
+            r1.y = minY;
+            r1.height = maxY - minY;
+            r2.merged = true;
+            changed = true;
+          }
+        }
+      }
+    }
+
+    return list
+      .filter((r) => !r.merged)
+      .map((r) => ({
+        x: r.x,
+        y: r.y,
+        width: r.width,
+        height: r.height,
+      }));
+  }
+}
+
+
+
 ● ./src/core/InputProvider.ts
 ────────────────────────────────────────────────────
 export type Action = "MOVE_LEFT" | "MOVE_RIGHT" | "MOVE_UP" | "MOVE_DOWN" | "JUMP" | "ATTACK" | "DASH";
@@ -10066,6 +9693,7 @@ export class ParticleSystem {
 ────────────────────────────────────────────────────
 import { Rectangle, IPhysicsWorld } from "./Interfaces";
 import { UNITS } from "@/core/Units";
+import { GreedyMerger } from "./GreedyMerger";
 
 export class PhysicsWorld implements IPhysicsWorld {
   public solids: Rectangle[] = [];
@@ -10077,11 +9705,10 @@ export class PhysicsWorld implements IPhysicsWorld {
   private platformGrid: Map<number, Rectangle[]> = new Map();
   private hazardGrid: Map<number, Rectangle[]> = new Map();
 
-
   constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
-    this.solids = solids;
-    this.hazards = hazards;
-    this.onewayPlatforms = onewayPlatforms;
+    this.solids = GreedyMerger.merge(solids);
+    this.hazards = GreedyMerger.merge(hazards);
+    this.onewayPlatforms = GreedyMerger.merge(onewayPlatforms);
 
     this.indexGeometry(this.solids, this.solidGrid);
     this.indexGeometry(this.onewayPlatforms, this.platformGrid);
@@ -11025,12 +10652,33 @@ export class StaticMapRenderer {
     sctx.fillStyle = "#0c0d11";
     sctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
 
-    sctx.fillStyle = "#1e1e24";
+    sctx.strokeStyle = "rgba(34, 197, 94, 0.4)";
+    sctx.lineWidth = 4;
+    sctx.lineJoin = "round";
+    sctx.shadowColor = "rgba(34, 197, 94, 0.25)";
+    sctx.shadowBlur = 8;
+    
+    sctx.beginPath();
     for (const solid of solids) {
-      sctx.fillRect(solid.x, solid.y, solid.width, solid.height);
-      sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-      sctx.strokeRect(solid.x, solid.y, solid.width, solid.height);
+      this.drawRoundedRectPath(sctx, solid.x - 2, solid.y - 2, solid.width + 4, solid.height + 4, 10);
     }
+    sctx.stroke();
+    sctx.shadowBlur = 0;
+
+    sctx.fillStyle = "#13151a";
+    sctx.beginPath();
+    for (const solid of solids) {
+      this.drawRoundedRectPath(sctx, solid.x, solid.y, solid.width, solid.height, 10);
+    }
+    sctx.fill();
+
+    sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+    sctx.lineWidth = 1;
+    sctx.beginPath();
+    for (const solid of solids) {
+      this.drawRoundedRectPath(sctx, solid.x + 3, solid.y + 3, solid.width - 6, solid.height - 6, 8);
+    }
+    sctx.stroke();
 
     if (hazards.length > 0) {
       this.spikePath = new Path2D();
@@ -11046,6 +10694,19 @@ export class StaticMapRenderer {
     }
 
     this.staticCacheBuilt = true;
+  }
+
+  private drawRoundedRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+    const rad = Math.min(r, w / 2, h / 2);
+    ctx.moveTo(x + rad, y);
+    ctx.lineTo(x + w - rad, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
+    ctx.lineTo(x + w, y + h - rad);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+    ctx.lineTo(x + rad, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
+    ctx.lineTo(x, y + rad);
+    ctx.quadraticCurveTo(x, y, x + rad, y);
   }
 
   public renderBackground(): void {
@@ -18312,6 +17973,13 @@ export interface PhysicsComponentOptions {
   gravity?: number;
 }
 
+export interface SweepResult {
+  collided: boolean;
+  t: number;
+  normalX: number;
+  normalY: number;
+}
+
 export class PhysicsComponent implements IEntityComponent {
   public owner!: BaseEntity;
   public gravity: number = 1200;
@@ -18321,13 +17989,9 @@ export class PhysicsComponent implements IEntityComponent {
 
   public disablePlatformCollisionTimer: number = 0;
 
-  // Scratch arrays to prevent GC allocations while maintaining re-entrant safety
   private overlapScratch: Rectangle[] = [];
-
-  private readonly maxStepSize: number = UNITS.CCD_STEP_LIMIT_DEFAULT;
   private readonly cornerNudgeThreshold: number = UNITS.CORNER_NUDGE_MAX_OVERLAP;
   private readonly groundDetectionOffset: number = UNITS.GROUND_DETECTION_OFFSET;
-  private readonly frameDurationEstimate: number = UNITS.CANONICAL_DELTA_TIME;
 
   public setup(owner: BaseEntity, dependencies?: PhysicsComponentOptions): void {
     this.owner = owner;
@@ -18339,158 +18003,233 @@ export class PhysicsComponent implements IEntityComponent {
   }
 
   public update(dt: number): void {
-    this.decayDisablePlatformTimer(dt);
-    this.applyGravity(dt);
-    this.executeSplitAxisMovement(dt);
-    this.evaluateGroundedStatus();
-  }
-
-  private decayDisablePlatformTimer(dt: number): void {
     if (this.disablePlatformCollisionTimer > 0) {
       this.disablePlatformCollisionTimer -= dt;
     }
-  }
 
-  private applyGravity(dt: number): void {
     if (!this.isGrounded) {
       this.owner.velocity.y += this.gravity * dt;
     }
+
+    this.executeSweptMovement(dt);
+    this.evaluateGroundedStatus();
   }
 
-  private executeSplitAxisMovement(dt: number): void {
+  private executeSweptMovement(dt: number): void {
     this.isOnWallLeft = false;
     this.isOnWallRight = false;
 
-    const deltaX = this.owner.velocity.x * dt;
-    const deltaY = this.owner.velocity.y * dt;
+    let timeLeft = 1.0;
+    let iterations = 0;
+    const maxIterations = 3;
 
-    const stepsX = Math.max(1, Math.ceil(Math.abs(deltaX) / this.maxStepSize));
-    const stepsY = Math.max(1, Math.ceil(Math.abs(deltaY) / this.maxStepSize));
+    const halfH = this.owner.size.height / 2;
 
-    const substepX = deltaX / stepsX;
-    const substepY = deltaY / stepsY;
+    this.resolveStaticOverlaps();
 
-    for (let i = 0; i < stepsX; i++) {
-      this.owner.position.x += substepX;
-      if (this.resolveCollisionsX()) {
-        break;
-      }
-    }
+    while (timeLeft > 0 && iterations < maxIterations) {
+      iterations++;
 
-    for (let i = 0; i < stepsY; i++) {
-      this.owner.position.y += substepY;
-      if (this.resolveCollisionsY()) {
-        break;
-      }
-    }
-  }
+      const vx = this.owner.velocity.x;
+      const vy = this.owner.velocity.y;
 
-  private resolveCollisionsX(): boolean {
-    const ownerHalfWidth = this.owner.size.width / 2;
-    const physicsWorld = this.owner.world.physicsWorld;
-    let hasCollided = false;
+      if (vx === 0 && vy === 0) break;
 
-    const solidCandidates = physicsWorld.getOverlapCandidates(
-      this.owner.position.x,
-      this.owner.position.y,
-      this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
-      this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-      "solid",
-      this.overlapScratch
-    );
+      const pathW = this.owner.size.width + Math.abs(vx * dt) + 32;
+      const pathH = this.owner.size.height + Math.abs(vy * dt) + 32;
 
-    for (const solid of solidCandidates) {
-      if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
-        if (this.owner.velocity.x > 0) {
-          this.owner.position.x = solid.x - ownerHalfWidth;
-          this.isOnWallRight = true;
-        } else if (this.owner.velocity.x < 0) {
-          this.owner.position.x = solid.x + solid.width + ownerHalfWidth;
-          this.isOnWallLeft = true;
-        }
-        this.owner.velocity.x = 0;
-        hasCollided = true;
-      }
-    }
-    return hasCollided;
-  }
-
-  private resolveCollisionsY(): boolean {
-    const ownerHalfHeight = this.owner.size.height / 2;
-    const ownerHalfWidth = this.owner.size.width / 2;
-    const physicsWorld = this.owner.world.physicsWorld;
-    let hasCollided = false;
-
-    const solidCandidates = physicsWorld.getOverlapCandidates(
-      this.owner.position.x,
-      this.owner.position.y,
-      this.owner.size.width + UNITS.BROAD_PHASE_PADDING_LARGE,
-      this.owner.size.height + UNITS.BROAD_PHASE_PADDING_LARGE,
-      "solid",
-      this.overlapScratch
-    );
-
-    for (const solid of solidCandidates) {
-      if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
-        if (this.owner.velocity.y >= 0) {
-          this.owner.position.y = solid.y - ownerHalfHeight;
-          this.owner.velocity.y = 0;
-          this.isGrounded = true;
-          hasCollided = true;
-        } else if (this.owner.velocity.y < 0) {
-          const overlapRight = this.owner.position.x + ownerHalfWidth - solid.x;
-          const overlapLeft = solid.x + solid.width - (this.owner.position.x - ownerHalfWidth);
-
-          if (overlapRight > 0 && overlapRight <= this.cornerNudgeThreshold) {
-            this.owner.position.x -= overlapRight;
-            if (!this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
-              continue;
-            }
-            this.owner.position.x += overlapRight;
-          } else if (overlapLeft > 0 && overlapLeft <= this.cornerNudgeThreshold) {
-            this.owner.position.x += overlapLeft;
-            if (!this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
-              continue;
-            }
-            this.owner.position.x -= overlapLeft;
-          }
-
-          this.owner.position.y = solid.y + solid.height + ownerHalfHeight;
-          this.owner.velocity.y = 0;
-          hasCollided = true;
-        }
-      }
-    }
-
-    if (this.disablePlatformCollisionTimer <= 0 && this.owner.velocity.y >= 0) {
-      const previousY = this.owner.position.y - this.owner.velocity.y * this.frameDurationEstimate;
-
-      const platformCandidates = physicsWorld.getOverlapCandidates(
+      const solidCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
         this.owner.position.x,
         this.owner.position.y,
-        this.owner.size.width + UNITS.BROAD_PHASE_PADDING_STANDARD,
-        this.owner.size.height + UNITS.BROAD_PHASE_PADDING_STANDARD,
-        "platform",
+        pathW,
+        pathH,
+        "solid",
         this.overlapScratch
       );
 
-      for (const platform of platformCandidates) {
-        if (this.isOverlapping(this.owner.position.x, this.owner.position.y, platform)) {
-          if (previousY + ownerHalfHeight - 4 <= platform.y) {
-            const landingVelY = this.owner.velocity.y;
-            const massMultiplier = this.owner.id === "boss-01" ? 2.5 : 1.0;
-            this.owner.position.y = platform.y - ownerHalfHeight;
-            this.owner.velocity.y = 0;
-            this.isGrounded = true;
-            hasCollided = true;
+      let earliestT = 1.0;
+      let normX = 0;
+      let normY = 0;
+      let hitFound = false;
 
-            this.owner.world.events.publish("PLATFORM_IMPACT", { platform, velocityY: landingVelY, massMultiplier });
+      for (const solid of solidCandidates) {
+        const sweep = this.sweptAABBCheck(this.owner.position, this.owner.size, vx, vy, solid, dt * timeLeft);
+        if (sweep.collided && sweep.t < earliestT) {
+          earliestT = sweep.t;
+          normX = sweep.normalX;
+          normY = sweep.normalY;
+          hitFound = true;
+        }
+      }
+
+      if (this.disablePlatformCollisionTimer <= 0 && vy >= 0) {
+        const platformCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
+          this.owner.position.x,
+          this.owner.position.y,
+          pathW,
+          pathH,
+          "platform"
+        );
+
+        for (const platform of platformCandidates) {
+          const prevFeetY = this.owner.position.y + halfH;
+          if (prevFeetY - 2 <= platform.y) {
+            const sweep = this.sweptAABBCheck(this.owner.position, this.owner.size, vx, vy, platform, dt * timeLeft);
+            if (sweep.collided && sweep.t < earliestT && sweep.normalY === -1) {
+              earliestT = sweep.t;
+              normX = sweep.normalX;
+              normY = sweep.normalY;
+              hitFound = true;
+
+              this.owner.world.events.publish("PLATFORM_IMPACT", {
+                platform,
+                velocityY: vy,
+                massMultiplier: this.owner.id === "boss-01" ? 2.5 : 1.0
+              });
+            }
+          }
+        }
+      }
+
+      const stepEpsilon = 0.001;
+      const moveFraction = Math.max(0, earliestT - stepEpsilon);
+      this.owner.position.x += vx * moveFraction * dt * timeLeft;
+      this.owner.position.y += vy * moveFraction * dt * timeLeft;
+
+      timeLeft -= earliestT * timeLeft;
+
+      if (hitFound) {
+        if (normX !== 0) {
+          this.owner.velocity.x = 0;
+          if (normX > 0) this.isOnWallLeft = true;
+          if (normX < 0) this.isOnWallRight = true;
+        }
+        if (normY !== 0) {
+          this.owner.velocity.y = 0;
+          if (normY < 0) {
+            this.isGrounded = true;
           }
         }
       }
     }
+  }
 
-    return hasCollided;
+  private sweptAABBCheck(
+    pos: { x: number; y: number },
+    size: { width: number; height: number },
+    vx: number, vy: number,
+    solid: Rectangle,
+    timeWindow: number
+  ): SweepResult {
+    const result: SweepResult = { collided: false, t: 1.0, normalX: 0, normalY: 0 };
+
+    if (vx === 0 && vy === 0) return result;
+
+    const halfW = size.width / 2;
+    const halfH = size.height / 2;
+
+    const pLeft = pos.x - halfW;
+    const pRight = pos.x + halfW;
+    const pTop = pos.y - halfH;
+    const pBottom = pos.y + halfH;
+
+    const dx = vx * timeWindow;
+    const dy = vy * timeWindow;
+
+    const xInvEntry = dx > 0 ? (solid.x - pRight) : ((solid.x + solid.width) - pLeft);
+    const xInvExit  = dx > 0 ? ((solid.x + solid.width) - pLeft) : (solid.x - pRight);
+
+    const yInvEntry = dy > 0 ? (solid.y - pBottom) : ((solid.y + solid.height) - pTop);
+    const yInvExit  = dy > 0 ? ((solid.y + solid.height) - pTop) : (solid.y - pBottom);
+
+    let rxEntry: number;
+    let rxExit: number;
+    if (dx !== 0) {
+      rxEntry = xInvEntry / dx;
+      rxExit = xInvExit / dx;
+    } else {
+      if (pRight > solid.x && pLeft < solid.x + solid.width) {
+        rxEntry = -Infinity;
+        rxExit = Infinity;
+      } else {
+        return result;
+      }
+    }
+
+    let ryEntry: number;
+    let ryExit: number;
+    if (dy !== 0) {
+      ryEntry = yInvEntry / dy;
+      ryExit = yInvExit / dy;
+    } else {
+      if (pBottom > solid.y && pTop < solid.y + solid.height) {
+        ryEntry = -Infinity;
+        ryExit = Infinity;
+      } else {
+        return result;
+      }
+    }
+
+    const tEntry = Math.max(rxEntry, ryEntry);
+    const tExit = Math.min(rxExit, ryExit);
+
+    if (tEntry > tExit || rxExit < 0 || ryExit < 0 || rxEntry > 1 || ryEntry > 1) {
+      return result;
+    }
+
+    result.collided = true;
+    result.t = Math.max(0, tEntry);
+
+    if (rxEntry > ryEntry) {
+      result.normalX = dx > 0 ? -1 : 1;
+      result.normalY = 0;
+    } else {
+      result.normalX = 0;
+      result.normalY = dy > 0 ? -1 : 1;
+    }
+
+    return result;
+  }
+
+  private resolveStaticOverlaps() {
+    const halfW = this.owner.size.width / 2;
+    const halfH = this.owner.size.height / 2;
+
+    const solidCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
+      this.owner.position.x,
+      this.owner.position.y,
+      this.owner.size.width,
+      this.owner.size.height,
+      "solid",
+      this.overlapScratch
+    );
+
+    for (const solid of solidCandidates) {
+      if (this.isOverlapping(this.owner.position.x, this.owner.position.y, solid)) {
+        const overlapX1 = (solid.x + solid.width) - (this.owner.position.x - halfW);
+        const overlapX2 = (this.owner.position.x + halfW) - solid.x;
+        const overlapY1 = (solid.y + solid.height) - (this.owner.position.y - halfH);
+        const overlapY2 = (this.owner.position.y + halfH) - solid.y;
+
+        const minX = Math.min(overlapX1, overlapX2);
+        const minY = Math.min(overlapY1, overlapY2);
+
+        if (minX < minY && minX <= this.cornerNudgeThreshold) {
+          if (overlapX1 < overlapX2) {
+            this.owner.position.x += overlapX1;
+          } else {
+            this.owner.position.x -= overlapX2;
+          }
+        } else if (minY <= this.cornerNudgeThreshold) {
+          if (overlapY1 < overlapY2) {
+            this.owner.position.y += overlapY1;
+          } else {
+            this.owner.position.y -= overlapY2;
+            this.owner.velocity.y = 0;
+          }
+        }
+      }
+    }
   }
 
   private evaluateGroundedStatus(): void {
@@ -18545,9 +18284,7 @@ export class PhysicsComponent implements IEntityComponent {
     return right > rect.x && left < rect.x + rect.width && bottom > rect.y && top < rect.y + rect.height;
   }
 
-  public teardown(): void {
-    // Reserved for cleanup
-  }
+  public teardown(): void {}
 }
 
 

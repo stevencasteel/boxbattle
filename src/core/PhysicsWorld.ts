@@ -1,5 +1,6 @@
 import { Rectangle, IPhysicsWorld } from "./Interfaces";
 import { UNITS } from "@/core/Units";
+import { GreedyMerger } from "./GreedyMerger";
 
 export class PhysicsWorld implements IPhysicsWorld {
   public solids: Rectangle[] = [];
@@ -11,10 +12,9 @@ export class PhysicsWorld implements IPhysicsWorld {
   private platformGrid: Map<number, Rectangle[]> = new Map();
   private hazardGrid: Map<number, Rectangle[]> = new Map();
 
-
   constructor(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
-    this.solids = solids;
-    this.hazards = hazards;
+    this.solids = GreedyMerger.merge(solids);
+    this.hazards = GreedyMerger.merge(hazards);
     this.onewayPlatforms = onewayPlatforms;
 
     this.indexGeometry(this.solids, this.solidGrid);
