@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CW6A4Dab.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-IddAwoJU.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -192,11 +192,11 @@ export default defineConfig([
 ]);
 `,"README.md":"# BOX BATTLE\n\nMega Man / Hollow Knight battle arena prototype.\n\nPorted over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand using Gemini 3.5 Flash\n\nPlay the game here:\n👉 **[GitHub.io](https://stevencasteel.github.io/boxbattle/)**\n👉 **[Itch.io](https://stevencasteel.itch.io/boxbattle)**\n\n---\n\n## Player Controls\n\n- **Move Left / Right**: `Left Arrow` / `Right Arrow` or `A` / `D`\n- **Look / Move Up**: `Up Arrow` or `W`\n- **Crouch / Move Down**: `Down Arrow` or `S`\n- **Jump**: `X` or `.` (Period) or `Space`\n- **Melee Attack**: `C` or `,` (Comma)\n- **Dash**: `Z` or `/` (Slash)\n- **Determination Heal**: Hold `Move Down` + Press `Jump` (Requires 1 active Heal Charge)\n\n_Key bindings are fully customizable inside the Options menu._\n\n---\n\n## Technical Architecture\n\n- **Presentation & UI**: React 19, TypeScript 6, Vite 8, Zustand 5\n- **Physics Simulation**: Custom 60Hz Semi-Implicit Euler accumulator loop with swept collision checks and corner-nudging\n- **Sound Design**: Pure procedural waveform synthesis utilizing native Web Audio API oscillators, filters, and envelope gains (zero external binary audio assets)\n","src/App.css":`.cabinet-outer {
   position: relative;
-  width: min(93vw, 79.2vh);
-  height: min(111vw, 95vh);
+  width: 740px;
+  height: 880px;
   border-radius: 20px;
   background: #0f1218;
-  padding: 2.2vmin;
+  padding: 16px;
   box-shadow:
     -8px -8px 24px rgba(255, 255, 255, 0.02),
     8px 8px 36px rgba(0, 0, 0, 0.95),
@@ -210,25 +210,20 @@ export default defineConfig([
 }
 
 .cabinet-outer.cabinet-mobile {
-  width: 100vw !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  max-width: none !important;
-  max-height: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  border: none !important;
-  padding: 8px 8px calc(10px + var(--safe-bottom)) 8px !important;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  width: 740px !important;
+  height: 880px !important;
+  border-radius: 20px !important;
+  box-shadow:
+    -8px -8px 24px rgba(255, 255, 255, 0.02),
+    8px 8px 36px rgba(0, 0, 0, 0.95),
+    inset 0 0 30px rgba(0, 0, 0, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.01) !important;
+  padding: 16px !important;
 }
 
 .cabinet-wide-source {
-  width: 95vw !important;
-  height: 95vh !important;
-  max-width: 1500px !important;
-  max-height: 95vh !important;
+  width: 1100px !important;
+  height: 800px !important;
   border-radius: 20px !important;
   padding: 24px !important;
 }
@@ -254,7 +249,7 @@ export default defineConfig([
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 2.2vmin;
+  padding: 16px;
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
@@ -355,13 +350,13 @@ export default defineConfig([
 }
 
 .title-banner {
-  padding-top: 2vmin;
+  padding-top: 14px;
   margin-top: 0;
   text-align: center;
 }
 
 .title-banner h2 {
-  font-size: 2.5vmin;
+  font-size: 18px;
   margin: 0;
   font-weight: bold;
   text-transform: uppercase;
@@ -370,9 +365,9 @@ export default defineConfig([
 }
 
 .title-banner p {
-  font-size: 1.3vmin;
+  font-size: 10px;
   color: var(--signal-green);
-  margin: 1vmin 0 0;
+  margin: 6px 0 0;
   letter-spacing: 0.35em;
   font-weight: bold;
   text-shadow: 0 0 8px var(--signal-green-glow);
@@ -398,7 +393,7 @@ export default defineConfig([
   contain: layout style paint;
   display: flex;
   flex-direction: column;
-  flex-shrink: 1;
+  flex-shrink: 0;
   min-height: 0;
   align-self: center;
 }
@@ -415,8 +410,7 @@ export default defineConfig([
   flex-shrink: 0;
   width: 100%;
   aspect-ratio: 1/1;
-  max-height: calc(100vh - 230px - var(--safe-bottom) - var(--safe-top));
-  max-height: calc(100dvh - 230px - var(--safe-bottom) - var(--safe-top));
+  max-height: none;
   height: auto;
 }
 
@@ -479,39 +473,6 @@ export default defineConfig([
   box-sizing: border-box;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
   min-height: 44px;
-}
-
-@media (max-width: 768px) and (pointer: coarse) {
-  .screen-inner {
-    border-radius: 0;
-    padding: 12px 10px;
-    overflow-y: auto;
-    justify-content: space-around;
-    gap: 8px;
-  }
-
-  .title-banner {
-    padding-top: 10px;
-  }
-  .title-banner h2 {
-    font-size: 20px;
-  }
-  .title-banner p {
-    font-size: 11px;
-  }
-}
-
-@media (max-height: 600px) {
-  .title-banner {
-    padding-top: 4px;
-  }
-  .title-banner h2 {
-    font-size: 1.3rem !important;
-  }
-  .title-banner p {
-    margin: 2px 0 0;
-    font-size: 10px;
-  }
 }
 
 @keyframes hud-cabinet-shake {
@@ -758,8 +719,8 @@ export default defineConfig([
 
 @keyframes text-chromatic-flicker-red {
   0%, 100% { text-shadow: 0 0 15px var(--signal-red-glow), -2px 0 #ff0000, 2px 0 #0000ff; }
-  45% { text-shadow: 0 0 6px rgba(239, 68, 68, 0.2), -1px 0 #ff0000, 1px 0 #0000ff; filter: brightness(0.85); }
-  85% { text-shadow: 0 0 22px var(--signal-red), -4px 0 #ff0000, 4px 0 #0000ff; filter: brightness(1.3); }
+  45% { text-shadow: 0 0 6px rgba(239, 68, 68, 0.25), -1px 0 #ff0000, 1px 0 #0000ff; filter: brightness(0.85); }
+  85% { text-shadow: 0 0 22px var(--signal-red), -4px 0 #ff0000, 3px 0 #0000ff; filter: brightness(1.3); }
 }
 
 .defeat-title-anim {
@@ -870,6 +831,39 @@ import "./components/GameArena.css";
 export default function App() {
   const bootStage = useBootSequence();
   const viewportRef = useRef<HTMLDivElement>(null);
+
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const isSource = useSessionStore.getState().currentScreen === "SOURCE_VIEW";
+      const cabinetWidth = isSource ? 1100 : 740;
+      const cabinetHeight = isSource ? 800 : 880;
+      const padding = 32; // Total padding around the cabinet
+      
+      const availableWidth = window.innerWidth - padding;
+      const availableHeight = window.innerHeight - padding;
+      
+      const scaleX = availableWidth / cabinetWidth;
+      const scaleY = availableHeight / cabinetHeight;
+      
+      const newScale = Math.min(scaleX, scaleY);
+      setScale(Math.max(0.1, newScale));
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    const unsub = useSessionStore.subscribe(() => {
+      handleResize();
+    });
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      unsub();
+    };
+  }, []);
+
 
   const currentScreen = useSessionStore((state) => state.currentScreen);
   const gameResult = useSessionStore((state) => state.gameResult);
@@ -996,19 +990,35 @@ export default function App() {
 
   if (bootStage === BootStage.NONE) {
     return (
-      <div className="app-wrapper">
-        <div className="cabinet-outer" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-          <span style={{ color: "#718096", fontSize: "11px", letterSpacing: "0.2em" }}>BOOTING SYSTEM...</span>
+      <div className="app-wrapper" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100vw", height: "100vh", overflow: "hidden", background: "#050505" }}>
+        <div style={{ transform: \`scale(\${scale})\`, transformOrigin: "center center", width: "740px", height: "880px", display: "flex", flexDirection: "column", flexShrink: 0, flexGrow: 0 }}>
+          <div className="cabinet-outer" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
+            <span style={{ color: "#718096", fontSize: "11px", letterSpacing: "0.2em" }}>BOOTING SYSTEM...</span>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="app-wrapper">
+    <div className="app-wrapper" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100vw", height: "100vh", overflow: "hidden", background: "#050505" }}>
       <div
-        className={\`cabinet-outer \${isFullHeightScreen ? "cabinet-wide-source" : ""} \${isTouchDevice ? "cabinet-mobile" : ""}\`}
+        style={{
+          transform: \`scale(\${scale})\`,
+          transformOrigin: "center center",
+          width: isFullHeightScreen ? "1100px" : "740px",
+          height: isFullHeightScreen ? "800px" : "880px",
+          display: "flex",
+          flexDirection: "column",
+          flexShrink: 0,
+          flexGrow: 0,
+          transition: "transform 0.15s ease-out, width 0.15s ease-out, height 0.15s ease-out"
+        }}
       >
+        <div
+          className={\`cabinet-outer \${isFullHeightScreen ? "cabinet-wide-source" : ""} \${isTouchDevice ? "cabinet-mobile" : ""}\`}
+          style={{ width: "100%", height: "100%" }}
+        >
         {!isFullHeightScreen && (
           <HudPanel
             key={\`\${currentScreen}-\${retryCount}\`}
@@ -1165,6 +1175,7 @@ export default function App() {
 
         {isPlayingScreen && isTouchDevice && <TouchOverlay />}
       </div>
+      </div>
 
       <ChromaticAberrationFilter />
       <Cursor />
@@ -1298,15 +1309,15 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 `,"src/components/GameArena.css":`.cabinet-status-panel {
   width: 100%;
-  height: 7.8vmin;
-  min-height: 64px;
-  max-height: 96px;
+  height: 60px;
+  min-height: 60px;
+  max-height: 60px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1vmin 1.5vmin;
-  border-radius: 1.5vmin;
-  margin-bottom: 0.8vmin;
+  padding: 8px 12px;
+  border-radius: 12px;
+  margin-bottom: 6px;
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -1318,7 +1329,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 
 .hud-panel-title {
-  font-size: clamp(10px, 1.4vmin, 15px);
+  font-size: 11px;
   font-weight: bold;
   color: #718096;
   text-transform: uppercase;
@@ -1339,27 +1350,27 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   contain: layout style paint;
   display: flex;
   flex-direction: column;
-  flex-shrink: 1;
+  flex-shrink: 0;
   min-height: 0;
   align-self: center;
 }
 
 .dialogue-console {
   width: 100%;
-  height: 7.8vmin;
-  min-height: 64px;
-  max-height: 96px;
+  height: 60px;
+  min-height: 60px;
+  max-height: 60px;
   display: flex;
-  gap: 1.5vmin;
-  margin-top: 0.8vmin;
+  gap: 12px;
+  margin-top: 6px;
   box-sizing: border-box;
   flex-shrink: 0;
 }
 
 .dialogue-console.is-mobile {
-  height: 54px !important;
-  margin-top: 4px !important;
-  gap: 4px !important;
+  height: 60px !important;
+  margin-top: 6px !important;
+  gap: 12px !important;
   padding: 0 !important;
   flex-shrink: 0 !important;
 }
@@ -1367,15 +1378,13 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 .dialogue-box-left,
 .dialogue-box-right {
   flex: 1;
-  border-radius: 1.5vmin;
-  padding: 1vmin 1.5vmin;
+  border-radius: 12px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 1.2vmin;
+  gap: 10px;
   box-sizing: border-box;
   overflow: hidden;
-  border-radius: 1.2vmin;
-  padding: 1vmin 1.5vmin;
   transition:
     opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1),
     border-color 0.4s cubic-bezier(0.25, 1, 0.5, 1),
@@ -1386,9 +1395,9 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 
 .dialogue-box-left.is-mobile,
 .dialogue-box-right.is-mobile {
-  padding: 4px 8px !important;
-  gap: 8px !important;
-  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  gap: 10px !important;
+  border-radius: 12px !important;
   height: 100% !important;
 }
 
@@ -1418,20 +1427,20 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 
 .portrait-square {
-  width: 6.5vmin;
-  height: 6.5vmin;
-  min-width: 36px;
-  min-height: 36px;
-  max-width: 72px;
-  max-height: 72px;
-  border-radius: 1vmin;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  max-width: 48px;
+  max-height: 48px;
+  border-radius: 6px;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.4);
 }
 
 .portrait-square.is-mobile {
-  width: 32px !important;
-  height: 32px !important;
+  width: 48px !important;
+  height: 48px !important;
 }
 
 .dialogue-text-container {
@@ -1443,7 +1452,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 
 .dialogue-speaker-label {
-  font-size: clamp(10px, 1.25vmin, 13px);
+  font-size: 10px;
   font-weight: bold;
   letter-spacing: 0.15em;
   color: var(--signal-green);
@@ -1454,7 +1463,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 
 .dialogue-body-text {
-  font-size: clamp(11px, 1.5vmin, 15px);
+  font-size: 12px;
   line-height: 1.35;
   color: #eaeaea;
   word-wrap: break-word;
@@ -1463,8 +1472,8 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 
 .dialogue-body-text.is-mobile {
-  font-size: 10px !important;
-  line-height: 1.2 !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
 }
 
 .portrait-rumble {
@@ -1480,54 +1489,6 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   100% { transform: translate(1px, 1px) rotate(-1deg); }
 }
 
-@media (max-width: 768px) and (pointer: coarse) {
-  .cabinet-status-panel {
-    padding: 10px 14px;
-    border-radius: 10px;
-    margin-bottom: 8px;
-  }
-  .hud-panel-title {
-    font-size: 11px;
-    letter-spacing: 0.1em;
-  }
-  .hud-panel-block:nth-child(3) .neo-pressed {
-    width: 100px !important;
-  }
-  .dialogue-console {
-    height: 90px;
-    margin-top: 8px;
-    gap: 8px;
-  }
-  .dialogue-box-left,
-  .dialogue-box-right {
-    padding: 10px 14px;
-    gap: 10px;
-    border-radius: 10px;
-  }
-  .portrait-square {
-    width: 44px;
-    height: 44px;
-  }
-  .dialogue-speaker-label {
-    font-size: 11px;
-  }
-  .dialogue-body-text {
-    font-size: 11px;
-    line-height: 1.3;
-  }
-}
-
-@media (max-height: 600px) {
-  .cabinet-status-panel {
-    display: none;
-  }
-  .dialogue-console {
-    display: none;
-  }
-}
-
-
-/* Retro Tutorial Keycaps */
 .keycap-box {
   display: inline-flex;
   align-items: center;
@@ -1562,8 +1523,6 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   text-shadow: 0 0 6px var(--signal-green-glow);
 }
 
-
-/* Subtle Pulsating Highlight for Determination Bar */
 @keyframes purple-pulse {
   0% {
     box-shadow: inset 3px 3px 10px rgba(0, 0, 0, 0.9);
@@ -3323,27 +3282,27 @@ export const CURSOR_VARIANTS: Record<CursorType, CursorVariantConfig> = {
 };
 `,"src/components/menus/AudioScreen.css":`.mixer-board {
   width: 100%;
-  max-width: 60vmin;
-  padding: 3.2vmin;
-  border-radius: 2.8vmin;
+  max-width: 450px;
+  padding: 24px;
+  border-radius: 20px;
   margin: auto 0;
   display: flex;
   flex-direction: column;
-  gap: 3.2vmin;
+  gap: 24px;
   box-sizing: border-box;
 }
 
 .mixer-strip {
   display: flex;
   flex-direction: column;
-  gap: 1vmin;
+  gap: 8px;
   width: 100%;
 }
 
 .mixer-header {
   display: flex;
   justify-content: space-between;
-  font-size: 1.5vmin;
+  font-size: 12px;
   font-weight: bold;
   letter-spacing: 0.12em;
   color: #718096;
@@ -3352,24 +3311,9 @@ export const CURSOR_VARIANTS: Record<CursorType, CursorVariantConfig> = {
 .slider-row {
   display: flex;
   align-items: center;
-  gap: 1.6vmin;
+  gap: 12px;
   width: 100%;
   box-sizing: border-box;
-}
-
-@media (max-width: 768px) and (pointer: coarse) {
-  .mixer-board {
-    padding: 18px;
-    gap: 20px;
-    max-width: none;
-    border-radius: 16px;
-  }
-  .mixer-header {
-    font-size: 14px;
-  }
-  .slider-row {
-    gap: 12px;
-  }
 }
 `,"src/components/menus/AudioScreen.tsx":`import "./AudioScreen.css";
 import { AudioSettings } from "@/core/SettingsManager";
@@ -3512,13 +3456,13 @@ export function AudioScreen({
 }
 `,"src/components/menus/ControlsScreen.css":`.binding-board {
   width: 100%;
-  max-width: 80vmin;
-  padding: 1.2vmin 1.8vmin;
-  border-radius: 1.8vmin;
+  max-width: 600px;
+  padding: 10px 14px;
+  border-radius: 14px;
   margin: auto 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.8vmin 2vmin;
+  gap: 6px 16px;
   box-sizing: border-box;
   overflow-y: auto;
   max-height: 44vh;
@@ -3528,9 +3472,9 @@ export function AudioScreen({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 1.3vmin;
+  font-size: 11px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 0.6vmin 0.2vmin;
+  padding: 4px 2px;
   box-sizing: border-box;
   gap: 8px;
 }
@@ -3544,7 +3488,7 @@ export function AudioScreen({
 }
 
 .binding-btn {
-  width: 20vmin;
+  width: 150px;
   max-width: 160px;
   height: 38px;
   padding: 0 4px !important;
@@ -3553,63 +3497,27 @@ export function AudioScreen({
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  font-size: 1.2vmin;
-  border-radius: 0.8vmin;
+  font-size: 10px;
+  border-radius: 6px;
   box-sizing: border-box;
 }
 
 .controls-notice {
-  padding: 1vmin 2vmin;
-  border-radius: 1vmin;
+  padding: 8px 16px;
+  border-radius: 8px;
   background: rgba(168, 85, 247, 0.08);
   border: 1px solid rgba(168, 85, 247, 0.25);
   color: hsl(280, 80%, 75%);
-  font-size: 1.1vmin;
+  font-size: 10px;
   font-weight: bold;
   letter-spacing: 0.08em;
   text-align: center;
   text-transform: uppercase;
   text-shadow: 0 0 6px rgba(168, 85, 247, 0.35);
   width: 100%;
-  max-width: 80vmin;
+  max-width: 600px;
   box-sizing: border-box;
   white-space: nowrap;
-}
-
-@media (max-width: 768px) and (pointer: coarse) {
-  .binding-board {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    max-height: 30vh;
-    padding: 10px;
-    max-width: none;
-    border-radius: 16px;
-  }
-  .binding-row {
-    padding: 4px 0;
-    font-size: 12px;
-  }
-  .binding-btn {
-    width: 140px;
-    height: 36px;
-    padding: 0 !important;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-    font-size: 12px;
-    border-radius: 6px;
-    box-sizing: border-box;
-  }
-  .controls-notice {
-    font-size: 9px;
-    padding: 8px 12px;
-    white-space: normal;
-    line-height: 1.4;
-    max-width: none;
-    border-radius: 8px;
-  }
 }
 `,"src/components/menus/ControlsScreen.tsx":`import "./ControlsScreen.css";
 import { useState } from "react";
@@ -3927,10 +3835,10 @@ export function ControlsScreen({
   );
 }
 `,"src/components/menus/CreditsScreen.css":`.credits-block {
-  max-width: 64vmin;
-  padding: 3.2vmin;
+  max-width: 480px;
+  padding: 24px;
   width: 100%;
-  border-radius: 2vmin;
+  border-radius: 16px;
   margin: auto 0;
   box-sizing: border-box;
 }
@@ -3938,7 +3846,7 @@ export function ControlsScreen({
 .credits-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.2vmin;
+  gap: 10px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -3946,17 +3854,17 @@ export function ControlsScreen({
 .credits-item {
   background: var(--surface-bg);
   border: 1px solid rgba(0, 0, 0, 0.4);
-  border-radius: 1.2vmin;
-  padding: 1.2vmin 1.6vmin;
+  border-radius: 10px;
+  padding: 10px 12px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 0.4vmin;
+  gap: 4px;
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
 }
 
 .credits-tech-title {
-  font-size: 1.4vmin;
+  font-size: 11px;
   font-weight: bold;
   color: var(--signal-green);
   text-transform: uppercase;
@@ -3965,35 +3873,11 @@ export function ControlsScreen({
 }
 
 .credits-tech-desc {
-  font-size: 1.25vmin;
+  font-size: 10px;
   color: #a0aec0;
   line-height: 1.45;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-@media (max-width: 768px) and (pointer: coarse) {
-  .credits-block {
-    padding: 12px 16px !important;
-    border-radius: 12px !important;
-    max-width: none;
-  }
-  .credits-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    max-height: 30vh;
-    overflow-y: auto;
-  }
-  .credits-item {
-    padding: 8px 12px;
-    border-radius: 8px;
-  }
-  .credits-tech-title {
-    font-size: 11px;
-  }
-  .credits-tech-desc {
-    font-size: 10px;
-  }
 }
 `,"src/components/menus/CreditsScreen.tsx":`import "./CreditsScreen.css";
 import { Layout, Activity, Waves, Database } from "lucide-react";
@@ -4316,9 +4200,9 @@ export function MenuBackButton({
 `,"src/components/menus/SaveSelectScreen.css":`.slot-list {
   display: flex;
   flex-direction: column;
-  gap: 2.2vmin;
+  gap: 16px;
   width: 100%;
-  max-width: 64vmin;
+  max-width: 480px;
   margin: auto 0;
 }
 
@@ -4326,8 +4210,8 @@ export function MenuBackButton({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 2.4vmin 3.2vmin;
-  border-radius: 1.4vmin;
+  padding: 18px 24px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.15s ease;
   width: 100%;
@@ -4361,17 +4245,6 @@ export function MenuBackButton({
   color: var(--signal-green);
   border-color: rgba(34, 197, 94, 0.25);
   text-shadow: 0 0 8px var(--signal-green-glow);
-}
-
-@media (max-width: 768px) and (pointer: coarse) {
-  .slot-list {
-    gap: 10px;
-    max-width: none;
-  }
-  .slot-card {
-    padding: 12px 16px;
-    border-radius: 10px;
-  }
 }
 `,"src/components/menus/SaveSelectScreen.tsx":`import "./SaveSelectScreen.css";
 import { SaveSlotData } from "@/core/SaveManager";
@@ -5208,14 +5081,14 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   box-sizing: border-box;
   height: 100%;
   width: 100%;
-  padding: 0.4vmin 2.5vmin;
+  padding: 4px 18px;
   position: relative;
 }
 
 .title-grid-overlay {
   position: absolute;
   inset: 0;
-  background-size: 3.2vmin 3.2vmin;
+  background-size: 24px 24px;
   background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
@@ -5229,29 +5102,29 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 0.3vmin;
+  padding-top: 2px;
 }
 
 .system-tag {
-  font-size: 1.1vmin;
+  font-size: 10px;
   color: #4a5568;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   font-weight: bold;
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 0.5vmin 1.4vmin;
-  border-radius: 0.4vmin;
+  padding: 4px 10px;
+  border-radius: 3px;
   background: rgba(0, 0, 0, 0.2);
 }
 
 .title-banner-overhauled {
   text-align: center;
-  margin-top: 0.3vmin;
+  margin-top: 2px;
   width: 100%;
 }
 
 .title-banner-overhauled h1 {
-  font-size: 3.4vmin;
+  font-size: 26px;
   margin: 0;
   letter-spacing: 0.22em;
   font-weight: 900;
@@ -5266,20 +5139,20 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1.6vmin;
+  gap: 12px;
   width: 100%;
-  margin-top: 0.2vmin;
+  margin-top: 2px;
 }
 
 .subtitle-line {
   height: 1px;
   flex-grow: 1;
-  max-width: 8vmin;
+  max-width: 60px;
   background: linear-gradient(to right, transparent, var(--signal-green), transparent);
 }
 
 .subtitle-text {
-  font-size: 1.2vmin;
+  font-size: 10px;
   color: var(--signal-green);
   margin: 0;
   letter-spacing: 0.35em;
@@ -5298,20 +5171,20 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 
 .btn-container {
   width: 100%;
-  max-width: 54vmin;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 2.4vmin;
+  gap: 14px;
   margin-bottom: 20px;
   box-sizing: border-box;
 }
 
 .btn-container-overhauled {
   width: 100%;
-  max-width: 58vmin;
+  max-width: 440px;
   display: flex;
   flex-direction: column;
-  gap: 1.1vmin;
+  gap: 8px;
 }
 
 .neo-btn-large {
@@ -5324,8 +5197,8 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     6px 6px 15px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 24px 32px;
-  border-radius: 12px;
+  padding: 16px 24px;
+  border-radius: 10px;
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
@@ -5358,7 +5231,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   height: 8px;
   border-radius: 50%;
   background: #1e2430;
-  margin-right: 24px;
+  margin-right: 18px;
   transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.5);
@@ -5379,7 +5252,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 }
 
 .btn-main-label {
-  font-size: clamp(14px, 4vw, 18px);
+  font-size: 13px;
   font-weight: 800;
   color: #a0aec0;
   letter-spacing: 0.18em;
@@ -5394,7 +5267,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 }
 
 .btn-sub-label {
-  font-size: clamp(8px, 2.5vw, 10px);
+  font-size: 9px;
   font-weight: 500;
   color: #4a5568;
   letter-spacing: 0.12em;
@@ -5410,41 +5283,41 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 }
 
 .cursor-arrow-large {
-  color: var(--signal-green);
-  font-size: 18px;
-  font-weight: bold;
-  animation: arrow-blink 0.4s infinite alternate;
-  margin-left: 10px;
+  position: absolute !important;
+  right: 24px !important;
+  width: 14px !important;
+  height: 14px !important;
+  color: var(--signal-green) !important;
+  animation: arrow-blink 0.4s infinite alternate !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
 }
 
 .cursor-arrow {
-  position: absolute;
-  right: 3.2vmin;
-  color: var(--signal-green);
-  font-weight: bold;
-  animation: arrow-blink 0.4s infinite alternate;
-  top: 50%;
-  transform: translateY(-50%);
-  line-height: 1;
-  display: flex;
-  align-items: center;
-}
-
-@keyframes arrow-blink {
-  0% {
-    opacity: 0.3;
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1.15);
-  }
+  position: absolute !important;
+  right: 24px !important;
+  width: 10px !important;
+  height: 10px !important;
+  color: var(--signal-green) !important;
+  animation: arrow-blink 0.4s infinite alternate !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
 }
 
 .title-screen-footer {
   z-index: 2;
   width: 100%;
-  margin-top: 1vmin;
+  margin-top: 8px;
 }
 
 .footer-deco-line {
@@ -5457,17 +5330,17 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     transparent
   );
   width: 100%;
-  margin-bottom: 0.8vmin;
+  margin-bottom: 6px;
 }
 
 .footer-status-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.9vmin;
+  font-size: 8px;
   color: #4a5568;
   letter-spacing: 0.15em;
-  padding: 0 1.6vmin;
+  padding: 0 12px;
   text-transform: uppercase;
 }
 
@@ -5477,8 +5350,8 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 }
 
 .title-screen-container .neo-btn-large {
-  padding: 2.2vmin 3.2vmin;
-  border-radius: 1.2vmin;
+  padding: 16px 24px;
+  border-radius: 10px;
 }
 
 .title-screen-container .neo-btn-large-focused {
@@ -5491,151 +5364,22 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
 }
 
 .title-screen-container .neo-btn-large .btn-indicator-light {
-  width: 1vmin;
-  height: 1vmin;
-  margin-right: 2.4vmin;
+  width: 8px;
+  height: 8px;
+  margin-right: 18px;
 }
 
 .title-screen-container .btn-main-label {
-  font-size: 1.7vmin;
+  font-size: 13px;
 }
 
 .title-screen-container .btn-sub-label {
-  font-size: 1vmin;
+  font-size: 9px;
 }
 
 .title-screen-container .cursor-arrow-large {
-  font-size: 1.8vmin;
-  margin-left: 1vmin;
-}
-
-@media (max-width: 768px) and (pointer: coarse) {
-  .title-screen-container {
-    padding: 8px 12px;
-  }
-  .title-screen-header {
-    padding-top: 10px;
-  }
-  .system-tag {
-    font-size: 9px;
-    padding: 4px 10px;
-  }
-  .title-banner-overhauled {
-    margin-top: 8px;
-  }
-  .title-banner-overhauled h1 {
-    font-size: 26px;
-  }
-  .title-subtitle-container {
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .subtitle-text {
-    font-size: 10px;
-  }
-  .btn-container {
-    max-width: none;
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-  .btn-container-overhauled {
-    max-width: none;
-    gap: 10px;
-  }
-  .neo-btn-large {
-    padding: 14px 20px;
-    border-radius: 10px;
-  }
-  .neo-btn-large .btn-indicator-light {
-    width: 8px;
-    height: 8px;
-    margin-right: 14px;
-  }
-  .btn-main-label {
-    font-size: 14px;
-  }
-  .btn-sub-label {
-    font-size: 9px;
-  }
-  .cursor-arrow-large {
-    font-size: 14px;
-  }
-  .footer-status-bar {
-    font-size: 7px;
-    padding: 0;
-  }
-  .footer-center-prompt {
-    display: none;
-  }
-
-  .title-screen-container .neo-btn-large {
-    padding: 14px 20px;
-    border-radius: 10px;
-  }
-  .title-screen-container .neo-btn-large .btn-indicator-light {
-    width: 8px;
-    height: 8px;
-    margin-right: 14px;
-  }
-  .title-screen-container .btn-main-label {
-    font-size: 14px;
-  }
-  .title-screen-container .btn-sub-label {
-    font-size: 9px;
-  }
-  .title-screen-container .cursor-arrow-large {
-    font-size: 14px;
-    margin-left: 10px;
-  }
-}
-
-@media (max-height: 600px) {
-  .title-screen-header {
-    padding-top: 6px;
-  }
-  .title-banner-overhauled h1 {
-    font-size: 2rem;
-  }
-  .btn-container-overhauled {
-    gap: 6px;
-  }
-  .neo-btn-large {
-    padding: 10px 16px;
-  }
-}
-
-
-/* Consolidated Vector Cursor Centering Overrides */
-.cursor-arrow-large {
-  position: absolute !important;
-  right: 3.2vmin !important;
-  width: 1.8vmin !important;
-  height: 1.8vmin !important;
-  color: var(--signal-green) !important;
-  animation: arrow-blink 0.4s infinite alternate !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  margin-left: 0 !important;
-  margin-top: 0 !important;
-}
-
-.cursor-arrow {
-  position: absolute !important;
-  right: 3.2vmin !important;
-  width: 1.4vmin !important;
-  height: 1.4vmin !important;
-  color: var(--signal-green) !important;
-  animation: arrow-blink 0.4s infinite alternate !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  margin-left: 0 !important;
-  margin-top: 0 !important;
+  font-size: 14px;
+  margin-left: 8px;
 }
 `,"src/components/menus/TitleScreen.tsx":`import { Gamepad2, Sliders, Award, Code2 } from "lucide-react";
 import { MenuContainer, MenuHeader, MenuButton } from "./MenuPrimitives";
@@ -17826,19 +17570,19 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   box-shadow: var(--shadow-light), var(--shadow-dark);
   border: 1px solid rgba(255, 255, 255, 0.02);
   color: #a0aec0;
-  padding: 2.2vmin 4.4vmin;
-  font-size: 1.7vmin;
+  padding: 16px 32px;
+  font-size: 13px;
   font-weight: bold;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  border-radius: 1.2vmin;
+  border-radius: 10px;
   cursor: pointer;
   transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease, color 0.12s ease;
   outline: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.8vmin;
+  gap: 6px;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -17868,14 +17612,14 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   box-sizing: border-box;
   height: 100%;
   width: 100%;
-  padding: 0.4vmin 2.5vmin;
+  padding: 4px 18px;
   position: relative;
 }
 
 .title-grid-overlay {
   position: absolute;
   inset: 0;
-  background-size: 3.2vmin 3.2vmin;
+  background-size: 24px 24px;
   background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
@@ -17889,29 +17633,29 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 0.3vmin;
+  padding-top: 2px;
 }
 
 .system-tag {
-  font-size: 1.1vmin;
+  font-size: 10px;
   color: #4a5568;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   font-weight: bold;
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 0.5vmin 1.4vmin;
-  border-radius: 0.4vmin;
+  padding: 4px 10px;
+  border-radius: 3px;
   background: rgba(0, 0, 0, 0.2);
 }
 
 .title-banner-overhauled {
   text-align: center;
-  margin-top: 0.3vmin;
+  margin-top: 2px;
   width: 100%;
 }
 
 .title-banner-overhauled h1 {
-  font-size: 3.4vmin;
+  font-size: 26px;
   margin: 0;
   letter-spacing: 0.22em;
   font-weight: 900;
@@ -17926,20 +17670,20 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1.6vmin;
+  gap: 12px;
   width: 100%;
-  margin-top: 0.2vmin;
+  margin-top: 2px;
 }
 
 .subtitle-line {
   height: 1px;
   flex-grow: 1;
-  max-width: 8vmin;
+  max-width: 60px;
   background: linear-gradient(to right, transparent, var(--signal-green), transparent);
 }
 
 .subtitle-text {
-  font-size: 1.2vmin;
+  font-size: 10px;
   color: var(--signal-green);
   margin: 0;
   letter-spacing: 0.35em;
@@ -17958,10 +17702,10 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 
 .btn-container-overhauled {
   width: 100%;
-  max-width: 58vmin;
+  max-width: 440px;
   display: flex;
   flex-direction: column;
-  gap: 1.1vmin;
+  gap: 8px;
 }
 
 .neo-btn-large {
@@ -17974,8 +17718,8 @@ export const useTutorialStore = create<TutorialState>((set) => ({
     6px 6px 15px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 2.2vmin 3.2vmin;
-  border-radius: 1.2vmin;
+  padding: 16px 24px;
+  border-radius: 10px;
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
@@ -18000,11 +17744,11 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 }
 
 .neo-btn-large .btn-indicator-light {
-  width: 1vmin;
-  height: 1vmin;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #1e2430;
-  margin-right: 2.4vmin;
+  margin-right: 18px;
   transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.5);
@@ -18026,7 +17770,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 }
 
 .btn-main-label {
-  font-size: 1.7vmin;
+  font-size: 13px;
   font-weight: 800;
   color: #a0aec0;
   letter-spacing: 0.18em;
@@ -18042,7 +17786,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 }
 
 .btn-sub-label {
-  font-size: 1vmin;
+  font-size: 9px;
   font-weight: 500;
   color: #4a5568;
   letter-spacing: 0.12em;
@@ -18060,9 +17804,9 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 
 .cursor-arrow-large {
   position: absolute;
-  right: 3.2vmin;
+  right: 24px;
   color: var(--signal-green);
-  font-size: 1.8vmin;
+  font-size: 14px;
   font-weight: bold;
   animation: arrow-blink 0.4s infinite alternate;
   top: 50%;
@@ -18074,9 +17818,9 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 
 .cursor-arrow {
   position: absolute;
-  right: 3.2vmin;
-  width: 1.2vmin;
-  height: 1.2vmin;
+  right: 24px;
+  width: 10px;
+  height: 10px;
   color: var(--signal-green);
   animation: arrow-blink 0.4s infinite alternate;
   top: 50%;
@@ -18100,7 +17844,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 .title-screen-footer {
   z-index: 2;
   width: 100%;
-  margin-top: 1vmin;
+  margin-top: 8px;
 }
 
 .footer-deco-line {
@@ -18113,17 +17857,17 @@ export const useTutorialStore = create<TutorialState>((set) => ({
     transparent
   );
   width: 100%;
-  margin-bottom: 0.8vmin;
+  margin-bottom: 6px;
 }
 
 .footer-status-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.9vmin;
+  font-size: 8px;
   color: #4a5568;
   letter-spacing: 0.15em;
-  padding: 0 1.6vmin;
+  padding: 0 12px;
   text-transform: uppercase;
 }
 
@@ -18142,8 +17886,8 @@ export const useTutorialStore = create<TutorialState>((set) => ({
     6px 6px 15px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 1.6vmin 3.2vmin;
-  font-size: 1.5vmin;
+  padding: 12px 24px;
+  font-size: 12px;
   font-weight: bold;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -18211,8 +17955,8 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 }
 
 .led-dot {
-  width: 1.3vmin;
-  height: 1.3vmin;
+  width: 10px;
+  height: 10px;
   border-radius: 25%;
   transition: all 0.2s ease;
 }
@@ -18242,12 +17986,12 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 1.2vmin;
-  border-radius: 0.6vmin;
+  height: 8px;
+  border-radius: 4px;
   background: var(--surface-bg);
   box-shadow: var(--shadow-inset-light), var(--shadow-inset-dark);
   outline: none;
-  margin: 1vmin 0;
+  margin: 8px 0;
   border: 1px solid rgba(0, 0, 0, 0.4);
   cursor: pointer;
 }
@@ -18255,9 +17999,9 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 .custom-range-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 2.2vmin;
-  height: 2.6vmin;
-  border-radius: 0.6vmin;
+  width: 16px;
+  height: 18px;
+  border-radius: 4px;
   background: var(--surface-elevated);
   border: 1px solid rgba(255, 255, 255, 0.04);
   box-shadow:
@@ -18277,9 +18021,9 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 }
 
 .custom-range-slider::-moz-range-thumb {
-  width: 2.2vmin;
-  height: 2.6vmin;
-  border-radius: 0.6vmin;
+  width: 16px;
+  height: 18px;
+  border-radius: 4px;
   background: var(--surface-elevated);
   border: 1px solid rgba(255, 255, 255, 0.04);
   box-shadow:
@@ -18300,90 +18044,10 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 
 .custom-range-slider::-moz-range-progress {
   background: var(--signal-green);
-  height: 1.2vmin;
-  border-radius: 0.6vmin;
+  height: 8px;
+  border-radius: 4px;
   border: 1px solid rgba(0, 0, 0, 0.4);
   border-right: none;
-}
-
-@media (max-width: 768px) and (pointer: coarse) {
-  .title-screen-container {
-    padding: 8px 12px;
-  }
-  .title-screen-header {
-    padding-top: 10px;
-  }
-  .system-tag {
-    font-size: 9px;
-    padding: 4px 10px;
-  }
-  .title-banner-overhauled {
-    margin-top: 8px;
-  }
-  .title-banner-overhauled h1 {
-    font-size: 26px;
-  }
-  .title-subtitle-container {
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .subtitle-text {
-    font-size: 10px;
-  }
-  .btn-container-overhauled {
-    max-width: none;
-    gap: 10px;
-  }
-  .neo-btn {
-    padding: 16px 32px;
-    font-size: 15px;
-    border-radius: 12px;
-  }
-  .neo-btn-large {
-    padding: 14px 20px;
-    border-radius: 10px;
-  }
-  .neo-btn-large .btn-indicator-light {
-    width: 8px;
-    height: 8px;
-    margin-right: 14px;
-  }
-  .btn-main-label {
-    font-size: 14px;
-  }
-  .btn-sub-label {
-    font-size: 9px;
-  }
-  .cursor-arrow-large {
-    font-size: 14px;
-    margin-left: 10px;
-  }
-  .footer-status-bar {
-    font-size: 7px;
-    padding: 0;
-  }
-  .footer-center-prompt {
-    display: none;
-  }
-  .led-dot {
-    width: 14px;
-    height: 14px;
-  }
-  .custom-range-slider {
-    height: 12px;
-    border-radius: 6px;
-    margin: 10px 0;
-  }
-  .custom-range-slider::-webkit-slider-thumb {
-    width: 28px;
-    height: 32px;
-    border-radius: 6px;
-  }
-  .custom-range-slider::-moz-range-thumb {
-    width: 28px;
-    height: 32px;
-    border-radius: 6px;
-  }
 }
 
 @keyframes led-wobble {
@@ -18396,28 +18060,11 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   animation: led-wobble 0.6s infinite alternate ease-in-out;
 }
 
-@media (max-height: 600px) {
-  .title-screen-header {
-    padding-top: 6px;
-  }
-  .title-banner-overhauled h1 {
-    font-size: 2rem;
-  }
-  .btn-container-overhauled {
-    gap: 6px;
-  }
-  .neo-btn-large {
-    padding: 10px 16px;
-  }
-}
-
-
-/* Consolidated Vector Cursor Centering Overrides */
 .cursor-arrow-large {
   position: absolute !important;
-  right: 3.2vmin !important;
-  width: 1.8vmin !important;
-  height: 1.8vmin !important;
+  right: 24px !important;
+  width: 14px !important;
+  height: 14px !important;
   color: var(--signal-green) !important;
   animation: arrow-blink 0.4s infinite alternate !important;
   top: 50% !important;
@@ -18431,9 +18078,9 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 
 .cursor-arrow {
   position: absolute !important;
-  right: 3.2vmin !important;
-  width: 1.4vmin !important;
-  height: 1.4vmin !important;
+  right: 24px !important;
+  width: 10px !important;
+  height: 10px !important;
   color: var(--signal-green) !important;
   animation: arrow-blink 0.4s infinite alternate !important;
   top: 50% !important;
@@ -18445,7 +18092,6 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   margin-top: 0 !important;
 }
 
-/* Structural Stress Jitter and Crisis HP Wobbles */
 @keyframes stress-shiver {
   0%, 100% { transform: translate(0, 0); }
   20% { transform: translate(-1.2px, 0.8px); filter: brightness(1.2); }
@@ -18458,7 +18104,6 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   animation: stress-shiver 0.12s infinite linear !important;
 }
 
-/* Refined Subtle Reactive Spring-Loaded HUD Keyframes */
 @keyframes led-squash-spring {
   0% { transform: scale(1); }
   25% { transform: scale(1.18, 0.82); filter: brightness(1.2); }
