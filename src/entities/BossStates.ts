@@ -2,8 +2,11 @@ import { TrigLUT } from "@/core/TrigLUT";
 import { IState } from "@/core/StateMachine";
 import { UNITS } from "@/core/Units";
 import { Boss } from "./Boss";
+import { Player } from "./Player";
 import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
+import { HealthComponent } from "@/entities/components/HealthComponent";
 import { setVec } from "@/core/VecUtils";
+import { selectBestAttack, BossAttackContext, IBossAttackState } from "./BossAttackPatterns";
 
 export abstract class BossState implements IState {
   protected owner: Boss;
@@ -35,7 +38,7 @@ export class BossCooldownState extends BossState {
       this.duration = this.overrideDuration;
       this.overrideDuration = -1;
     } else {
-      this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
+      this.duration = this.owner.currentPhase === 3 ? 1.2 : 2.0;
     }
     setVec(this.owner.targetVisualScale, 1.0, 1.0);
   }
@@ -56,7 +59,7 @@ export class BossPatrolState extends BossState {
 
   public enter(): void {
     setVec(this.owner.targetVisualScale, 1.0, 1.0);
-    this.duration = this.owner.currentPhase === 3 ? 1.5 : 2.5;
+    this.duration = this.owner.currentPhase === 3 ? 1.0 : 2.0;
   }
 
   public update(dt: number): void {
@@ -114,47 +117,63 @@ export class BossMeleeState extends BossState {
   public exit(): void {}
 }
 
-export class BossAttackState extends BossState {
-  private attackType: "SINGLE_SHOT" | "VOLLEY" | "OMNI_BURST" = "SINGLE_SHOT";
-  private durationTimer: number = 0;
-  private volleyCount: number = 0;
-  private volleyTimer: number = 0;
+export class BossAttackState extends BossState implements IBossAttackState {
+  public attackType: "SINGLE_SHOT" | "VOLLEY" | "OMNI_BURST" | "FAN_BURST" | "PREDICTIVE_SHOT" | "GAP_RING" = "SINGLE_SHOT";
+  public durationTimer: number = 0;
+  public volleyCount: number = 0;
+  public volleyTimer: number = 0;
+
+  constructor(owner: Boss) {
+    super(owner);
+  }
+
+  public getBoss(): Boss {
+    return this.owner;
+  }
 
   public enter(): void {
-    const phase = this.owner.currentPhase;
     this.owner.velocity.x = 0;
+    const player = this.owner.world.player as Player;
+    if (!player || player.isDead) {
+      this.owner.stateMachine.changeState(this.owner.cooldownState);
+      return;
+    }
 
-    if (phase === 1) {
-      if (TrigLUT.randomGameplay() < 0.6) {
-        this.attackType = "SINGLE_SHOT";
-        this.durationTimer = 0.5;
-        this.owner.fireSingleShotAtPlayer();
-      } else {
-        this.owner.stateMachine.changeState(this.owner.telegraphState);
-      }
-    } else if (phase === 2) {
-      if (TrigLUT.randomGameplay() < 0.5) {
-        this.attackType = "VOLLEY";
-        this.volleyCount = 3;
-        this.volleyTimer = 0;
-        this.durationTimer = 1.0;
-      } else {
-        this.owner.stateMachine.changeState(this.owner.telegraphState);
-      }
-    } else {
-      const r = TrigLUT.randomGameplay();
-      if (r < 0.33) {
-        this.attackType = "VOLLEY";
-        this.volleyCount = 5;
-        this.volleyTimer = 0;
-        this.durationTimer = 1.2;
-      } else if (r < 0.66) {
-        this.attackType = "OMNI_BURST";
-        this.owner.fireRadialOmniBurst();
-        this.durationTimer = 0.8;
-      } else {
-        this.owner.stateMachine.changeState(this.owner.telegraphState);
-      }
+    const playerHealth = player.getComponent(HealthComponent);
+    const playerHp = playerHealth ? playerHealth.currentHealth : 5;
+
+    const ctx: BossAttackContext = {
+      phase: this.owner.currentPhase,
+      distanceToPlayer: Math.abs(player.position.x - this.owner.position.x),
+      playerIsAirborne: !player.physics.isGrounded,
+      playerHP: playerHp,
+      activeMinionsCount: this.owner.world.minions.length,
+      recentAttackIds: [...this.owner.recentAttackIds],
+      timeSinceLastProjectileHeavy: this.owner.timeSinceLastProjectileHeavy,
+    };
+
+    const pattern = selectBestAttack(ctx);
+
+    this.owner.recentAttackIds.push(pattern.id);
+    if (this.owner.recentAttackIds.length > 3) {
+      this.owner.recentAttackIds.shift();
+    }
+
+    this.attackType = pattern.id as "SINGLE_SHOT" | "VOLLEY" | "OMNI_BURST" | "FAN_BURST" | "PREDICTIVE_SHOT" | "GAP_RING";
+    pattern.configure(this);
+
+    this.executeImmediateFire();
+  }
+
+  private executeImmediateFire() {
+    if (this.attackType === "OMNI_BURST") {
+      this.fireOmniBurst();
+    } else if (this.attackType === "FAN_BURST") {
+      this.fireFanBurst();
+    } else if (this.attackType === "PREDICTIVE_SHOT") {
+      this.firePredictiveShot();
+    } else if (this.attackType === "GAP_RING") {
+      this.fireGapRing();
     }
   }
 
@@ -166,17 +185,143 @@ export class BossAttackState extends BossState {
       if (this.volleyTimer <= 0) {
         this.owner.fireSingleShotAtPlayer();
         this.volleyCount--;
-        this.volleyTimer = 0.2;
+        this.volleyTimer = this.owner.currentPhase === 3 ? 0.10 : 0.12;
       }
     }
 
     if (this.durationTimer <= 0) {
-      let cooldown = 1.5;
-      if (this.attackType === "VOLLEY") cooldown = 2.5;
-      else if (this.attackType === "OMNI_BURST") cooldown = 3.5;
+      let cooldown = 1.2;
+      if (this.attackType === "VOLLEY") cooldown = 2.0;
+      else if (this.attackType === "OMNI_BURST") cooldown = 2.5;
+      else if (this.attackType === "GAP_RING") cooldown = 3.0;
 
       this.owner.cooldownState.setDuration(cooldown);
       this.owner.stateMachine.changeState(this.owner.cooldownState);
+    }
+  }
+
+  private fireOmniBurst() {
+    const phase = this.owner.currentPhase;
+    const projectileCount = phase === 1 ? 12 : phase === 2 ? 18 : 24;
+    const angleStep = (Math.PI * 2) / projectileCount;
+
+    for (let i = 0; i < projectileCount; i++) {
+      const angle = i * angleStep;
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
+
+      this.owner.world.spawnProjectile(
+        this.owner.position.x + dirX * 40,
+        this.owner.position.y + dirY * 40,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        280,
+        4.0
+      );
+    }
+  }
+
+  private fireFanBurst() {
+    const player = this.owner.world.player;
+    if (!player) return;
+
+    const dx = player.position.x - this.owner.position.x;
+    const dy = player.position.y - this.owner.position.y;
+    const centerAngle = TrigLUT.atan2(dy, dx);
+
+    const phase = this.owner.currentPhase;
+    const count = phase === 2 ? 7 : 12;
+    const totalSpread = (phase === 2 ? 55 : 80) * (Math.PI / 180);
+    const startAngle = centerAngle - totalSpread / 2;
+    const step = totalSpread / (count - 1);
+
+    for (let i = 0; i < count; i++) {
+      const angle = startAngle + i * step;
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
+
+      this.owner.world.spawnProjectile(
+        this.owner.position.x + dirX * 40,
+        this.owner.position.y + dirY * 40,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        300,
+        5.0
+      );
+    }
+  }
+
+  private firePredictiveShot() {
+    const player = this.owner.world.player;
+    if (!player) return;
+
+    const leadTime = 0.35;
+    const predX = player.position.x + player.velocity.x * leadTime;
+    const predY = player.position.y + player.velocity.y * leadTime;
+
+    const dx = predX - this.owner.position.x;
+    const dy = predY - this.owner.position.y;
+    const mag = Math.sqrt(dx * dx + dy * dy);
+    if (mag === 0) return;
+
+    const dirX = dx / mag;
+    const dirY = dy / mag;
+
+    const proj = this.owner.world.spawnProjectile(
+      this.owner.position.x + dirX * 45,
+      this.owner.position.y + dirY * 45,
+      dirX,
+      dirY,
+      "boss",
+      2,
+      450,
+      6.0
+    );
+
+    proj.size = { width: 22, height: 22 };
+  }
+
+  private fireGapRing() {
+    const player = this.owner.world.player;
+    if (!player) return;
+
+    const leadTime = 0.3;
+    const predX = player.position.x + player.velocity.x * leadTime;
+    const predY = player.position.y + player.velocity.y * leadTime;
+
+    const dx = predX - this.owner.position.x;
+    const dy = predY - this.owner.position.y;
+    const targetAngle = TrigLUT.atan2(dy, dx);
+
+    const projCount = 18;
+    const angleStep = (Math.PI * 2) / projCount;
+
+    for (let i = 0; i < projCount; i++) {
+      const angle = i * angleStep;
+      let diff = Math.abs(angle - targetAngle) % (Math.PI * 2);
+      if (diff > Math.PI) diff = Math.PI * 2 - diff;
+
+      if (diff < 0.22) {
+        continue;
+      }
+
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
+
+      this.owner.world.spawnProjectile(
+        this.owner.position.x + dirX * 40,
+        this.owner.position.y + dirY * 40,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        280,
+        4.0
+      );
     }
   }
 
@@ -188,7 +333,7 @@ export class BossTelegraphState extends BossState {
 
   public enter(): void {
     this.owner.velocity.x = 0;
-    this.duration = this.owner.currentPhase === 3 ? 0.4 : 0.8;
+    this.duration = this.owner.currentPhase === 3 ? 0.35 : 0.6;
     setVec(this.owner.visualScale, 1.25, 0.75);
     setVec(this.owner.targetVisualScale, 1.15, 0.85);
     this.owner.world.events.publish("BOSS_TELEGRAPH", undefined);
@@ -238,7 +383,6 @@ export class BossLungeState extends BossState {
     const hitWall = physics ? physics.isOnWallLeft || physics.isOnWallRight : false;
 
     if (hitWall && physics) {
-      // Rebound backward and squash elastically on wall collision
       this.owner.velocity.x = -this.owner.facingDirection * UNITS.BOSS_WALL_REBOUND_VELOCITY;
       setVec(this.owner.visualScale, 0.7, 1.3);
       setVec(this.owner.targetVisualScale, 1.0, 1.0);

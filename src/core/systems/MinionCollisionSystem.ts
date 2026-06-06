@@ -1,6 +1,8 @@
 import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { EntityStatus, IWorld } from "@/core/Interfaces";
+import { LancerMinion } from "@/entities/LancerMinion";
+import { BaseMinion } from "@/entities/BaseMinion";
 
 export class MinionCollisionSystem {
   public update(minions: IWorld["minions"], player: Player, dt: number): void {
@@ -10,25 +12,57 @@ export class MinionCollisionSystem {
 
       if (player.isDead || minion.status !== EntityStatus.ACTIVE) continue;
 
-      const pW = player.size.width / 2;
-      const pH = player.size.height / 2;
-      const mW = minion.size.width / 2;
-      const mH = minion.size.height / 2;
+      let isColliding = false;
+      let applyLanceKnockback = false;
 
-      const isColliding =
-        player.position.x + pW > minion.position.x - mW &&
-        player.position.x - pW < minion.position.x + mW &&
-        player.position.y + pH > minion.position.y - mH &&
-        player.position.y - pH < minion.position.y + mH;
+      if (minion instanceof LancerMinion && minion.lanceExtended) {
+        const lanceWidth = 90;
+        const lanceHeight = 18;
+        const lanceX = minion.position.x + minion.facingDirection * 55;
+        const lanceY = minion.position.y - 12;
+
+        const pW = player.size.width / 2;
+        const pH = player.size.height / 2;
+
+        const isLanceColliding =
+          player.position.x + pW > lanceX - lanceWidth / 2 &&
+          player.position.x - pW < lanceX + lanceWidth / 2 &&
+          player.position.y + pH > lanceY - lanceHeight / 2 &&
+          player.position.y - pH < lanceY + lanceHeight / 2;
+
+        if (isLanceColliding) {
+          isColliding = true;
+          applyLanceKnockback = true;
+        }
+      }
+
+      if (!isColliding) {
+        const pW = player.size.width / 2;
+        const pH = player.size.height / 2;
+        const mW = minion.size.width / 2;
+        const mH = minion.size.height / 2;
+
+        isColliding =
+          player.position.x + pW > minion.position.x - mW &&
+          player.position.x - pW < minion.position.x + mW &&
+          player.position.y + pH > minion.position.y - mH &&
+          player.position.y - pH < minion.position.y + mH;
+      }
 
       if (isColliding) {
         const playerHealth = player.getComponent(HealthComponent);
         if (playerHealth) {
           const damaged = playerHealth.takeDamage(1);
           if (damaged) {
-            const knockbackDir = Math.sign(player.position.x - minion.position.x);
-            player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
-            player.velocity.y = -350;
+            if (applyLanceKnockback && minion instanceof BaseMinion) {
+              const knockbackDir = minion.facingDirection !== 0 ? minion.facingDirection : 1;
+              player.velocity.x = knockbackDir * 650;
+              player.velocity.y = -350;
+            } else {
+              const knockbackDir = Math.sign(player.position.x - minion.position.x);
+              player.velocity.x = (knockbackDir !== 0 ? knockbackDir : 1) * 450;
+              player.velocity.y = -350;
+            }
           }
         }
       }

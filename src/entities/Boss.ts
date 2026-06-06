@@ -36,6 +36,9 @@ export class Boss extends BaseEntity {
   public facingDirection: number = -1;
   public currentPhase: number = 1;
 
+  public recentAttackIds: string[] = [];
+  public timeSinceLastProjectileHeavy = 0;
+
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 60, height: 60 };
@@ -78,10 +81,10 @@ export class Boss extends BaseEntity {
       return;
     }
 
+    this.timeSinceLastProjectileHeavy += dt;
     this.evaluatePhaseShifts();
     this.trackPlayer();
 
-    // Standard Boss target rotation lean driven by movement velocity
     if (this.physics.isGrounded) {
       this.targetRotation = Math.sign(this.velocity.x) * 0.1;
     } else {
@@ -124,28 +127,6 @@ export class Boss extends BaseEntity {
       250,
       10.0
     );
-  }
-
-  public fireRadialOmniBurst() {
-    const projectileCount = 8;
-    const angleStep = (Math.PI * 2) / projectileCount;
-
-    for (let i = 0; i < projectileCount; i++) {
-      const angle = i * angleStep;
-      const dirX = TrigLUT.cos(angle);
-      const dirY = TrigLUT.sin(angle);
-
-      this.world.spawnProjectile(
-        this.position.x + dirX * 40,
-        this.position.y + dirY * 40,
-        dirX,
-        dirY,
-        "boss",
-        1,
-        280,
-        4.0
-      );
-    }
   }
 
   private evaluatePhaseShifts() {
@@ -221,12 +202,10 @@ export class Boss extends BaseEntity {
 
     const dirX = dx !== 0 ? dx / dist : -this.facingDirection;
 
-    // Overriding velocities directly to create a satisfying pop upward similar to the spike hazard response
     this.velocity.x = dirX * 240 * intensity;
     this.velocity.y = Math.min(this.velocity.y, -280 * intensity);
     this.physics.isGrounded = false;
 
-    // Stretch vertically to visually sell the launch momentum
     setVec(this.visualScale, 1.0 - 0.15 * intensity, 1.0 + 0.3 * intensity);
     setVec(this.scaleVelocity, 8.0 * intensity, -16.0 * intensity);
 

@@ -18,7 +18,8 @@ export class Projectile extends BaseEntity implements IPoolable {
   public ownerId: "player" | "boss" = "player";
   public damage = 1;
   public customColor: string | null = null;
-
+  public pierce = 0;
+  
   private strategy!: IProjectileStrategy;
   private lifespan = 0;
 
@@ -27,6 +28,7 @@ export class Projectile extends BaseEntity implements IPoolable {
   private trailCount = 0;
 
   private overlapScratch: Rectangle[] = [];
+  private hitTargetIds = new Set<string>();
 
   constructor() {
     super("projectile", null as unknown as IWorld);
@@ -55,6 +57,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.lifespan = lifespan;
     this.world = world;
     this.customColor = customColor || null;
+    this.pierce = ownerId === "player" && damage >= 3 ? 1 : 0;
 
     this.strategy = ownerId === "player" ? playerProjectileStrategy : bossProjectileStrategy;
 
@@ -62,6 +65,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.isDead = false;
     this.trailHead = 0;
     this.trailCount = 0;
+    this.hitTargetIds.clear();
   }
 
   public deactivate() {
@@ -69,6 +73,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.isDead = true;
     zeroVec(this.velocity);
     this.trailCount = 0;
+    this.hitTargetIds.clear();
   }
 
   public update(dt: number): boolean {
@@ -117,9 +122,6 @@ export class Projectile extends BaseEntity implements IPoolable {
       }
 
       if (this.checkEntityCollisions()) {
-        this.releaseEffects();
-        this.isActive = false;
-        this.isDead = true;
         return true;
       }
     }
@@ -227,6 +229,8 @@ export class Projectile extends BaseEntity implements IPoolable {
     const pH = this.size.height / 2;
 
     for (const target of targets) {
+      if (this.hitTargetIds.has(target.id)) continue;
+
       const tW = target.size.width / 2;
       const tH = target.size.height / 2;
 
@@ -241,7 +245,18 @@ export class Projectile extends BaseEntity implements IPoolable {
         if (targetHealth) {
           const projIntensity = this.strategy.getProjIntensity(this.damage);
           targetHealth.takeDamage(this.damage, this.position.x, this.position.y, projIntensity);
-          return true;
+          this.hitTargetIds.add(target.id);
+
+          if (this.pierce > 0) {
+            this.pierce--;
+            this.damage = Math.max(1, this.damage - 1);
+            this.world.events.publishSpark(this.position.x, this.position.y, 0, "hsl(45, 100%, 65%)", true, 8);
+          } else {
+            this.releaseEffects();
+            this.isActive = false;
+            this.isDead = true;
+            return true;
+          }
         }
       }
     }

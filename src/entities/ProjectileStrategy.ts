@@ -1,6 +1,27 @@
 import { IWorld, IEntity, IEventPublisher, EntityStatus } from "@/core/Interfaces";
 import { TrigLUT } from "@/core/TrigLUT";
 
+export type ProjectileKind =
+  | "player-basic"
+  | "player-charged"
+  | "boss-bolt"
+  | "boss-fan"
+  | "boss-ring"
+  | "minion-shot"
+  | "shockwave";
+
+export interface ProjectileOptions {
+  kind: ProjectileKind;
+  radius: number;
+  trailLength: number;
+  trailWidth: number;
+  coreColor: string;
+  rimColor: string;
+  canClash: boolean;
+  pierce: number;
+  maxLifetime: number;
+}
+
 export interface TrailPoint {
   x: number;
   y: number;

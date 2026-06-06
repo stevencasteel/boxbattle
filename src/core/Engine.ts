@@ -4,7 +4,7 @@ import { Boss } from "@/entities/Boss";
 import { ObjectPool } from "@/core/ObjectPool";
 import { Projectile } from "@/entities/Projectile";
 import { Camera } from "@/core/Camera";
-import { Spawner } from "@/entities/Spawner";
+import { EncounterDirector } from "@/core/EncounterDirector";
 import { World } from "@/core/World";
 import { SimulationSystems } from "@/core/SimulationSystems";
 import { Rectangle } from "@/core/Interfaces";
@@ -33,7 +33,7 @@ export class Engine {
   private pool!: ObjectPool<Projectile>;
   private player!: Player;
   private boss!: Boss;
-  private activeSpawners: Spawner[] = [];
+  private encounterDirector!: EncounterDirector;
   private springPlatforms: { rect: Rectangle; offsetY: number; velocityY: number }[] = [];
   private unsubPlatformImpact!: () => void;
 
@@ -70,7 +70,7 @@ export class Engine {
       (id) => this.world.minions.find((m) => m.id === id)?.position.x ?? 625
     );
 
-    this.pool = new ObjectPool(() => new Projectile(), 60);
+    this.pool = new ObjectPool(() => new Projectile(), 500);
     this.world.projectilePool = this.pool;
 
     this.player = new Player("player-01", this.world);
@@ -84,7 +84,7 @@ export class Engine {
     this.world.player = this.player;
     this.world.boss = this.boss;
 
-    this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
+    this.encounterDirector = new EncounterDirector(this.world);
 
     Camera.reset();
 
@@ -131,11 +131,7 @@ export class Engine {
       overlay.classList.remove("vignette-pulse");
     }
 
-    for (const spawner of this.activeSpawners) {
-      spawner.cleanup();
-    }
-    this.world.minions = [];
-    this.activeSpawners = this.levelConfig.spawners.map((s) => new Spawner(s.type, s.x, s.y, this.world));
+    this.encounterDirector.reset();
 
     if (this.world.audio.stopCrowdSounds) {
       this.world.audio.stopCrowdSounds();
@@ -253,9 +249,7 @@ export class Engine {
     this.player.update(dt);
     this.boss.update(dt);
 
-    for (const spawner of this.activeSpawners) {
-      spawner.update(dt);
-    }
+    this.encounterDirector.update(dt);
 
     this.minionCollisionSystem.update(this.world.minions, this.player, dt);
 
@@ -301,9 +295,6 @@ export class Engine {
       this.unsubPlatformImpact();
     }
 
-    for (const spawner of this.activeSpawners) {
-      spawner.cleanup();
-    }
-    this.world.minions = [];
+    this.encounterDirector.teardown();
   }
 }

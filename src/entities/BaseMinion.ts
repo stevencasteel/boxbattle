@@ -8,7 +8,7 @@ import { HazardSystem } from "@/core/systems/HazardSystem";
 import { setVec, zeroVec } from "@/core/VecUtils";
 import { TrigLUT } from "@/core/TrigLUT";
 
-export type MinionType = "TURRET" | "LANCER" | "FLYER";
+export type MinionType = "TURRET" | "LANCER" | "FLYER" | "SHIELDER";
 
 export abstract class BaseMinion extends BaseEntity {
   private unsubHurt!: () => void;
@@ -240,5 +240,3 @@ export abstract class BaseMinion extends BaseEntity {
     super.teardown();
   }
 }
-
-

@@ -5,6 +5,8 @@ import { LancerPatrolState } from "./MinionStates";
 import { TrigLUT } from "@/core/TrigLUT";
 
 export class LancerMinion extends BaseMinion {
+  public lanceExtended = false;
+
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
     this.size = { width: 40, height: 50 };

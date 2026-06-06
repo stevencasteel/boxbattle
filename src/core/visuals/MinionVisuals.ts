@@ -1,5 +1,6 @@
 import { TrigLUT } from "@/core/TrigLUT";
 import { BaseMinion } from "@/entities/BaseMinion";
+import { Boss } from "@/entities/Boss";
 
 interface CageSegment { x1: number; y1: number; x2: number; y2: number; color: string; width: number; }
 const backCageScratch: CageSegment[] = [];
@@ -33,7 +34,14 @@ export class MinionVisuals {
       const staticFlicker = TrigLUT.random() < 0.04 ? 0.45 : 1.0;
       const cageAlpha = spawnPct <= 0.5 ? 0.85 * staticFlicker : (1.0 - secondHalfProgress) * 0.85 * staticFlicker;
 
-      const mColor = minion["cageColorValue"] + `${cageAlpha})`;
+      const boss = minion.world.boss;
+      const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
+      let mColor = `hsla(180, 85%, 65%, ${cageAlpha})`;
+      if (phase === 2) {
+        mColor = `hsla(35, 95%, 60%, ${cageAlpha})`;
+      } else if (phase === 3) {
+        mColor = `hsla(0, 100%, 60%, ${cageAlpha})`;
+      }
 
       const H = minion.size.height;
       const W = minion.size.width;
