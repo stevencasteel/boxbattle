@@ -1,6 +1,5 @@
 import { Boss } from "@/entities/Boss";
-import { drawVisualProfile, VisualProfile } from "./ShapeRenderer";
-import { useSessionStore } from "@/store/useGameStore";
+import { Software3DRenderer } from "./Software3DRenderer";
 
 export class BossVisuals {
   static draw(ctx: CanvasRenderingContext2D, boss: Boss, alpha: number): void {
@@ -14,56 +13,37 @@ export class BossVisuals {
 
     ctx.save();
 
-    const stageIdx = useSessionStore.getState().currentStageIndex;
-
-    const profile: VisualProfile = {
-      shapeFamily: "corrupted-box",
-      danger: boss.currentPhase === 3 ? 0.9 : 0.4,
-      weight: 0.8,
-      corruption: 0.15,
-      hueRole: "boss-lethal",
-      strokePx: 3.0,
-      spinRate: 0.05,
-      wobbleAmp: 0.1,
-      cornerRadius: 0,
-      phaseOffset: stageIdx * 10
-    };
-
-    if (stageIdx === 1) { // Scarlet Lock
-      profile.shapeFamily = "corrupted-box";
-      profile.corruption = 0.35;
-    } else if (stageIdx === 2) { // Carminal Orbit
-      profile.shapeFamily = "diamond";
-      profile.spinRate = 1.0;
-    } else if (stageIdx === 3) { // Vermilion Needle
-      profile.shapeFamily = "needle";
-      profile.hueRole = "hazard";
-      profile.spinRate = 2.0;
-    } else if (stageIdx === 4) { // Marrow King
-      profile.shapeFamily = "blister";
-      profile.hueRole = "minion-organic";
-      profile.corruption = 0.65;
-    } else if (stageIdx === 5) { // Rust Cathedral
-      profile.shapeFamily = "corrupted-box";
-      profile.corruption = 0.55;
-    } else if (stageIdx === 6) { // False Square
-      profile.shapeFamily = "perfect-square";
-      profile.spinRate = Math.sin(performance.now() * 0.005) * 0.4;
-      profile.wobbleAmp = 0.4;
-      profile.hueRole = performance.now() % 1000 < 500 ? "boss-lethal" : "hazard";
-    }
-
+    let baseColor = "hsl(350, 80%, 60%)";
     if (boss.health.isFlashing()) {
-      profile.hueRole = "impact-white";
+      baseColor = "hsl(0, 0%, 100%)";
     } else if (activeState === "TELEGRAPH") {
-      profile.hueRole = "telegraph";
+      baseColor = "hsl(45, 100%, 50%)";
     }
 
     const feetY = drawY + boss.size.height / 2;
-    const drawW = boss.size.width * boss.visualScale.x;
-    const drawH = boss.size.height * boss.visualScale.y;
 
-    drawVisualProfile(ctx, drawX, feetY - boss.size.height / 2, drawW, drawH, profile, performance.now() / 1000);
+    ctx.translate(drawX, feetY);
+    ctx.rotate(boss.rotation);
+
+    const yaw = 0.15 * boss.facingDirection + (boss.velocity.x / boss.lungeSpeed) * 0.45;
+    const pitch = 0.08 + (boss.velocity.y / 1200) * 0.25;
+
+    Software3DRenderer.drawGeometry(
+      ctx,
+      Software3DRenderer.BOX_GEOMETRY,
+      0,
+      0,
+      boss.size.width,
+      boss.size.height,
+      boss.visualScale.x,
+      boss.visualScale.y,
+      yaw,
+      pitch,
+      0,
+      baseColor,
+      1.0,
+      "feet"
+    );
 
     ctx.restore();
   }

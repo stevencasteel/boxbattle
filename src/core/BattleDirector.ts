@@ -189,8 +189,18 @@ export class BattleDirector {
             triggerTime: 7.2,
             action: () => {
               this.events.publish("CLEAR_DIALOGUES", undefined);
-              this.events.publish("VICTORY", undefined);
-              this.onBattleEnd();
+              
+              const currentStageIdx = useSessionStore.getState().currentStageIndex;
+              const isLastStage = currentStageIdx === 6;
+
+              if (isLastStage) {
+                this.events.publish("VICTORY", undefined);
+                this.onBattleEnd();
+              } else {
+                const nextStageIdx = currentStageIdx + 1;
+                useSessionStore.getState().setCurrentStageIndex(nextStageIdx);
+                this.events.publish("LOAD_STAGE", { stageIndex: nextStageIdx });
+              }
             },
           },
         ]

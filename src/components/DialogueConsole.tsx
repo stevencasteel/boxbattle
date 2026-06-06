@@ -30,11 +30,7 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
 
       if (speaker === "player") {
         ctx.fillStyle = "hsl(142, 72%, 56%)";
-        ctx.fillRect(4, 4, w - 8, h - 8);
-
-        ctx.strokeStyle = "hsl(142, 100%, 80%)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(4, 4, w - 8, h - 8);
+        ctx.fillRect(0, 0, w, h);
 
         if (typing) {
           ctx.fillStyle = "#ffffff";
@@ -46,21 +42,21 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
         const stageIdx = useSessionStore.getState().currentStageIndex;
 
         ctx.fillStyle = "hsl(350, 82%, 58%)";
-        if (stageIdx === 4) ctx.fillStyle = "hsl(82, 38%, 44%)"; // Marrow King lumpy bruised HSL
-        ctx.fillRect(4, 4, w - 8, h - 8);
+        if (stageIdx === 4) ctx.fillStyle = "hsl(82, 38%, 44%)";
+        ctx.fillRect(0, 0, w, h);
 
         if (stageIdx === 0) {
           ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
           ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.moveTo(4, 4);
-          ctx.lineTo(w - 4, h - 4);
+          ctx.moveTo(0, 0);
+          ctx.lineTo(w, h);
           ctx.stroke();
         } else if (stageIdx === 1) {
           ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-          ctx.fillRect(12, 4, 6, h - 8);
-          ctx.fillRect(21, 4, 6, h - 8);
-          ctx.fillRect(30, 4, 6, h - 8);
+          ctx.fillRect(8, 0, 6, h);
+          ctx.fillRect(17, 0, 6, h);
+          ctx.fillRect(26, 0, 6, h);
         } else if (stageIdx === 2) {
           ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
           ctx.lineWidth = 2.5;
@@ -71,16 +67,16 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
         } else if (stageIdx === 3) {
           ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
           ctx.beginPath();
-          ctx.moveTo(w / 2, 4);
-          ctx.lineTo(w / 2 + 10, 18);
-          ctx.lineTo(w / 2 - 10, 18);
+          ctx.moveTo(w / 2, 0);
+          ctx.lineTo(w / 2 + 10, 14);
+          ctx.lineTo(w / 2 - 10, 14);
           ctx.closePath();
           ctx.fill();
 
           ctx.beginPath();
-          ctx.moveTo(w / 2, h - 4);
-          ctx.lineTo(w / 2 + 10, h - 18);
-          ctx.lineTo(w / 2 - 10, h - 18);
+          ctx.moveTo(w / 2, h);
+          ctx.lineTo(w / 2 + 10, h - 14);
+          ctx.lineTo(w / 2 - 10, h - 14);
           ctx.closePath();
           ctx.fill();
         } else if (stageIdx === 4) {
@@ -97,17 +93,13 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
           const split = (t * 8) % 4 === 0;
           if (split) {
             ctx.fillStyle = "rgba(0,0,0,0.9)";
-            ctx.fillRect(w / 2 - 8, 4, 16, h - 8);
+            ctx.fillRect(w / 2 - 8, 0, 16, h);
           } else {
             ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
             ctx.lineWidth = 1.5;
-            ctx.strokeRect(10, 10, w - 20, h - 20);
+            ctx.strokeRect(6, 6, w - 12, h - 12);
           }
         }
-
-        ctx.strokeStyle = "hsl(0, 100%, 72%)";
-        ctx.lineWidth = 2.5;
-        ctx.strokeRect(4, 4, w - 8, h - 8);
       }
 
       frameId = requestAnimationFrame(render);
@@ -120,7 +112,7 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
     };
   }, [speaker, typing]);
 
-  return <canvas ref={canvasRef} width={48} height={48} style={{ width: "48px", height: "48px", borderRadius: "6px" }} />;
+  return <canvas ref={canvasRef} width={48} height={48} style={{ width: "100%", height: "100%", display: "block", borderRadius: "5px" }} />;
 }
 
 export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }: DialogueConsoleProps) {
@@ -173,7 +165,12 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
         transition={{ type: "spring", stiffness: 220, damping: 25 }}
         className={`dialogue-box-left neo-pressed ${mobileClass}`}
       >
-        <PortraitCanvas speaker="player" typing={playerDialogue.isTyping} />
+        <div 
+          className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`}
+          style={{ overflow: "hidden", display: "flex", padding: 0 }}
+        >
+          <PortraitCanvas speaker="player" typing={playerDialogue.isTyping} />
+        </div>
         <div className="dialogue-text-container">
           <div className={`dialogue-speaker-label ${mobileClass}`}>
             PLAYER
@@ -201,7 +198,12 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
             {bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}
           </div>
         </div>
-        <PortraitCanvas speaker="boss" typing={bossDialogue.isTyping} />
+        <div 
+          className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`}
+          style={{ overflow: "hidden", display: "flex", padding: 0 }}
+        >
+          <PortraitCanvas speaker="boss" typing={bossDialogue.isTyping} />
+        </div>
       </motion.div>
     </div>
   );
