@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/6/2026, 6:08:50 PM
+ [SYSTEM] Generated: 6/6/2026, 6:13:30 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -1823,11 +1823,11 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
 ────────────────────────────────────────────────────
 .cabinet-outer {
   position: relative;
-  width: min(90vw, 76.5vh);
-  height: min(114vw, 95vh);
+  width: min(93vw, 79.2vh);
+  height: min(111vw, 95vh);
   border-radius: 20px;
   background: #0f1218;
-  padding: 2.5vmin;
+  padding: 2.2vmin;
   box-shadow:
     -8px -8px 24px rgba(255, 255, 255, 0.02),
     8px 8px 36px rgba(0, 0, 0, 0.95),
@@ -1885,7 +1885,7 @@ console.log('Successfully generated public/source_code_manifest.json and src/cor
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 2.5vmin;
+  padding: 2.2vmin;
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
@@ -2949,7 +2949,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 ────────────────────────────────────────────────────
 .cabinet-status-panel {
   width: 100%;
-  height: 8.5vmin;
+  height: 7.8vmin;
   min-height: 64px;
   max-height: 96px;
   display: flex;
@@ -2957,7 +2957,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   align-items: center;
   padding: 1vmin 1.5vmin;
   border-radius: 1.5vmin;
-  margin-bottom: 1vmin;
+  margin-bottom: 0.8vmin;
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -2997,12 +2997,12 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 
 .dialogue-console {
   width: 100%;
-  height: 8.5vmin;
+  height: 7.8vmin;
   min-height: 64px;
   max-height: 96px;
   display: flex;
   gap: 1.5vmin;
-  margin-top: 1vmin;
+  margin-top: 0.8vmin;
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -3025,6 +3025,8 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   gap: 1.2vmin;
   box-sizing: border-box;
   overflow: hidden;
+  border-radius: 1.2vmin;
+  padding: 1vmin 1.5vmin;
   transition:
     opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1),
     border-color 0.4s cubic-bezier(0.25, 1, 0.5, 1),

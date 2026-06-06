@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CpyMHF9l.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CtTCPGfn.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -192,11 +192,11 @@ export default defineConfig([
 ]);
 `,"README.md":"# BOX BATTLE\n\nMega Man / Hollow Knight battle arena prototype.\n\nPorted over from a Gemini 2.5 Pro in Godot to React + TypeScript + Vite + Zustand using Gemini 3.5 Flash\n\nPlay the game here:\n👉 **[GitHub.io](https://stevencasteel.github.io/boxbattle/)**\n👉 **[Itch.io](https://stevencasteel.itch.io/boxbattle)**\n\n---\n\n## Player Controls\n\n- **Move Left / Right**: `Left Arrow` / `Right Arrow` or `A` / `D`\n- **Look / Move Up**: `Up Arrow` or `W`\n- **Crouch / Move Down**: `Down Arrow` or `S`\n- **Jump**: `X` or `.` (Period) or `Space`\n- **Melee Attack**: `C` or `,` (Comma)\n- **Dash**: `Z` or `/` (Slash)\n- **Determination Heal**: Hold `Move Down` + Press `Jump` (Requires 1 active Heal Charge)\n\n_Key bindings are fully customizable inside the Options menu._\n\n---\n\n## Technical Architecture\n\n- **Presentation & UI**: React 19, TypeScript 6, Vite 8, Zustand 5\n- **Physics Simulation**: Custom 60Hz Semi-Implicit Euler accumulator loop with swept collision checks and corner-nudging\n- **Sound Design**: Pure procedural waveform synthesis utilizing native Web Audio API oscillators, filters, and envelope gains (zero external binary audio assets)\n","src/App.css":`.cabinet-outer {
   position: relative;
-  width: min(90vw, 76.5vh);
-  height: min(114vw, 95vh);
+  width: min(93vw, 79.2vh);
+  height: min(111vw, 95vh);
   border-radius: 20px;
   background: #0f1218;
-  padding: 2.5vmin;
+  padding: 2.2vmin;
   box-shadow:
     -8px -8px 24px rgba(255, 255, 255, 0.02),
     8px 8px 36px rgba(0, 0, 0, 0.95),
@@ -254,7 +254,7 @@ export default defineConfig([
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 2.5vmin;
+  padding: 2.2vmin;
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
@@ -1298,7 +1298,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 }
 `,"src/components/GameArena.css":`.cabinet-status-panel {
   width: 100%;
-  height: 8.5vmin;
+  height: 7.8vmin;
   min-height: 64px;
   max-height: 96px;
   display: flex;
@@ -1306,7 +1306,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   align-items: center;
   padding: 1vmin 1.5vmin;
   border-radius: 1.5vmin;
-  margin-bottom: 1vmin;
+  margin-bottom: 0.8vmin;
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -1346,12 +1346,12 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
 
 .dialogue-console {
   width: 100%;
-  height: 8.5vmin;
+  height: 7.8vmin;
   min-height: 64px;
   max-height: 96px;
   display: flex;
   gap: 1.5vmin;
-  margin-top: 1vmin;
+  margin-top: 0.8vmin;
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -1374,6 +1374,8 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
   gap: 1.2vmin;
   box-sizing: border-box;
   overflow: hidden;
+  border-radius: 1.2vmin;
+  padding: 1vmin 1.5vmin;
   transition:
     opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1),
     border-color 0.4s cubic-bezier(0.25, 1, 0.5, 1),
