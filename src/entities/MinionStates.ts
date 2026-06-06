@@ -232,6 +232,36 @@ function minionPatrolMovement(minion: BaseMinion, dt: number) {
     if (physics.isOnWallLeft) minion.facingDirection = 1;
     else if (physics.isOnWallRight) minion.facingDirection = -1;
   }
+
+  if (physics && physics.isGrounded) {
+    const checkDist = 20;
+    const forwardX = minion.position.x + minion.facingDirection * checkDist;
+    const belowY = minion.position.y + minion.size.height / 2 + 10;
+    
+    const solids = minion.world.physicsWorld.getOverlapCandidates(forwardX, belowY, 8, 8, "solid");
+    const platforms = minion.world.physicsWorld.getOverlapCandidates(forwardX, belowY, 8, 8, "platform");
+
+    let hasGroundAhead = false;
+    for (const solid of solids) {
+      if (forwardX > solid.x && forwardX < solid.x + solid.width && belowY > solid.y && belowY < solid.y + solid.height) {
+        hasGroundAhead = true;
+        break;
+      }
+    }
+    if (!hasGroundAhead) {
+      for (const plat of platforms) {
+        if (forwardX > plat.x && forwardX < plat.x + plat.width && belowY > plat.y && belowY < plat.y + plat.height) {
+          hasGroundAhead = true;
+          break;
+        }
+      }
+    }
+
+    if (!hasGroundAhead) {
+      minion.facingDirection *= -1;
+      minion.velocity.x = 0;
+    }
+  }
 }
 
 export class FlyerPatrolState extends MinionState {

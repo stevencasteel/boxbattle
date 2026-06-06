@@ -120,6 +120,15 @@ export class SimulationSystems {
         this.input.triggerHapticFeedback("heavy");
       })
     );
+
+    this.unsubscribes.push(
+      this.events.subscribe("BOSS_PHASE_SHIFT", () => {
+        Camera.shake(18, 0.45);
+        Camera.triggerHitStop(0.12);
+        const bossX = getBossX();
+        this.events.publishSpark(bossX, 1000, 0, "hsl(45, 100%, 65%)", true, 25);
+      })
+    );
   }
 
   public teardown(): void {

@@ -1,5 +1,7 @@
 import { TrigLUT } from "@/core/TrigLUT";
 import { BaseMinion } from "@/entities/BaseMinion";
+import { LancerMinion } from "@/entities/LancerMinion";
+import { ShielderMinion } from "@/entities/ShielderMinion";
 import { Boss } from "@/entities/Boss";
 
 interface CageSegment { x1: number; y1: number; x2: number; y2: number; color: string; width: number; }
@@ -157,6 +159,51 @@ export class MinionVisuals {
 
     ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
     ctx.shadowBlur = 0;
+
+    if (minion.attackState === "PATROL" && minion.minionColor.includes("215")) {
+      const player = minion.world.player;
+      if (player) {
+        const angle = TrigLUT.atan2(player.position.y - minion.position.y, player.position.x - minion.position.x);
+        ctx.save();
+        ctx.translate(0, -minion.size.height / 2);
+        ctx.rotate(angle);
+        ctx.fillStyle = "#4a5568";
+        ctx.fillRect(0, -4, 24, 8);
+        ctx.fillStyle = "#1a202c";
+        ctx.fillRect(20, -5, 4, 10);
+        ctx.restore();
+      }
+    }
+
+    if (minion instanceof LancerMinion && minion.lanceExtended) {
+      ctx.save();
+      ctx.strokeStyle = "hsl(45, 100%, 65%)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(minion.facingDirection * 15, -18);
+      ctx.lineTo(minion.facingDirection * 55, -18);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(minion.facingDirection * 15, -18);
+      ctx.lineTo(minion.facingDirection * 50, -18);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (minion instanceof ShielderMinion && !minion.isSpawning && !minion.isDying) {
+      ctx.save();
+      ctx.strokeStyle = "hsl(180, 100%, 65%)";
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = "rgba(6, 182, 212, 0.6)";
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(minion.facingDirection * 12, -minion.size.height / 2, 24, -Math.PI / 3, Math.PI / 3);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     ctx.fillStyle = "black";
     ctx.fillRect(minion.facingDirection * 8 - 2, localY - 12, 6, 4);
