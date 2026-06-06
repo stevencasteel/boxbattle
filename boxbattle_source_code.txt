@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/6/2026, 6:51:52 PM
+ [SYSTEM] Generated: 6/6/2026, 9:50:06 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -99,7 +99,8 @@
 │   │   │   └── MinionCollisionSystem.ts
 │   │   ├── visuals/
 │   │   │   ├── BossVisuals.ts
-│   │   │   └── MinionVisuals.ts
+│   │   │   ├── MinionVisuals.ts
+│   │   │   └── Software3DRenderer.ts
 │   │   ├── BattleDirector.ts
 │   │   ├── Camera.ts
 │   │   ├── CinematicSystem.ts
@@ -187,6 +188,7 @@
 ├── index.html
 ├── package-lock.json
 ├── package.json
+├── patch_round2.js
 ├── patch_silk_confetti.js
 ├── README.md
 ├── tsconfig.app.json
@@ -1361,6 +1363,205 @@ export default defineConfig([
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12"
   }
+}
+
+
+
+● ./patch_round2.js
+────────────────────────────────────────────────────
+import fs from 'fs';
+
+// 1. Patch PlayerVisuals.ts for "feet" pivot and resting yaw/pitch tilt (Pronounced 3D)
+{
+  const path = 'src/entities/handlers/PlayerVisuals.ts';
+  let content = fs.readFileSync(path, 'utf8');
+  
+  const searchStr = 'Software3DRenderer.drawGeometry(';
+  const targetIdx = content.indexOf(searchStr);
+  const blockEnd = content.indexOf(');', targetIdx) + 2;
+  
+  const newBlock = `Software3DRenderer.drawGeometry(
+      ctx,
+      Software3DRenderer.BOX_GEOMETRY,
+      0,
+      0,
+      this.player.size.width,
+      this.player.size.height,
+      this.player.visualScale.x,
+      this.player.visualScale.y,
+      0.15 * this.player.facingDirection + (this.player.velocity.x / 1120) * 0.35,
+      0.08 + (this.player.velocity.y / 1200) * 0.22,
+      0,
+      this.player.health.isFlashing() ? "hsl(0, 0%, 100%)" : "hsl(142, 71%, 58%)",
+      1.0,
+      "feet"
+    );`;
+
+  if (targetIdx === -1) {
+    console.error("Failed to find drawGeometry call in PlayerVisuals.ts");
+    process.exit(1);
+  }
+  
+  const before = content.substring(0, targetIdx);
+  const after = content.substring(blockEnd);
+  fs.writeFileSync(path, before + newBlock + after, 'utf8');
+  console.log("Patched PlayerVisuals.ts for feet pivot");
+}
+
+// 2. Patch BossVisuals.ts for "feet" pivot and resting yaw/pitch tilt (Pronounced 3D)
+{
+  const path = 'src/core/visuals/BossVisuals.ts';
+  let content = fs.readFileSync(path, 'utf8');
+  
+  const searchStr = 'Software3DRenderer.drawGeometry(';
+  const targetIdx = content.indexOf(searchStr);
+  const blockEnd = content.indexOf(');', targetIdx) + 2;
+  
+  const newBlock = `Software3DRenderer.drawGeometry(
+          ctx,
+          Software3DRenderer.BOX_GEOMETRY,
+          0,
+          0,
+          boss.size.width,
+          boss.size.height,
+          boss.visualScale.x,
+          boss.visualScale.y,
+          0.15 * boss.facingDirection + (boss.velocity.x / boss.lungeSpeed) * 0.45,
+          0.08 + (boss.velocity.y / 1200) * 0.25,
+          0,
+          baseColor,
+          1.0,
+          "feet"
+        );`;
+
+  if (targetIdx === -1) {
+    console.error("Failed to find drawGeometry call in BossVisuals.ts");
+    process.exit(1);
+  }
+  
+  const before = content.substring(0, targetIdx);
+  const after = content.substring(blockEnd);
+  fs.writeFileSync(path, before + newBlock + after, 'utf8');
+  console.log("Patched BossVisuals.ts for feet pivot");
+}
+
+// 3. Patch MinionVisuals.ts for custom pivotY parsing
+{
+  const path = 'src/core/visuals/MinionVisuals.ts';
+  let content = fs.readFileSync(path, 'utf8');
+  
+  const searchStr = 'const geom = (minion.id.includes("TURRET")';
+  const blockStart = content.indexOf(searchStr);
+  const blockEnd = content.lastIndexOf('}', content.indexOf('ctx.fillRect(minion.facingDirection', blockStart)) + 1;
+  
+  const newBlock = `const geom = (minion.id.includes("TURRET") || minion.id.includes("SHIELDER"))
+          ? Software3DRenderer.HEXAGON_GEOMETRY
+          : Software3DRenderer.BOX_GEOMETRY;
+
+        const yaw = 0.15 * minion.facingDirection + (minion.velocity.x / 450) * 0.35;
+        const pitch = 0.08 + (minion.velocity.y / 1000) * 0.22;
+        const pivotY = minion.squashPivot === "feet" ? "feet" : "center";
+        const posY = pivotY === "feet" ? 0 : -minion.size.height / 2;
+        const localY = minion.squashPivot === "feet" ? -minion.size.height / 2 : 0;
+
+        if (minion.isDying) {
+          const shrapnelProgress = 1.0 - minion.dissolveTimer / 0.5;
+          Software3DRenderer.drawFragments(
+            ctx,
+            geom,
+            0,
+            posY,
+            minion.size.width,
+            minion.size.height,
+            minion.visualScale.x,
+            minion.visualScale.y,
+            yaw,
+            pitch,
+            0,
+            minion.minionColor,
+            shrapnelProgress,
+            180,
+            minion.dissolveTimer / 0.5,
+            pivotY
+          );
+        } else {
+          let baseColor = minion.minionColor;
+          if (minion.health.isFlashing()) {
+            baseColor = "hsl(0, 0%, 100%)";
+          } else if (minion.attackState === "TELEGRAPH") {
+            baseColor = "hsl(45, 100%, 50%)";
+          }
+
+          Software3DRenderer.drawGeometry(
+            ctx,
+            geom,
+            0,
+            posY,
+            minion.size.width,
+            minion.size.height,
+            minion.visualScale.x,
+            minion.visualScale.y,
+            yaw,
+            pitch,
+            0,
+            baseColor,
+            1.0,
+            pivotY
+          );
+        }`;
+
+  if (blockStart === -1) {
+    console.error("Failed to find draw block in MinionVisuals.ts");
+    process.exit(1);
+  }
+  
+  const before = content.substring(0, blockStart);
+  const after = content.substring(blockEnd);
+  fs.writeFileSync(path, before + newBlock + after, 'utf8');
+  console.log("Patched MinionVisuals.ts for customizable pivots");
+}
+
+// 4. Upgrade CinematicDeathRenderer.ts to draw beautiful, tumbling 3D fragments
+{
+  const path = 'src/core/effects/CinematicDeathRenderer.ts';
+  let content = fs.readFileSync(path, 'utf8');
+  
+  content = "import { Software3DRenderer } from \"../visuals/Software3DRenderer\";\n" + content;
+  
+  const oldBlock = `            ctx.save();
+            ctx.translate(curX, curY);
+            ctx.rotate(progress * 4 + row);
+            ctx.fillRect(-size / 2, -size / 2, size, size);
+            ctx.restore();`;
+            
+  const newBlock = `            const fYaw = progress * 6 + row;
+            const fPitch = progress * 4 - row;
+            const fRoll = progress * 5 + row * 2;
+            const fColor = (row + (row % gridCols)) % 2 === 0 ? primaryColor : secondaryColor;
+            Software3DRenderer.drawGeometry(
+              ctx,
+              Software3DRenderer.BOX_GEOMETRY,
+              curX,
+              curY,
+              size,
+              size,
+              1.0,
+              1.0,
+              fYaw,
+              fPitch,
+              fRoll,
+              fColor,
+              opacity
+            );`;
+            
+  if (!content.includes(oldBlock)) {
+    console.error("Could not find fillRect block in CinematicDeathRenderer.ts");
+    process.exit(1);
+  }
+  
+  content = content.replace(oldBlock, newBlock);
+  fs.writeFileSync(path, content, 'utf8');
+  console.log("Patched CinematicDeathRenderer.ts to render cascading volumetric 3D pixels (voxels)");
 }
 
 
@@ -12435,6 +12636,7 @@ export const SFX_PRESETS = {
 
 ● ./src/core/effects/CinematicDeathRenderer.ts
 ────────────────────────────────────────────────────
+import { Software3DRenderer } from "../visuals/Software3DRenderer";
 import { UNITS } from "@/core/Units";
 import { World } from "@/core/World";
 import { TrigLUT } from "@/core/TrigLUT";
@@ -12493,11 +12695,25 @@ export class CinematicDeathRenderer {
           ctx.fillStyle = (row + (row % gridCols)) % 2 === 0 ? primaryColor : secondaryColor;
           ctx.globalAlpha = opacity;
 
-          ctx.save();
-          ctx.translate(curX, curY);
-          ctx.rotate(progress * 4 + row);
-          ctx.fillRect(-size / 2, -size / 2, size, size);
-          ctx.restore();
+          const fYaw = progress * 6 + row;
+        const fPitch = progress * 4 - row;
+        const fRoll = progress * 5 + row * 2;
+        const fColor = (row + (row % gridCols)) % 2 === 0 ? primaryColor : secondaryColor;
+        Software3DRenderer.drawGeometry(
+          ctx,
+          Software3DRenderer.BOX_GEOMETRY,
+          curX,
+          curY,
+          size,
+          size,
+          1.0,
+          1.0,
+          fYaw,
+          fPitch,
+          fRoll,
+          fColor,
+          opacity
+        );
         }
       }
 
@@ -13656,6 +13872,7 @@ export class MinionCollisionSystem {
 ● ./src/core/visuals/BossVisuals.ts
 ────────────────────────────────────────────────────
 import { Boss } from "@/entities/Boss";
+import { Software3DRenderer } from "./Software3DRenderer";
 
 export class BossVisuals {
   static draw(ctx: CanvasRenderingContext2D, boss: Boss, alpha: number): void {
@@ -13682,13 +13899,36 @@ export class BossVisuals {
       }
     }
 
-    const vWidth = boss.size.width * boss.visualScale.x;
-    const vHeight = boss.size.height * boss.visualScale.y;
     const feetY = drawY + boss.size.height / 2;
 
     ctx.translate(drawX, feetY);
     ctx.rotate(boss.rotation);
-    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
+
+    const yaw = 0.15 * boss.facingDirection + (boss.velocity.x / boss.lungeSpeed) * 0.45;
+    const pitch = 0.08 + (boss.velocity.y / 1200) * 0.25;
+    let baseColor = "hsl(350, 80%, 60%)";
+    if (boss.health.isFlashing()) {
+      baseColor = "hsl(0, 0%, 100%)";
+    } else if (activeState === "TELEGRAPH") {
+      baseColor = "hsl(45, 100%, 50%)";
+    }
+
+    Software3DRenderer.drawGeometry(
+      ctx,
+      Software3DRenderer.BOX_GEOMETRY,
+      0,
+      0,
+      boss.size.width,
+      boss.size.height,
+      boss.visualScale.x,
+      boss.visualScale.y,
+      yaw,
+      pitch,
+      0,
+      baseColor,
+      1.0,
+      "feet"
+    );
 
     ctx.shadowBlur = 0;
     ctx.restore();
@@ -13699,10 +13939,9 @@ export class BossVisuals {
 
 ● ./src/core/visuals/MinionVisuals.ts
 ────────────────────────────────────────────────────
+import { Software3DRenderer } from "./Software3DRenderer";
 import { TrigLUT } from "@/core/TrigLUT";
 import { BaseMinion } from "@/entities/BaseMinion";
-import { LancerMinion } from "@/entities/LancerMinion";
-import { ShielderMinion } from "@/entities/ShielderMinion";
 import { Boss } from "@/entities/Boss";
 
 interface CageSegment { x1: number; y1: number; x2: number; y2: number; color: string; width: number; }
@@ -13842,69 +14081,61 @@ export class MinionVisuals {
       ctx.translate(0, minion.size.height / 2);
     }
 
-    if (minion.health.isFlashing()) {
-      ctx.fillStyle = "white";
-    } else {
-      ctx.fillStyle = minion["bodyColorValue"];
-    }
+        const geom = (minion.id.includes("TURRET") || minion.id.includes("SHIELDER"))
+          ? Software3DRenderer.HEXAGON_GEOMETRY
+          : Software3DRenderer.BOX_GEOMETRY;
 
-    if (minion.attackState === "TELEGRAPH" && !minion.isDying) {
-      ctx.fillStyle = "hsl(45, 100%, 50%)";
-      ctx.shadowColor = "rgba(234, 179, 8, 0.8)";
-      ctx.shadowBlur = 14;
-    }
+        const yaw = 0.15 * minion.facingDirection + (minion.velocity.x / 450) * 0.35;
+        const pitch = 0.08 + (minion.velocity.y / 1000) * 0.22;
+        const pivotY = minion.squashPivot === "feet" ? "feet" : "center";
+        const posY = pivotY === "feet" ? 0 : -minion.size.height / 2;
+        const localY = minion.squashPivot === "feet" ? -minion.size.height / 2 : 0;
 
-    const vWidth = minion.size.width * minion.visualScale.x;
-    const vHeight = minion.size.height * minion.visualScale.y;
-    const localY = minion.squashPivot === "feet" ? -minion.size.height / 2 : 0;
+        if (minion.isDying) {
+          const shrapnelProgress = 1.0 - minion.dissolveTimer / 0.5;
+          Software3DRenderer.drawFragments(
+            ctx,
+            geom,
+            0,
+            posY,
+            minion.size.width,
+            minion.size.height,
+            minion.visualScale.x,
+            minion.visualScale.y,
+            yaw,
+            pitch,
+            0,
+            minion.minionColor,
+            shrapnelProgress,
+            180,
+            minion.dissolveTimer / 0.5,
+            pivotY
+          );
+        } else {
+          let baseColor = minion.minionColor;
+          if (minion.health.isFlashing()) {
+            baseColor = "hsl(0, 0%, 100%)";
+          } else if (minion.attackState === "TELEGRAPH") {
+            baseColor = "hsl(45, 100%, 50%)";
+          }
 
-    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
-    ctx.shadowBlur = 0;
-
-    if (minion.attackState === "PATROL" && minion.minionColor.includes("215")) {
-      const player = minion.world.player;
-      if (player) {
-        const angle = TrigLUT.atan2(player.position.y - minion.position.y, player.position.x - minion.position.x);
-        ctx.save();
-        ctx.translate(0, -minion.size.height / 2);
-        ctx.rotate(angle);
-        ctx.fillStyle = "#4a5568";
-        ctx.fillRect(0, -4, 24, 8);
-        ctx.fillStyle = "#1a202c";
-        ctx.fillRect(20, -5, 4, 10);
-        ctx.restore();
-      }
-    }
-
-    if (minion instanceof LancerMinion && minion.lanceExtended) {
-      ctx.save();
-      ctx.strokeStyle = "hsl(45, 100%, 65%)";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(minion.facingDirection * 12, -18);
-      ctx.lineTo(minion.facingDirection * 44, -18);
-      ctx.stroke();
-
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(minion.facingDirection * 12, -18);
-      ctx.lineTo(minion.facingDirection * 40, -18);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    if (minion instanceof ShielderMinion && !minion.isSpawning && !minion.isDying) {
-      ctx.save();
-      ctx.strokeStyle = "hsl(180, 100%, 65%)";
-      ctx.lineWidth = 3.5;
-      ctx.shadowColor = "rgba(6, 182, 212, 0.6)";
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(minion.facingDirection * 9.6, -minion.size.height / 2, 19.2, -Math.PI / 3, Math.PI / 3);
-      ctx.stroke();
-      ctx.restore();
-    }
+          Software3DRenderer.drawGeometry(
+            ctx,
+            geom,
+            0,
+            posY,
+            minion.size.width,
+            minion.size.height,
+            minion.visualScale.x,
+            minion.visualScale.y,
+            yaw,
+            pitch,
+            0,
+            baseColor,
+            1.0,
+            pivotY
+          );
+        }
 
     ctx.fillStyle = "black";
     ctx.fillRect(minion.facingDirection * 6.4 - 1.6, localY - 9.6, 4.8, 3.2);
@@ -13918,6 +14149,299 @@ export class MinionVisuals {
       ctx.restore();
     }
 
+    ctx.restore();
+  }
+}
+
+
+
+● ./src/core/visuals/Software3DRenderer.ts
+────────────────────────────────────────────────────
+import { TrigLUT } from "../TrigLUT";
+
+export interface Vector3D {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface Face {
+  indices: number[];
+  color: string;
+  baseNormal: Vector3D;
+}
+
+export interface Geometry {
+  vertices: Vector3D[];
+  faces: Face[];
+}
+
+export class Software3DRenderer {
+  private static readonly LIGHT_DIR = { x: 0.577, y: -0.577, z: 0.577 };
+
+  public static readonly BOX_GEOMETRY: Geometry = {
+    vertices: [
+      { x: -0.5, y: -0.5, z: -0.5 },
+      { x: 0.5, y: -0.5, z: -0.5 },
+      { x: 0.5, y: 0.5, z: -0.5 },
+      { x: -0.5, y: 0.5, z: -0.5 },
+      { x: -0.5, y: -0.5, z: 0.5 },
+      { x: 0.5, y: -0.5, z: 0.5 },
+      { x: 0.5, y: 0.5, z: 0.5 },
+      { x: -0.5, y: 0.5, z: 0.5 },
+    ],
+    faces: [
+      { indices: [0, 1, 2, 3], color: "FRONT", baseNormal: { x: 0, y: 0, z: -1 } },
+      { indices: [1, 5, 6, 2], color: "RIGHT", baseNormal: { x: 1, y: 0, z: 0 } },
+      { indices: [5, 4, 7, 6], color: "BACK", baseNormal: { x: 0, y: 0, z: 1 } },
+      { indices: [4, 0, 3, 7], color: "LEFT", baseNormal: { x: -1, y: 0, z: 0 } },
+      { indices: [4, 5, 1, 0], color: "TOP", baseNormal: { x: 0, y: -1, z: 0 } },
+      { indices: [3, 2, 6, 7], color: "BOTTOM", baseNormal: { x: 0, y: 1, z: 0 } },
+    ]
+  };
+
+  public static readonly HEXAGON_GEOMETRY: Geometry = (() => {
+    const vertices: Vector3D[] = [];
+    const faces: Face[] = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      vertices.push({ x: Math.cos(angle) * 0.5, y: Math.sin(angle) * 0.5, z: -0.5 });
+    }
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * Math.PI) / 3;
+      vertices.push({ x: Math.cos(angle) * 0.5, y: Math.sin(angle) * 0.5, z: 0.5 });
+    }
+    faces.push({ indices: [5, 4, 3, 2, 1, 0], color: "FRONT", baseNormal: { x: 0, y: 0, z: -1 } });
+    faces.push({ indices: [6, 7, 8, 9, 10, 11], color: "BACK", baseNormal: { x: 0, y: 0, z: 1 } });
+    for (let i = 0; i < 6; i++) {
+      const next = (i + 1) % 6;
+      const angle = ((i + 0.5) * Math.PI) / 3;
+      faces.push({
+        indices: [i, next, next + 6, i + 6],
+        color: "SIDE",
+        baseNormal: { x: Math.cos(angle), y: Math.sin(angle), z: 0 }
+      });
+    }
+    return { vertices, faces };
+  })();
+
+  public static drawGeometry(
+    ctx: CanvasRenderingContext2D,
+    geometry: Geometry,
+    posX: number,
+    posY: number,
+    sizeW: number,
+    sizeH: number,
+    scaleX: number,
+    scaleY: number,
+    yaw: number,
+    pitch: number,
+    roll: number,
+    baseHslColor: string,
+    alpha: number = 1.0,
+    pivotY: "center" | "feet" = "center"
+  ) {
+    const projected: { x: number; y: number; z: number }[] = [];
+    const hslMatch = baseHslColor.match(/hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
+    const h = hslMatch ? parseFloat(hslMatch[1]) : 142;
+    const s = hslMatch ? parseFloat(hslMatch[2]) : 71;
+    const l = hslMatch ? parseFloat(hslMatch[3]) : 58;
+
+    const cosY = TrigLUT.cos(yaw);
+    const sinY = TrigLUT.sin(yaw);
+    const cosP = TrigLUT.cos(pitch);
+    const sinP = TrigLUT.sin(pitch);
+    const cosR = TrigLUT.cos(roll);
+    const sinR = TrigLUT.sin(roll);
+
+    for (let i = 0; i < geometry.vertices.length; i++) {
+      const v = geometry.vertices[i];
+      const lx = v.x * sizeW * scaleX;
+      
+      const ly = pivotY === "feet"
+        ? (v.y - 0.5) * sizeH * scaleY
+        : v.y * sizeH * scaleY;
+      
+      const lz = v.z * ((sizeW + sizeH) / 2);
+
+      const x1 = lx * cosY + lz * sinY;
+      const y1 = ly;
+      const z1 = -lx * sinY + lz * cosY;
+
+      const x2 = x1;
+      const y2 = y1 * cosP - z1 * sinP;
+      const z2 = y1 * sinP + z1 * cosP;
+
+      const x3 = x2 * cosR - y2 * sinR;
+      const y3 = x2 * sinR + y2 * cosR;
+
+      projected.push({ x: posX + x3, y: posY + y3, z: z2 });
+    }
+
+    const facesWithDepth = geometry.faces.map((face) => {
+      let sumZ = 0;
+      for (const idx of face.indices) {
+        sumZ += projected[idx].z;
+      }
+      const avgZ = sumZ / face.indices.length;
+
+      const n = face.baseNormal;
+      const nx1 = n.x * cosY + n.z * sinY;
+      const ny1 = n.y;
+      const nz1 = -n.x * sinY + n.z * cosY;
+
+      const nx2 = nx1;
+      const ny2 = ny1 * cosP - nz1 * sinP;
+      const nz2 = ny1 * sinP + nz1 * cosP;
+
+      const nx3 = nx2 * cosR - ny2 * sinR;
+      const ny3 = nx2 * sinR + ny2 * cosR;
+
+      const dot = nx3 * this.LIGHT_DIR.x + ny3 * this.LIGHT_DIR.y + nz2 * this.LIGHT_DIR.z;
+      const shadeFactor = 0.85 + dot * 0.3;
+
+      return { face, avgZ, shadeFactor, nz3: nz2 };
+    });
+
+    facesWithDepth.sort((a, b) => b.avgZ - a.avgZ);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.lineJoin = "round";
+
+    for (const item of facesWithDepth) {
+      const face = item.face;
+      const shadedLightness = Math.max(10, Math.min(100, l * item.shadeFactor));
+      ctx.fillStyle = `hsl(${h}, ${s}%, ${shadedLightness}%)`;
+
+      const rimGlow = Math.pow(1.0 - Math.abs(item.nz3), 4.0);
+      ctx.lineWidth = 1.5 + rimGlow * 1.8;
+      ctx.strokeStyle = `hsla(${h}, ${s}%, ${Math.min(100, shadedLightness + rimGlow * 20)}%, ${0.35 + rimGlow * 0.35})`;
+
+      ctx.beginPath();
+      const firstIdx = face.indices[0];
+      ctx.moveTo(projected[firstIdx].x, projected[firstIdx].y);
+      for (let i = 1; i < face.indices.length; i++) {
+        const idx = face.indices[i];
+        ctx.lineTo(projected[idx].x, projected[idx].y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  public static drawFragments(
+    ctx: CanvasRenderingContext2D,
+    geometry: Geometry,
+    posX: number,
+    posY: number,
+    sizeW: number,
+    sizeH: number,
+    scaleX: number,
+    scaleY: number,
+    yaw: number,
+    pitch: number,
+    roll: number,
+    baseHslColor: string,
+    shrapnelProgress: number,
+    explosionSpeed: number = 220,
+    alpha: number = 1.0,
+    pivotY: "center" | "feet" = "center"
+  ) {
+    const hslMatch = baseHslColor.match(/hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
+    const h = hslMatch ? parseFloat(hslMatch[1]) : 142;
+    const s = hslMatch ? parseFloat(hslMatch[2]) : 71;
+    const l = hslMatch ? parseFloat(hslMatch[3]) : 58;
+
+    const cosY = TrigLUT.cos(yaw);
+    const sinY = TrigLUT.sin(yaw);
+    const cosP = TrigLUT.cos(pitch);
+    const sinP = TrigLUT.sin(pitch);
+    const cosR = TrigLUT.cos(roll);
+    const sinR = TrigLUT.sin(roll);
+
+    const facesWithFragments = geometry.faces.map((face) => {
+      const n = face.baseNormal;
+      const nx1 = n.x * cosY + n.z * sinY;
+      const ny1 = n.y;
+      const nz1 = -n.x * sinY + n.z * cosY;
+
+      const nx2 = nx1;
+      const ny2 = ny1 * cosP - nz1 * sinP;
+      const nz2 = ny1 * sinP + nz1 * cosP;
+
+      const nx3 = nx2 * cosR - ny2 * sinR;
+      const ny3 = nx2 * sinR + ny2 * cosR;
+
+      const gravityEffect = 0.5 * 980 * shrapnelProgress * shrapnelProgress;
+      const offX = nx3 * explosionSpeed * shrapnelProgress;
+      const offY = ny3 * explosionSpeed * shrapnelProgress + gravityEffect;
+      const offZ = nz2 * explosionSpeed * shrapnelProgress;
+
+      const faceProj: { x: number; y: number; z: number }[] = [];
+      let sumZ = 0;
+
+      for (const idx of face.indices) {
+        const v = geometry.vertices[idx];
+        const lx = v.x * sizeW * scaleX;
+        
+        const ly = pivotY === "feet"
+          ? (v.y - 0.5) * sizeH * scaleY
+          : v.y * sizeH * scaleY;
+        
+        const lz = v.z * ((sizeW + sizeH) / 2);
+
+        const rx1 = lx * cosY + lz * sinY;
+        const ry1 = ly;
+        const rz1 = -lx * sinY + lz * cosY;
+
+        const rx2 = rx1;
+        const ry2 = ry1 * cosP - rz1 * sinP;
+        const rz2 = ry1 * sinP + rz1 * cosP;
+
+        const rx3 = rx2 * cosR - ry2 * sinR;
+        const ry3 = rx2 * sinR + ry2 * cosR;
+
+        const finalX = posX + rx3 + offX;
+        const finalY = posY + ry3 + offY;
+        const finalZ = rz2 + offZ;
+
+        faceProj.push({ x: finalX, y: finalY, z: finalZ });
+        sumZ += finalZ;
+      }
+
+      const avgZ = sumZ / face.indices.length;
+      const dot = nx3 * this.LIGHT_DIR.x + ny3 * this.LIGHT_DIR.y + nz2 * this.LIGHT_DIR.z;
+      const shadeFactor = 0.85 + dot * 0.3;
+
+      return { face, avgZ, shadeFactor, projected: faceProj, nz3: nz2 };
+    });
+
+    facesWithFragments.sort((a, b) => b.avgZ - a.avgZ);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.lineJoin = "round";
+
+    for (const item of facesWithFragments) {
+      const shadedLightness = Math.max(10, Math.min(100, l * item.shadeFactor));
+      ctx.fillStyle = `hsl(${h}, ${s}%, ${shadedLightness}%)`;
+
+      const rimGlow = Math.pow(1.0 - Math.abs(item.nz3), 4.0);
+      ctx.lineWidth = 1.5 + rimGlow * 3.5;
+      ctx.strokeStyle = `hsla(${h}, ${s}%, ${Math.min(100, shadedLightness + rimGlow * 20)}%, ${0.35 + rimGlow * 0.35})`;
+
+      ctx.beginPath();
+      ctx.moveTo(item.projected[0].x, item.projected[0].y);
+      for (let i = 1; i < item.projected.length; i++) {
+        ctx.lineTo(item.projected[i].x, item.projected[i].y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
     ctx.restore();
   }
 }
@@ -18377,6 +18901,7 @@ export class PlayerInputHandler {
 
 ● ./src/entities/handlers/PlayerVisuals.ts
 ────────────────────────────────────────────────────
+import { Software3DRenderer } from "../../core/visuals/Software3DRenderer";
 import { Player } from "@/entities/Player";
 import { PlayerFxRenderer } from "@/core/effects/PlayerFxRenderer";
 import { UNITS } from "@/core/Units";
@@ -18470,8 +18995,8 @@ export class PlayerVisuals {
       ctx.restore();
     }
 
-    const vWidth = this.player.size.width * this.player.visualScale.x;
-    const vHeight = this.player.size.height * this.player.visualScale.y;
+    
+    
     const feetY = drawY + this.player.size.height / 2;
 
     const nowTime = performance.now();
@@ -18507,13 +19032,24 @@ export class PlayerVisuals {
       ctx.restore();
     }
 
-    if (this.player.health.isFlashing()) {
-      ctx.fillStyle = "white";
-    } else {
-      ctx.fillStyle = "hsl(142, 71%, 58%)";
-    }
-
-    ctx.fillRect(-vWidth / 2, -vHeight, vWidth, vHeight);
+        const yaw = 0.15 * this.player.facingDirection + (this.player.velocity.x / 1120) * 0.35;
+    const pitch = 0.08 + (this.player.velocity.y / 1200) * 0.22;
+    Software3DRenderer.drawGeometry(
+      ctx,
+      Software3DRenderer.BOX_GEOMETRY,
+      0,
+      0,
+      this.player.size.width,
+      this.player.size.height,
+      this.player.visualScale.x,
+      this.player.visualScale.y,
+      yaw,
+      pitch,
+      0,
+      this.player.health.isFlashing() ? "hsl(0, 0%, 100%)" : "hsl(142, 71%, 58%)",
+      1.0,
+      "feet"
+    );
 
     const localCenterX = 0;
     const localCenterY = -this.player.size.height / 2;
