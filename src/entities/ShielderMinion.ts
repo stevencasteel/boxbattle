@@ -60,8 +60,7 @@ export class ShielderMinion extends BaseMinion {
     this.cageColorValue = "hsla(180,85%,65%,";
     this.dissolveColorValue = "hsl(180,70%,45%)";
 
-    const originalTakeDamage = this.health.takeDamage.bind(this.health);
-    this.health.takeDamage = (amount: number, sourceX: number = 0, sourceY: number = 0, intensity: number = 1): boolean => {
+    this.health.onBeforeDamage = (amount: number, sourceX: number): boolean => {
       if (this.isSpawning || this.isDying || this.isDead) {
         return false;
       }
@@ -87,7 +86,7 @@ export class ShielderMinion extends BaseMinion {
         }
       }
 
-      return originalTakeDamage(amount, sourceX, sourceY, intensity);
+      return true;
     };
 
     this.initState(new ShielderPatrolState(this));

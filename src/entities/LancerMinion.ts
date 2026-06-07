@@ -8,6 +8,16 @@ import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 export class LancerMinion extends BaseMinion {
   public lanceExtended = false;
 
+  public getExtendedHitbox() {
+    if (!this.lanceExtended) return null;
+    return {
+      x: this.position.x + this.facingDirection * 44,
+      y: this.position.y - 9.6,
+      width: 72,
+      height: 14.4
+    };
+  }
+
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
     this.size = { width: 32, height: 40 };

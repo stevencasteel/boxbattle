@@ -21,6 +21,36 @@ export class SimplePatrolState implements IState {
       if (physics.isOnWallLeft) this.owner.facingDirection = 1;
       else if (physics.isOnWallRight) this.owner.facingDirection = -1;
     }
+
+    if (physics && physics.isGrounded) {
+      const checkDist = 20;
+      const forwardX = this.owner.position.x + this.owner.facingDirection * checkDist;
+      const belowY = this.owner.position.y + this.owner.size.height / 2 + 10;
+      
+      const solids = this.owner.world.physicsWorld.getOverlapCandidates(forwardX, belowY, 8, 8, "solid");
+      const platforms = this.owner.world.physicsWorld.getOverlapCandidates(forwardX, belowY, 8, 8, "platform");
+
+      let hasGroundAhead = false;
+      for (const solid of solids) {
+        if (forwardX > solid.x && forwardX < solid.x + solid.width && belowY > solid.y && belowY < solid.y + solid.height) {
+          hasGroundAhead = true;
+          break;
+        }
+      }
+      if (!hasGroundAhead) {
+        for (const plat of platforms) {
+          if (forwardX > plat.x && forwardX < plat.x + plat.width && belowY > plat.y && belowY < plat.y + plat.height) {
+            hasGroundAhead = true;
+            break;
+          }
+        }
+      }
+
+      if (!hasGroundAhead) {
+        this.owner.facingDirection *= -1;
+        this.owner.velocity.x = 0;
+      }
+    }
   }
   public exit(): void {}
 }
@@ -155,8 +185,8 @@ export class CompassWaspMinion extends BaseMinion {
 
     super.update(dt);
 
-    this.position.x = Math.max(50, Math.min(950, this.position.x));
-    this.position.y = Math.max(50, Math.min(910, this.position.y));
+    this.position.x = Math.max(40 + this.size.width/2, Math.min(UNITS.WORLD_SIZE - 40 - this.size.width/2, this.position.x));
+    this.position.y = Math.max(40 + this.size.height/2, Math.min(UNITS.WORLD_SIZE - 80 - this.size.height/2, this.position.y));
   }
 
   protected updateExhaust(): void {
@@ -566,8 +596,8 @@ export class ShardChoirMinion extends BaseMinion {
 
     super.update(dt);
     
-    this.position.x = Math.max(50, Math.min(950, this.position.x));
-    this.position.y = Math.max(50, Math.min(910, this.position.y));
+    this.position.x = Math.max(40 + this.size.width/2, Math.min(UNITS.WORLD_SIZE - 40 - this.size.width/2, this.position.x));
+    this.position.y = Math.max(40 + this.size.height/2, Math.min(UNITS.WORLD_SIZE - 80 - this.size.height/2, this.position.y));
   }
 
   protected updateExhaust(): void {

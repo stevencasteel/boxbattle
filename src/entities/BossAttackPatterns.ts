@@ -9,8 +9,7 @@ export interface BossAttackContext {
   playerHP: number;
   activeMinionsCount: number;
   recentAttackIds: string[];
-  timeSinceLastProjectileHeavy: number;
-}
+  }
 
 export interface IBossAttackState {
   volleyCount: number;

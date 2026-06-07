@@ -24,6 +24,9 @@ export type MinionType =
 
 export abstract class BaseMinion extends BaseEntity {
   private unsubHurt!: () => void;
+  public get minionType(): MinionType { return this.id.split("-")[1] as MinionType; }
+  public getExtendedHitbox?(): {x: number, y: number, width: number, height: number} | null;
+
   public get status(): EntityStatus {
     if (this.isDead) return EntityStatus.DEAD;
     if (this.isDying) return EntityStatus.DYING;

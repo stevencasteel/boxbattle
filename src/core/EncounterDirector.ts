@@ -1,5 +1,6 @@
 import { IWorld } from "./Interfaces";
 import { SpawnAnchor, MinionType } from "./levelData";
+import { BaseMinion } from "@/entities/BaseMinion";
 import { MinionFactory } from "@/entities/MinionFactory";
 import { TrigLUT } from "./TrigLUT";
 import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
@@ -105,13 +106,15 @@ export class EncounterDirector {
 
     let activeThreat = 0;
     for (const m of this.world.minions) {
-      activeThreat += this.getMinionThreatValue(m.id.split("-")[1] as MinionType);
+      activeThreat += this.getMinionThreatValue((m as BaseMinion).minionType);
     }
 
     const maxCandidates = Math.min(wave.maxActiveMinions, isNarrowMap ? 2 : 4);
 
     for (let i = 0; i < maxCandidates; i++) {
-      const entryRand = TrigLUT.randomGameplay() * 100;
+      let totalWeight = 0;
+      for (const entry of wave.entries) totalWeight += entry.weight;
+      const entryRand = TrigLUT.randomGameplay() * totalWeight;
       let accumulatedWeight = 0;
       let selectedEntry = wave.entries[0];
 

@@ -1,7 +1,6 @@
 import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { EntityStatus, IWorld } from "@/core/Interfaces";
-import { LancerMinion } from "@/entities/LancerMinion";
 import { BaseMinion } from "@/entities/BaseMinion";
 
 export class MinionCollisionSystem {
@@ -15,20 +14,17 @@ export class MinionCollisionSystem {
       let isColliding = false;
       let applyLanceKnockback = false;
 
-      if (minion instanceof LancerMinion && minion.lanceExtended) {
-        const lanceWidth = 72;
-        const lanceHeight = 14.4;
-        const lanceX = minion.position.x + minion.facingDirection * 44;
-        const lanceY = minion.position.y - 9.6;
+      const extBox = (minion as BaseMinion).getExtendedHitbox ? (minion as BaseMinion).getExtendedHitbox!() : null;
 
+      if (extBox) {
         const pW = player.size.width / 2;
         const pH = player.size.height / 2;
 
         const isLanceColliding =
-          player.position.x + pW > lanceX - lanceWidth / 2 &&
-          player.position.x - pW < lanceX + lanceWidth / 2 &&
-          player.position.y + pH > lanceY - lanceHeight / 2 &&
-          player.position.y - pH < lanceY + lanceHeight / 2;
+          player.position.x + pW > extBox.x - extBox.width / 2 &&
+          player.position.x - pW < extBox.x + extBox.width / 2 &&
+          player.position.y + pH > extBox.y - extBox.height / 2 &&
+          player.position.y - pH < extBox.y + extBox.height / 2;
 
         if (isLanceColliding) {
           isColliding = true;

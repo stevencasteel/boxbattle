@@ -33,6 +33,8 @@ export class HealthComponent implements IEntityComponent {
   public hitFlashTimer: number = 0;
   public hitFlashDuration: number = 0.12;
 
+  public onBeforeDamage?: (amount: number, sourceX: number, sourceY: number, intensity: number) => boolean;
+
   private onDamaged: ((payload: DamagePayload) => void) | null = null;
 
   public setup(owner: BaseEntity, dependencies?: HealthComponentOptions): void {
@@ -65,6 +67,9 @@ export class HealthComponent implements IEntityComponent {
   public takeDamage(amount: number, sourceX: number = 0, sourceY: number = 0, intensity: number = 1): boolean {
     const isDying = this.owner.status === EntityStatus.DYING;
     const isSpawning = this.owner.status === EntityStatus.SPAWNING;
+    if (this.onBeforeDamage && !this.onBeforeDamage(amount, sourceX, sourceY, intensity)) {
+      return false;
+    }
     if (this.invincibilityTimer > 0 || this.owner.isDead || isDying || isSpawning) {
       return false;
     }

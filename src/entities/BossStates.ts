@@ -152,8 +152,7 @@ export class BossAttackState extends BossState implements IBossAttackState {
       playerHP: playerHp,
       activeMinionsCount: this.owner.world.minions.length,
       recentAttackIds: [...this.owner.recentAttackIds],
-      timeSinceLastProjectileHeavy: this.owner.timeSinceLastProjectileHeavy,
-    };
+      };
 
     const pattern = selectBestAttack(ctx);
 

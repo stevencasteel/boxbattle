@@ -38,8 +38,6 @@ export class Boss extends BaseEntity {
   public currentPhase: number = 1;
 
   public recentAttackIds: string[] = [];
-  public timeSinceLastProjectileHeavy = 0;
-
   constructor(id: string, world: IWorld) {
     super(id, world);
     this.size = { width: 48, height: 48 };
@@ -86,7 +84,6 @@ export class Boss extends BaseEntity {
       return;
     }
 
-    this.timeSinceLastProjectileHeavy += dt;
     this.evaluatePhaseShifts();
     this.trackPlayer();
 
