@@ -20,7 +20,7 @@ export class StaticMapRenderer {
     public buildStaticCache(solids: Rectangle[], hazards: Rectangle[]): void {
         if (this.staticCacheBuilt) return;
         const sctx = this.staticCtx;
-        const stageIdx = useSessionStore.getState().currentStageIndex;
+        const stageIdx = 0;
         const stageConfig = GAUNTLET_STAGES[stageIdx];
         const bg = sctx.createLinearGradient(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
         bg.addColorStop(0, "hsl(230, 12%, 5%)");

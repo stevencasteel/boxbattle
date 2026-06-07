@@ -15,72 +15,6 @@ interface HudPanelProps {
   isPlayingScreen: boolean;
 }
 
-// Subcomponent: Custom Svg Boss Sigil based on Mathematical stage identity [4]
-function SvgBossSigil({ stageIndex }: { stageIndex: number }) {
-  switch (stageIndex) {
-    case 0: // Prime Wound: Red square with a diagonal crack [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="var(--signal-red)" />
-          <line x1="1" y1="15" x2="15" y2="1" stroke="#000000" strokeWidth="2" />
-        </svg>
-      );
-    case 1: // Scarlet Lock: Red square with vertical prison bars [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="var(--signal-red)" />
-          <line x1="4" y1="1" x2="4" y2="15" stroke="#000000" strokeWidth="1.5" />
-          <line x1="8" y1="1" x2="8" y2="15" stroke="#000000" strokeWidth="1.5" />
-          <line x1="12" y1="1" x2="12" y2="15" stroke="#000000" strokeWidth="1.5" />
-        </svg>
-      );
-    case 2: // Carminal Orbit: Concentric polar circular cuts [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(338, 76%, 55%)" />
-          <circle cx="8" cy="8" r="5.5" fill="none" stroke="#000000" strokeWidth="1.5" />
-          <circle cx="8" cy="8" r="2.5" fill="none" stroke="#000000" strokeWidth="1" />
-        </svg>
-      );
-    case 3: // Vermilion Needle: Spiky needle-sharp teeth edges [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(356, 94%, 62%)" />
-          <polygon points="1,8 4,5 4,11" fill="#000000" />
-          <polygon points="15,8 12,5 12,11" fill="#000000" />
-          <polygon points="8,1 5,4 11,4" fill="#000000" />
-          <polygon points="8,15 5,12 11,12" fill="#000000" />
-        </svg>
-      );
-    case 4: // Marrow King: Bruised organic blister spots [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(82, 38%, 44%)" />
-          <circle cx="5" cy="5" r="2" fill="#000000" />
-          <circle cx="11" cy="6" r="2.5" fill="#000000" />
-          <circle cx="6" cy="11" r="1.5" fill="#000000" />
-        </svg>
-      );
-    case 5: // Rust Cathedral: Heavy columnar block structure [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(15, 82%, 48%)" />
-          <rect x="4" y="4" width="8" height="8" fill="#000000" />
-        </svg>
-      );
-    case 6: // False Square: Glitching, shifting block segments [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0 animate-pulse" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(330, 82%, 64%)" />
-          <rect x="3" y="3" width="5" height="5" fill="none" stroke="#000000" strokeWidth="1" />
-          <rect x="8" y="8" width="5" height="5" fill="none" stroke="#000000" strokeWidth="1" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
-
 // Subcomponent: Player HP Display (LED Dots)
 function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
   const playerHP = useGameplayStore((state) => state.playerHP);
@@ -363,7 +297,7 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-          <SvgBossSigil stageIndex={currentStageIndex} /> BOSS
+          BOSS
         </span>
         <div
           id="hud-m-boss-container"
@@ -396,7 +330,7 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
     <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
       <span className="hud-panel-title hud-panel-title-red" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <Skull size={14} style={{ color: "var(--signal-red)", flexShrink: 0 }} />
-        <SvgBossSigil stageIndex={currentStageIndex} />
+        
         BOSS HP
       </span>
       <div

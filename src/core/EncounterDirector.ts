@@ -96,7 +96,7 @@ export class EncounterDirector {
 
     // Calculate maximum threat based on active boss footprint and narrow map constraints
     const bossActive = this.world.boss && !this.world.boss.isDead;
-    const stageIdx = useSessionStore.getState().currentStageIndex;
+    const stageIdx = 0;
     const isNarrowMap = stageIdx === 1; // Narrow Redoubt
 
     let maxThreatBudget = bossActive ? 4 : 8;

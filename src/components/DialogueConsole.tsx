@@ -1,9 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { DialogueState } from "@/hooks/useGameDialogue";
-import { useSessionStore } from "@/store/useGameStore";
-import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
-
 
 interface DialogueConsoleProps { playerDialogue: DialogueState; bossDialogue: DialogueState; isTouchDevice: boolean; }
 
@@ -20,15 +17,9 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
                 ctx.fillStyle = "hsl(142, 72%, 56%)"; ctx.fillRect(0, 0, w, h);
                 if (typing) { ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(w / 2, h / 2, 4 + Math.sin(t * 12) * 2, 0, Math.PI * 2); ctx.fill(); }
             } else {
-                const stageIdx = useSessionStore.getState().currentStageIndex;
-                const colors = ["hsl(350, 82%, 58%)", "hsl(4, 88%, 54%)", "hsl(338, 76%, 55%)", "hsl(356, 94%, 62%)", "hsl(82, 38%, 44%)", "hsl(15, 82%, 48%)", "hsl(345, 58%, 46%)"];
-                const baseColor = colors[stageIdx] || colors[0];
-                
-                // Totally fill the boss dialogue square with the stage's core color
+                const baseColor = "hsl(350, 82%, 58%)";
                 ctx.fillStyle = baseColor;
                 ctx.fillRect(0, 0, w, h);
-
-                
             }
             frameId = requestAnimationFrame(render);
         };
@@ -42,9 +33,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
     const mobileClass = isTouchDevice ? "is-mobile" : "";
     const leftState = playerDialogue.active ? "active" : bossDialogue.active ? "inactive" : "idle";
     const rightState = bossDialogue.active ? "active" : playerDialogue.active ? "inactive" : "idle";
-    const currentStageIndex = useSessionStore((state) => state.currentStageIndex);
-    const activeStage = GAUNTLET_STAGES[currentStageIndex];
-    const bossName = activeStage ? activeStage.midBossDisplayName : "BOSS";
+    const bossName = "PRIME WOUND";
 
     const getVariants = (speaker: "player" | "boss") => ({
         active: { scale: 1.02, opacity: 1, borderColor: speaker === "player" ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)", boxShadow: speaker === "player" ? "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(34, 197, 94, 0.15)" : "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(239, 68, 68, 0.15)" },

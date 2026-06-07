@@ -434,26 +434,8 @@ export const ALL_PATTERNS: AttackPattern[] = [
 ];
 
 export function selectBestAttack(ctx: BossAttackContext): AttackPattern {
-  const stageIdx = useSessionStore.getState().currentStageIndex;
-
-  // Filter patterns by what is valid for the stage to express the chromatic/geometric narrative
-  let candidates = ALL_PATTERNS;
-
-  if (stageIdx === 0) {
-    candidates = ALL_PATTERNS.filter(p => ["OMNI_BURST", "VOLLEY", "PREDICTIVE_SHOT"].includes(p.id));
-  } else if (stageIdx === 1) {
-    candidates = ALL_PATTERNS.filter(p => ["GATE_DROP", "LOCKSTEP_VOLLEY", "COMPRESSION_MARCH"].includes(p.id));
-  } else if (stageIdx === 2) {
-    candidates = ALL_PATTERNS.filter(p => ["APHELION_RING", "PERIHELION_DIVE", "SATELLITE_TAX"].includes(p.id));
-  } else if (stageIdx === 3) {
-    candidates = ALL_PATTERNS.filter(p => ["NEEDLE_RAIN", "DASH_THREAD", "POGO_TAX"].includes(p.id));
-  } else if (stageIdx === 4) {
-    candidates = ALL_PATTERNS.filter(p => ["BELLY_TIDE", "BLISTER_SPAWN", "SICKNESS_LEAN"].includes(p.id));
-  } else if (stageIdx === 5) {
-    candidates = ALL_PATTERNS.filter(p => ["CATHEDRAL_TOLL", "FALLING_NAVE", "WEIGHT_TRANSFER"].includes(p.id));
-  } else if (stageIdx === 6) {
-    candidates = ALL_PATTERNS.filter(p => !["BLISTER_SPAWN"].includes(p.id));
-  }
+  // Allow our unified single boss to access all attack patterns
+  const candidates = ALL_PATTERNS;
 
   let bestPattern = candidates[0] || ALL_PATTERNS[0];
   let highestScore = -1;

@@ -99,7 +99,7 @@ export class Software3DRenderer {
         return geom;
     }
 
-    public static getTransformedBossGeometry(stageIdx: number, _phase: number, time: number): Geometry {
+    public static getTransformedBossGeometry(_phase: number, time: number): Geometry {
         const baseBox = [
             { x: -0.5, y: -0.5, z: -0.5 }, { x: 0.5, y: -0.5, z: -0.5 },
             { x: 0.5, y: 0.5, z: -0.5 }, { x: -0.5, y: 0.5, z: -0.5 },
@@ -109,70 +109,15 @@ export class Software3DRenderer {
 
         let w = 1.0;
         let h = 1.0;
-        let d = 1.0;
+        let d = 0.9;
 
-        if (stageIdx === 0) {
-            w = 1.0; h = 1.0; d = 0.9;
-        } else if (stageIdx === 1) {
-            w = 0.58; h = 1.5; d = 0.5;
-        } else if (stageIdx === 2) {
-            w = 1.33; h = 0.38; d = 1.2;
-        } else if (stageIdx === 3) {
-            w = 0.75; h = 1.25; d = 0.6;
-        } else if (stageIdx === 4) {
-            w = 1.25; h = 0.75; d = 1.5;
-        } else if (stageIdx === 5) {
-            w = 1.33; h = 1.33; d = 1.4;
-        } else if (stageIdx === 6) {
-            const isGlitched = Math.sin(time * 12) > 0.7;
-            w = isGlitched ? 1.4 : 1.0;
-            h = isGlitched ? 0.7 : 1.0;
-            d = 1.0;
-        }
-
-        const vertices = baseBox.map((v, idx) => {
+        const vertices = baseBox.map((v) => {
             let x = v.x * w;
             let y = v.y * h;
             let z = v.z * d;
 
-            if (stageIdx === 0) {
-                const offset = Math.sin(time * 8 + y * 2) * 0.12 * Math.sign(y);
-                x += offset;
-            } else if (stageIdx === 1) {
-                const scaleY = 1.0 + 0.15 * Math.sin(time * 12);
-                y *= scaleY;
-            } else if (stageIdx === 2) {
-                const angle = y * 0.5 * Math.sin(time * 6);
-                const cosA = Math.cos(angle);
-                const sinA = Math.sin(angle);
-                const rx = x * cosA - z * sinA;
-                const rz = x * sinA + z * cosA;
-                x = rx;
-                z = rz;
-            } else if (stageIdx === 3) {
-                const expansion = 1.0 + 0.18 * Math.pow(Math.abs(Math.sin(time * 18 + idx)), 4);
-                x *= expansion;
-                y *= expansion;
-                z *= expansion;
-            } else if (stageIdx === 4) {
-                const theta = Math.atan2(z, x);
-                const r = Math.sqrt(x * x + z * z);
-                const wave = 1.0 + 0.14 * Math.sin(theta * 4 + time * 4);
-                x = Math.cos(theta) * r * wave;
-                z = Math.sin(theta) * r * wave;
-                y += Math.sin(time * 3 + x * 2) * 0.08;
-            } else if (stageIdx === 5) {
-                const step = Math.floor(time * 2.25) % 2 === 0 ? 0.95 : 1.05;
-                x *= step;
-                y *= step;
-                z *= step;
-            } else if (stageIdx === 6) {
-                const glitch = Math.sin(time * 24) > 0.8;
-                if (glitch) {
-                    x += Math.sin(y * 10) * 0.15;
-                    y += Math.cos(x * 10) * 0.1;
-                }
-            }
+            const offset = Math.sin(time * 8 + y * 2) * 0.12 * Math.sign(y);
+            x += offset;
 
             return { x, y, z };
         });
