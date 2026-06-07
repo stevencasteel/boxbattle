@@ -1,3 +1,4 @@
+import { intersectsAABBWithRect } from "@/core/VecUtils";
 import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
@@ -333,15 +334,7 @@ export class PhysicsComponent implements IEntityComponent {
   }
 
   private isOverlapping(x: number, y: number, rect: Rectangle): boolean {
-    const halfWidth = this.owner.size.width / 2;
-    const halfHeight = this.owner.size.height / 2;
-
-    const left = x - halfWidth;
-    const right = x + halfWidth;
-    const top = y - halfHeight;
-    const bottom = y + halfHeight;
-
-    return right > rect.x && left < rect.x + rect.width && bottom > rect.y && top < rect.y + rect.height;
+    return intersectsAABBWithRect({ x, y }, this.owner.size, rect);
   }
 
   public teardown(): void {}

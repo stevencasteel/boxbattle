@@ -1,3 +1,4 @@
+import { intersectsAABBWithRect } from "@/core/VecUtils";
 import { Rectangle } from "../Interfaces";
 import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
@@ -54,13 +55,7 @@ export class DissolvePlatform {
     } else if (this.state === "respawning") {
       this.timer -= dt;
       if (this.timer <= 0) {
-        const pW = player.size.width / 2;
-        const pH = player.size.height / 2;
-        const isOverlapping =
-          player.position.x + pW > this.rect.x &&
-          player.position.x - pW < this.rect.x + this.rect.width &&
-          player.position.y + pH > this.rect.y &&
-          player.position.y - pH < this.rect.y + this.rect.height;
+        const isOverlapping = intersectsAABBWithRect(player.position, player.size, this.rect);
 
         if (isOverlapping) {
           this.timer = 0.05; // Delay solidification until player clears the area
@@ -80,14 +75,7 @@ export class PogoPost {
   }
 
   public update(_dt: number, player: Player): void {
-    const pW = player.size.width / 2;
-    const pH = player.size.height / 2;
-
-    const isOverlapping =
-      player.position.x + pW > this.rect.x &&
-      player.position.x - pW < this.rect.x + this.rect.width &&
-      player.position.y + pH > this.rect.y &&
-      player.position.y - pH < this.rect.y + this.rect.height;
+    const isOverlapping = intersectsAABBWithRect(player.position, player.size, this.rect);
 
     if (isOverlapping) {
       const isPogoActive = player.meleeComponent.attackActive && player.meleeComponent.attackDirection === "down";
@@ -140,14 +128,7 @@ export class DashResetGate {
 
     if (!this.active) return;
 
-    const pW = player.size.width / 2;
-    const pH = player.size.height / 2;
-
-    const isOverlapping =
-      player.position.x + pW > this.rect.x &&
-      player.position.x - pW < this.rect.x + this.rect.width &&
-      player.position.y + pH > this.rect.y &&
-      player.position.y - pH < this.rect.y + this.rect.height;
+    const isOverlapping = intersectsAABBWithRect(player.position, player.size, this.rect);
 
     if (isOverlapping && this.active) {
       this.active = false;

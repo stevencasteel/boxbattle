@@ -1,11 +1,11 @@
 import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
-import { SFX_PRESETS } from "../sfxPresetData";
+import { SFX_PRESETS, DORIAN_RATIOS } from "../sfxPresetData";
 import { SynthFactory } from "./SynthFactory";
 import { IEventBus } from "@/core/Interfaces";
 
-const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
+
 
 export class PlayerSFX {
   private helper: SFXHelper;

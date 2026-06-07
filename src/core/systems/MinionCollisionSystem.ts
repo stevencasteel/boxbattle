@@ -1,3 +1,4 @@
+import { intersectsAABB } from "@/core/VecUtils";
 import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { EntityStatus, IWorld } from "@/core/Interfaces";
@@ -17,14 +18,7 @@ export class MinionCollisionSystem {
       const extBox = (minion as BaseMinion).getExtendedHitbox ? (minion as BaseMinion).getExtendedHitbox!() : null;
 
       if (extBox) {
-        const pW = player.size.width / 2;
-        const pH = player.size.height / 2;
-
-        const isLanceColliding =
-          player.position.x + pW > extBox.x - extBox.width / 2 &&
-          player.position.x - pW < extBox.x + extBox.width / 2 &&
-          player.position.y + pH > extBox.y - extBox.height / 2 &&
-          player.position.y - pH < extBox.y + extBox.height / 2;
+        const isLanceColliding = intersectsAABB(player.position, player.size, extBox, extBox);
 
         if (isLanceColliding) {
           isColliding = true;
@@ -33,16 +27,7 @@ export class MinionCollisionSystem {
       }
 
       if (!isColliding) {
-        const pW = player.size.width / 2;
-        const pH = player.size.height / 2;
-        const mW = minion.size.width / 2;
-        const mH = minion.size.height / 2;
-
-        isColliding =
-          player.position.x + pW > minion.position.x - mW &&
-          player.position.x - pW < minion.position.x + mW &&
-          player.position.y + pH > minion.position.y - mH &&
-          player.position.y - pH < minion.position.y + mH;
+        isColliding = intersectsAABB(player.position, player.size, minion.position, minion.size);
       }
 
       if (isColliding) {

@@ -1,3 +1,4 @@
+import { distance } from "@/core/VecUtils";
 import { IWorld } from "./Interfaces";
 import { SpawnAnchor, MinionType, EncounterWave } from "./levelData";
 import { BaseMinion } from "@/entities/BaseMinion";
@@ -177,8 +178,8 @@ export class EncounterDirector {
     let highestSafetyScore = -Infinity;
 
     for (const anchor of candidates) {
-      const dp = player ? Math.sqrt(Math.pow(player.position.x - anchor.x, 2) + Math.pow(player.position.y - anchor.y, 2)) : 500;
-      const db = boss ? Math.sqrt(Math.pow(boss.position.x - anchor.x, 2) + Math.pow(boss.position.y - anchor.y, 2)) : 500;
+      const dp = player ? distance(player.position, anchor) : 500;
+      const db = boss ? distance(boss.position, anchor) : 500;
 
       let safetyScore = dp * 1.0 + db * 0.45;
 
