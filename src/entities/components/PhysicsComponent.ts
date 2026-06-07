@@ -125,10 +125,48 @@ export class PhysicsComponent implements IEntityComponent {
         }
       }
 
-      const stepEpsilon = 0.001;
+      // Calculate an adaptive safety step margin based on current linear velocity magnitude
+      const velocityMagnitude = Math.sqrt(vx * vx + vy * vy) || 1.0;
+      const stepEpsilon = Math.min(0.001, 1.0 / (velocityMagnitude * 10.0));
       const moveFraction = Math.max(0, earliestT - stepEpsilon);
       this.owner.position.x += vx * moveFraction * dt * timeLeft;
       this.owner.position.y += vy * moveFraction * dt * timeLeft;
+
+      // Handle terminal snapping against the collision face normal
+      if (earliestT < 1.0) {
+        if (normX !== 0) {
+          const halfW = this.owner.size.width / 2;
+          const solidCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
+            this.owner.position.x + normX,
+            this.owner.position.y,
+            this.owner.size.width,
+            this.owner.size.height,
+            "solid"
+          );
+          for (const solid of solidCandidates) {
+            if (normX < 0) {
+              // Snapping to the left side of solid bounding box
+              this.owner.position.x = solid.x - halfW;
+            } else if (normX > 0) {
+              // Snapping to the right side of solid bounding box
+              this.owner.position.x = solid.x + solid.width + halfW;
+            }
+          }
+        }
+        if (normY < 0) {
+          const halfH = this.owner.size.height / 2;
+          const solidCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
+            this.owner.position.x,
+            this.owner.position.y + normY,
+            this.owner.size.width,
+            this.owner.size.height,
+            "solid"
+          );
+          for (const solid of solidCandidates) {
+            this.owner.position.y = solid.y - halfH;
+          }
+        }
+      }
 
       timeLeft -= earliestT * timeLeft;
 

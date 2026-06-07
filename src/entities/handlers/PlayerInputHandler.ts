@@ -76,7 +76,7 @@ export class PlayerInputHandler {
 
   public updateCoyoteAndWallTimers(dt: number) {
     if (this.player.physics.isGrounded) {
-      this.player.coyoteTimer = 0.15;
+      this.player.coyoteTimer = UNITS.PLAYER_COYOTE_TIME;
       this.player.hasDoubleJump = true;
       this.player.dashComponent.resetDashCharge();
     } else {
@@ -84,12 +84,12 @@ export class PlayerInputHandler {
     }
 
     if (this.player.physics.isOnWallLeft) {
-      this.player.wallCoyoteTimer = 0.1;
+      this.player.wallCoyoteTimer = UNITS.PLAYER_WALL_COYOTE_TIME;
       this.player.lastWallNormal = 1;
       this.player.hasDoubleJump = true;
       this.player.dashComponent.resetDashCharge();
     } else if (this.player.physics.isOnWallRight) {
-      this.player.wallCoyoteTimer = 0.1;
+      this.player.wallCoyoteTimer = UNITS.PLAYER_WALL_COYOTE_TIME;
       this.player.lastWallNormal = -1;
       this.player.hasDoubleJump = true;
       this.player.dashComponent.resetDashCharge();
@@ -157,13 +157,13 @@ export class PlayerInputHandler {
       return;
     }
 
-    this.player.jumpBufferTimer = 0.1;
+    this.player.jumpBufferTimer = UNITS.PLAYER_JUMP_BUFFER;
     this.resolveJump();
   }
 
   private resolveJump() {
     if (this.player.inputReceiver.isPressed("MOVE_DOWN") && this.isStandingOnOneway()) {
-      this.player.physics.disablePlatformCollisionTimer = 0.25;
+      this.player.physics.disablePlatformCollisionTimer = UNITS.PLATFORM_COLLISION_DISABLE_TIME;
       this.player.position.y += 12;
       this.player.velocity.y = 180;
       this.player.physics.isGrounded = false;
