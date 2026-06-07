@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CTx7yS_B.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-41oWE_ki.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7761,14 +7761,20 @@ export class PhysicsWorld implements IPhysicsWorld {
     this.indexGeometry(this.hazards, this.hazardGrid);
   }
 
+  private recycleGrid(grid: Map<number, Rectangle[]>) {
+    for (const arr of grid.values()) {
+      arr.length = 0;
+    }
+  }
+
   public rebuild(solids: Rectangle[], hazards: Rectangle[], onewayPlatforms: Rectangle[]) {
     this.solids = GreedyMerger.merge(solids);
     this.hazards = GreedyMerger.merge(hazards);
     this.onewayPlatforms = onewayPlatforms;
 
-    this.solidGrid.clear();
-    this.platformGrid.clear();
-    this.hazardGrid.clear();
+    this.recycleGrid(this.solidGrid);
+    this.recycleGrid(this.platformGrid);
+    this.recycleGrid(this.hazardGrid);
 
     this.indexGeometry(this.solids, this.solidGrid);
     this.indexGeometry(this.onewayPlatforms, this.platformGrid);
@@ -9008,6 +9014,12 @@ export class StaticMapRenderer {
   POGO_HITBOX_HEIGHT: 35.6,
   POGO_HITBOX_Y_OFFSET: 32,
   POGO_HITBOX_X_OFFSET: -36,
+
+  // Input Timing Buffers (Seconds)
+  PLAYER_COYOTE_TIME: 0.15,
+  PLAYER_JUMP_BUFFER: 0.1,
+  PLAYER_WALL_COYOTE_TIME: 0.1,
+  PLATFORM_COLLISION_DISABLE_TIME: 0.25,
 } as const;
 `,"src/core/VecUtils.ts":`import { Vector2D } from "./Interfaces";
 
@@ -18225,10 +18237,48 @@ export class PhysicsComponent implements IEntityComponent {
         }
       }
 
-      const stepEpsilon = 0.001;
+      // Calculate an adaptive safety step margin based on current linear velocity magnitude
+      const velocityMagnitude = Math.sqrt(vx * vx + vy * vy) || 1.0;
+      const stepEpsilon = Math.min(0.001, 1.0 / (velocityMagnitude * 10.0));
       const moveFraction = Math.max(0, earliestT - stepEpsilon);
       this.owner.position.x += vx * moveFraction * dt * timeLeft;
       this.owner.position.y += vy * moveFraction * dt * timeLeft;
+
+      // Handle terminal snapping against the collision face normal
+      if (earliestT < 1.0) {
+        if (normX !== 0) {
+          const halfW = this.owner.size.width / 2;
+          const solidCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
+            this.owner.position.x + normX,
+            this.owner.position.y,
+            this.owner.size.width,
+            this.owner.size.height,
+            "solid"
+          );
+          for (const solid of solidCandidates) {
+            if (normX < 0) {
+              // Snapping to the left side of solid bounding box
+              this.owner.position.x = solid.x - halfW;
+            } else if (normX > 0) {
+              // Snapping to the right side of solid bounding box
+              this.owner.position.x = solid.x + solid.width + halfW;
+            }
+          }
+        }
+        if (normY < 0) {
+          const halfH = this.owner.size.height / 2;
+          const solidCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
+            this.owner.position.x,
+            this.owner.position.y + normY,
+            this.owner.size.width,
+            this.owner.size.height,
+            "solid"
+          );
+          for (const solid of solidCandidates) {
+            this.owner.position.y = solid.y - halfH;
+          }
+        }
+      }
 
       timeLeft -= earliestT * timeLeft;
 
@@ -18570,7 +18620,7 @@ export class PlayerInputHandler {
 
   public updateCoyoteAndWallTimers(dt: number) {
     if (this.player.physics.isGrounded) {
-      this.player.coyoteTimer = 0.15;
+      this.player.coyoteTimer = UNITS.PLAYER_COYOTE_TIME;
       this.player.hasDoubleJump = true;
       this.player.dashComponent.resetDashCharge();
     } else {
@@ -18578,12 +18628,12 @@ export class PlayerInputHandler {
     }
 
     if (this.player.physics.isOnWallLeft) {
-      this.player.wallCoyoteTimer = 0.1;
+      this.player.wallCoyoteTimer = UNITS.PLAYER_WALL_COYOTE_TIME;
       this.player.lastWallNormal = 1;
       this.player.hasDoubleJump = true;
       this.player.dashComponent.resetDashCharge();
     } else if (this.player.physics.isOnWallRight) {
-      this.player.wallCoyoteTimer = 0.1;
+      this.player.wallCoyoteTimer = UNITS.PLAYER_WALL_COYOTE_TIME;
       this.player.lastWallNormal = -1;
       this.player.hasDoubleJump = true;
       this.player.dashComponent.resetDashCharge();
@@ -18651,13 +18701,13 @@ export class PlayerInputHandler {
       return;
     }
 
-    this.player.jumpBufferTimer = 0.1;
+    this.player.jumpBufferTimer = UNITS.PLAYER_JUMP_BUFFER;
     this.resolveJump();
   }
 
   private resolveJump() {
     if (this.player.inputReceiver.isPressed("MOVE_DOWN") && this.isStandingOnOneway()) {
-      this.player.physics.disablePlatformCollisionTimer = 0.25;
+      this.player.physics.disablePlatformCollisionTimer = UNITS.PLATFORM_COLLISION_DISABLE_TIME;
       this.player.position.y += 12;
       this.player.velocity.y = 180;
       this.player.physics.isGrounded = false;
