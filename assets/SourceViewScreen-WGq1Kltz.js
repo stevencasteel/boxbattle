@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BEc5Cxo5.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BGxPmd5k.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -15755,7 +15755,7 @@ export class CompassWaspMinion extends BaseMinion {
     this.angle = TrigLUT.random() * Math.PI * 2;
   }
 
-  get minionColor(): string { return "hsl(45, 100%, 60%)"; }
+  get minionColor(): string { return this.state === "diving" ? "hsl(45, 100%, 60%)" : "hsl(194, 62%, 52%)"; }
 
   public getVisualProfile(): VisualProfile {
     return {
@@ -15763,7 +15763,7 @@ export class CompassWaspMinion extends BaseMinion {
       danger: 0.9,
       weight: 0.1,
       corruption: 0.2,
-      hueRole: "telegraph",
+      hueRole: this.state === "diving" ? "telegraph" : "minion-logic",
       strokePx: 2,
       spinRate: 3.5,
       wobbleAmp: 0.3,
@@ -16937,7 +16937,7 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         const isLvl2 = damage >= 3;
         if (TrigLUT.random() < (isLvl2 ? 0.35 : 0.08)) {
             const angle = TrigLUT.atan2(velY, velX) + Math.PI + (TrigLUT.random() * 0.4 - 0.2);
-            world.publishSpark(posX, posY, angle, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line");
+            world.publishSpark(posX, posY, angle, isLvl2 ? "hsl(142, 100%, 70%)" : "hsl(142, 71%, 58%)", false, 1, "line");
         }
     }
     shouldCheckClashes(): boolean { return true; }
@@ -16948,7 +16948,7 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         return targets;
     }
     getProjIntensity(damage: number): number { return damage >= 3 ? 1.6 : 0.6; }
-    getBlastColor(damage: number, _customColor: string | null): string { return damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)"; }
+    getBlastColor(damage: number, _customColor: string | null): string { return damage >= 3 ? "hsl(142, 100%, 70%)" : "hsl(142, 71%, 58%)"; }
     getSparkCount(damage: number): number { return damage >= 3 ? 18 : 4; }
     getSparkTurbulence(damage: number): number { return damage >= 3 ? 20 : 5; }
     
@@ -16958,11 +16958,11 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         const offsetY = data.drawY - data.posY;
         
         ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
-        const mainColor = isLvl2 ? "rgba(234, 179, 8, " : "rgba(34, 197, 94, ";
+        const mainColor = isLvl2 ? "rgba(52, 211, 153, " : "rgba(34, 197, 94, ";
         const outerGrad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX + offsetX, data.oldestY + offsetY);
         outerGrad.addColorStop(0.0, mainColor + "0.45)"); outerGrad.addColorStop(1.0, mainColor + "0.0)");
         ctx.strokeStyle = outerGrad; ctx.lineWidth = data.projWidth * 1.5;
-        ctx.shadowColor = isLvl2 ? "rgba(234, 179, 8, 0.6)" : "rgba(34, 197, 94, 0.6)"; ctx.shadowBlur = 12;
+        ctx.shadowColor = isLvl2 ? "rgba(52, 211, 153, 0.6)" : "rgba(34, 197, 94, 0.6)"; ctx.shadowBlur = 12;
         drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize, offsetX, offsetY);
         ctx.restore();
     }
@@ -16973,7 +16973,7 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         ctx.save();
         if (isLvl2) {
             const geom = Software3DRenderer.getPrismGeometry("proj-diamond", [{x:0,y:-0.5},{x:0.3,y:0},{x:0,y:0.5},{x:-0.3,y:0}], 0.8);
-            Software3DRenderer.drawGeometry(ctx, geom, 0, 0, data.width * 1.5, data.height * 1.5, 1, 1, 0, 0, angle + Math.PI/2, "hsl(45, 100%, 60%)", 1.0, "center");
+            Software3DRenderer.drawGeometry(ctx, geom, 0, 0, data.width * 1.5, data.height * 1.5, 1, 1, 0, 0, angle + Math.PI/2, "hsl(142, 100%, 65%)", 1.0, "center");
         } else {
             Software3DRenderer.drawGeometry(ctx, Software3DRenderer.BOX_GEOMETRY, 0, 0, data.width, data.height, 1, 1, 0, 0, angle + Math.PI/4, "hsl(142, 72%, 56%)", 1.0, "center");
         }
@@ -17434,7 +17434,7 @@ export class FireballComponent implements IEntityComponent {
         const vx = (targetX - startX) * 3.5;
         const vy = (targetY - startY) * 3.5;
 
-        this.owner.world.events.publishSpark(startX, startY, TrigLUT.atan2(vy, vx), isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line", 20);
+        this.owner.world.events.publishSpark(startX, startY, TrigLUT.atan2(vy, vx), isLvl2 ? "hsl(142, 100%, 70%)" : "hsl(142, 71%, 58%)", false, 1, "line", 20);
       }
 
       if (isLvl2 && TrigLUT.random() < 0.12) {
@@ -18740,7 +18740,7 @@ chargeGradCtx.fillRect(0, 0, 64, 64);
 
 const chargeGradLvl2 = chargeGradCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
 chargeGradLvl2.addColorStop(0.0, '#ffffff');
-chargeGradLvl2.addColorStop(0.3, 'hsl(45, 100%, 75%)');
+chargeGradLvl2.addColorStop(0.3, 'hsl(142, 100%, 75%)');
 chargeGradLvl2.addColorStop(1.0, 'rgba(255,255,255,0)');
 const chargeGradLvl2Canvas = document.createElement("canvas");
 chargeGradLvl2Canvas.width = 64;
