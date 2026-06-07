@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BGF9wBqi.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DnxtYeZ9.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -223,7 +223,7 @@ export default defineConfig([
 
 .cabinet-wide-source {
   width: 1100px !important;
-  height: 800px !important;
+  height: 862px !important;
   border-radius: 20px !important;
   padding: 24px !important;
 }
@@ -838,7 +838,7 @@ export default function App() {
     const handleResize = () => {
       const isSource = useSessionStore.getState().currentScreen === "SOURCE_VIEW";
       const cabinetWidth = isSource ? 1100 : 740;
-      const cabinetHeight = isSource ? 800 : 862;
+      const cabinetHeight = 862;
       const padding = 32; // Total padding around the cabinet
       
       const availableWidth = window.innerWidth - padding;
@@ -1007,7 +1007,7 @@ export default function App() {
           transform: \`scale(\${scale})\`,
           transformOrigin: "center center",
           width: isFullHeightScreen ? "1100px" : "740px",
-          height: isFullHeightScreen ? "800px" : "862px",
+          height: "862px",
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
@@ -1044,7 +1044,7 @@ export default function App() {
                       navTo("SAVE_SELECT");
                     }}
                     onSettings={() => {
-                      navTo("OPTIONS");
+                      navTo("SETTINGS");
                     }}
                     onCredits={() => {
                       navTo("CREDITS");
@@ -1076,7 +1076,7 @@ export default function App() {
                   />
                 )}
 
-                {currentScreen === "OPTIONS" && (
+                {currentScreen === "SETTINGS" && (
                   <SettingsScreen
                     menuIndex={menuIndex}
                     onAudio={() => {
@@ -1101,7 +1101,7 @@ export default function App() {
                     handleVolumeChange={handleVolumeChange}
                     resetSettings={resetSettings}
                     onBack={() => {
-                      navTo("OPTIONS");
+                      navTo("SETTINGS");
                     }}
                     playHoverTick={playHoverTick}
                     setMenuIndex={setMenuIndex}
@@ -1113,7 +1113,7 @@ export default function App() {
                     menuIndex={menuIndex}
                     rebindTarget={rebindTarget}
                     onBack={() => {
-                      navTo("OPTIONS");
+                      navTo("SETTINGS");
                       setMenuIndex(1);
                     }}
                     playHoverTick={playHoverTick}
@@ -3415,7 +3415,7 @@ export function AudioScreen({
         </div>
       </div>
 
-      <div className="flex-col" style={{ gap: "1.2vmin", width: "100%", maxWidth: "58vmin", marginTop: "1.5vmin" }}>
+      <div className="flex-col" style={{ gap: "12px", width: "100%", maxWidth: "580px", marginTop: "24px" }}>
         <MenuButton
           variant="large"
           isFocused={menuIndex === 3}
@@ -3659,7 +3659,7 @@ export function ControlsScreen({
         </div>
       ) : (
         <>
-          <div className="flex-row" style={{ gap: "16px", width: "100%", maxWidth: "80vmin", marginTop: "auto", marginBottom: "auto" }}>
+          <div className="flex-row" style={{ gap: "16px", width: "100%", maxWidth: "580px", marginTop: "auto", marginBottom: "auto" }}>
             <MenuButton
               variant="led"
               isFocused={menuIndex === 0}
@@ -3811,7 +3811,7 @@ export function ControlsScreen({
         onFocused={() => setMenuIndex(backBtnIndex)}
         playHoverTick={playHoverTick}
         onBack={onBack}
-        style={{ maxWidth: "80vmin", width: "100%" }}
+        style={{ maxWidth: "580px", width: "100%" }}
       />
     </MenuContainer>
   );
@@ -3878,9 +3878,9 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
         className="credits-block neo-pressed flex-col"
         style={{
           width: "100%",
-          maxWidth: "68vmin",
-          padding: "3.2vmin",
-          borderRadius: "2vmin",
+          maxWidth: "580px",
+          padding: "24px",
+          borderRadius: "12px",
           boxSizing: "border-box",
         }}
       >
@@ -3888,13 +3888,13 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
           style={{
             textAlign: "center",
             borderBottom: "1px solid rgba(255,255,255,0.03)",
-            paddingBottom: "1.2vmin",
-            marginBottom: "1.2vmin",
+            paddingBottom: "12px",
+            marginBottom: "12px",
           }}
         >
           <p
             style={{
-              fontSize: "1.6vmin",
+              fontSize: "15px",
               fontWeight: "bold",
               color: "#22c55e",
               textTransform: "uppercase",
@@ -3907,9 +3907,9 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
           </p>
           <p
             style={{
-              fontSize: "1.2vmin",
+              fontSize: "12px",
               color: "#4a5568",
-              margin: "0.6vmin 0 0",
+              margin: "6px 0 0",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
               fontWeight: "bold",
@@ -3924,9 +3924,9 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
             rel="noopener noreferrer"
             style={{
               display: "inline-block",
-              fontSize: "1.1vmin",
+              fontSize: "11px",
               color: "#4a5568",
-              margin: "0.6vmin 0 0",
+              margin: "6px 0 0",
               letterSpacing: "0.15em",
               textDecoration: "none",
               transition: "color 0.15s ease",
@@ -4156,7 +4156,7 @@ export function MenuBackButton({
 }: MenuBackButtonProps) {
   const defaultStyle: React.CSSProperties = {
     width: "100%",
-    maxWidth: "58vmin",
+    maxWidth: "580px",
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-start",
@@ -4361,7 +4361,7 @@ export function SaveSelectScreen({
 
       <div
         className="flex-col"
-        style={{ gap: "16px", width: "100%", maxWidth: "64vmin", marginTop: "16px", paddingBottom: "10px" }}
+        style={{ gap: "16px", width: "100%", maxWidth: "580px", marginTop: "16px", paddingBottom: "10px" }}
       >
         <div className="flex-row" style={{ gap: "16px", justifyContent: "center", width: "100%" }}>
           <MenuButton
@@ -4472,8 +4472,8 @@ function GithubIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="18"
-      height="18"
+      width="16"
+      height="16"
       stroke="currentColor"
       strokeWidth="2.5"
       fill="none"
@@ -4548,7 +4548,7 @@ export function SourceViewFooter({
               justifyContent: "center",
             }}
           >
-            <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+            <Download size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           </button>
         </div>
 
@@ -4566,7 +4566,7 @@ export function SourceViewFooter({
               justifyContent: "center",
             }}
           >
-            <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+            <ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           </button>
         </div>
       </div>
@@ -4581,42 +4581,43 @@ export function SourceViewFooter({
         flexDirection: "row",
         gap: "16px",
         width: "100%",
-        height: "8.5vmin",
+        height: "50px",
         boxSizing: "border-box",
         marginTop: "12px",
         flexShrink: 0,
       }}
     >
       <MenuButton
+        variant="led"
         isFocused={activeIndex === visibleNodesLength}
         onFocused={() => setActiveIndex(visibleNodesLength)}
         onClick={() => window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank")}
         leftIcon={<GithubIcon />}
         mainLabel="GITHUB"
-        subLabel="OPEN SOURCE"
         showArrow={false}
-        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box", justifyContent: "center" }}
       />
 
       <MenuButton
+        variant="led"
         isFocused={activeIndex === visibleNodesLength + 1}
         onFocused={() => setActiveIndex(visibleNodesLength + 1)}
         onClick={handleDownload}
-        leftIcon={<Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
-        mainLabel="DOWNLOAD .TXT"
-        subLabel="SINGLE FILE FOR LLM CHAT"
+        leftIcon={<Download size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+        mainLabel="DOWNLOAD CODE"
         showArrow={false}
-        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box", justifyContent: "center" }}
       />
 
       <MenuButton
+        variant="led"
         isFocused={activeIndex === visibleNodesLength + 2}
         onFocused={() => setActiveIndex(visibleNodesLength + 2)}
         onClick={onBack}
-        leftIcon={<ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
-        mainLabel="BACK"
+        leftIcon={<ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+        mainLabel="BACK TO MENU"
         showArrow={false}
-        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box", justifyContent: "center" }}
       />
     </div>
   );
@@ -4625,7 +4626,7 @@ export function SourceViewFooter({
   display: flex;
   gap: 16px;
   flex-grow: 1;
-  height: 0;
+  height: 100%;
   min-height: 0;
   width: 100%;
   box-sizing: border-box;
@@ -4634,6 +4635,7 @@ export function SourceViewFooter({
 
 .directory-tree-pane {
   width: 24%;
+  height: 100%;
   overflow-y: auto;
   border-radius: 12px;
   padding: 12px;
@@ -4645,6 +4647,7 @@ export function SourceViewFooter({
 
 .code-viewer-pane {
   width: 76%;
+  height: 100%;
   overflow-y: auto;
   border-radius: 12px;
   padding: 16px;
@@ -5080,10 +5083,8 @@ export function TitleScreen({
 }: TitleScreenProps) {
   return (
     <MenuContainer hasGridOverlay>
-      <div className="title-screen-header">
-        <div className="system-tag">WELCOME TO THE GAUNTLET</div>
-        <MenuHeader title="BOX BATTLE" subtitle="RETRO ACTION GAME" />
-      </div>
+      <div className="system-tag">WELCOME TO THE GAUNTLET</div>
+      <MenuHeader title="BOX BATTLE" subtitle="RETRO ACTION GAME" />
 
       <div className="title-screen-center">
         <div className="btn-container-overhauled">
@@ -5103,7 +5104,7 @@ export function TitleScreen({
             playHoverTick={playHoverTick}
             onClick={onSettings}
             leftIcon={<Sliders size={18} strokeWidth={2} />}
-            mainLabel="OPTIONS"
+            mainLabel="SETTINGS"
             subLabel="ADJUST SOUNDS AND CONTROLS"
           />
 
@@ -5126,15 +5127,6 @@ export function TitleScreen({
             mainLabel="SOURCE CODE"
             subLabel="BROWSE CABINET ENGINE FILE TREE"
           />
-        </div>
-      </div>
-
-      <div className="title-screen-footer">
-        <div className="footer-deco-line" />
-        <div className="footer-status-bar">
-          <span>CONTROL METHOD: KEYBOARD</span>
-          <span className="footer-center-prompt">NAVIGATE: ARROWS / WASD • SELECT: ENTER / SPACE</span>
-          <span>SAVES: 3 AVAILABLE</span>
         </div>
       </div>
     </MenuContainer>
@@ -11675,7 +11667,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         reloadSaveSlots();
         navTo("SAVE_SELECT");
       } else if (menuIndex === 1) {
-        navTo("OPTIONS");
+        navTo("SETTINGS");
       } else if (menuIndex === 2) {
         navTo("CREDITS");
       } else if (menuIndex === 3) {
@@ -11726,7 +11718,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       navTo("TITLE");
     },
   },
-  OPTIONS: {
+  SETTINGS: {
     getMaxIndex: () => 2,
     onSelect: ({ menuIndex, navTo, setMenuIndex }) => {
       if (menuIndex === 0) {
@@ -11749,7 +11741,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       if (menuIndex === 3) {
         resetSettings?.();
       } else if (menuIndex === 4) {
-        navTo("OPTIONS");
+        navTo("SETTINGS");
       }
     },
     onHorizontal: (direction, { menuIndex, audio, handleVolumeChange }) => {
@@ -11766,7 +11758,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       }
     },
     onBack: ({ navTo }) => {
-      navTo("OPTIONS");
+      navTo("SETTINGS");
     },
   },
   CONTROLS: {
@@ -11777,7 +11769,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget, reloadSaveSlots }) => {
       const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
       if (isTouch) {
-        navTo("OPTIONS");
+        navTo("SETTINGS");
         setMenuIndex(1);
         return;
       }
@@ -11794,7 +11786,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         soundSynth.playHitConfirm();
         reloadSaveSlots();
       } else if (menuIndex === 10) {
-        navTo("OPTIONS");
+        navTo("SETTINGS");
         setMenuIndex(1);
       } else {
         const actionIndex = menuIndex - 3;
@@ -11804,7 +11796,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       }
     },
     onBack: ({ navTo }) => {
-      navTo("OPTIONS");
+      navTo("SETTINGS");
     },
   },
   CREDITS: {
@@ -19585,7 +19577,7 @@ import { UNITS } from "@/core/Units";
 export type ScreenState =
   | "TITLE"
   | "SAVE_SELECT"
-  | "OPTIONS"
+  | "SETTINGS"
   | "SOUND"
   | "CONTROLS"
   | "CREDITS"
@@ -19596,7 +19588,7 @@ export type GameResultState = "PLAYING" | "GAMEOVER" | "VICTORY";
 export const SCREEN_DEPTHS: Record<ScreenState, number> = {
   TITLE: 0,
   SAVE_SELECT: 1,
-  OPTIONS: 1,
+  SETTINGS: 1,
   CREDITS: 1,
   SOURCE_VIEW: 1,
   SOUND: 2,
@@ -19839,7 +19831,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   box-sizing: border-box;
   height: 100%;
   width: 100%;
-  padding: 4px 18px;
+  padding: 44px 24px;
   position: relative;
 }
 
@@ -19860,19 +19852,22 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 2px;
+  padding-top: 14px;
 }
 
 .system-tag {
-  font-size: 10px;
+  position: absolute;
+  top: 14px;
+  font-size: 11px;
   color: #4a5568;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   font-weight: bold;
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 4px 10px;
-  border-radius: 3px;
+  padding: 6px 14px;
+  border-radius: 4px;
   background: rgba(0, 0, 0, 0.2);
+  z-index: 10;
 }
 
 .title-banner-overhauled {
@@ -19882,9 +19877,9 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 }
 
 .title-banner-overhauled h1 {
-  font-size: 26px;
+  font-size: 46px;
   margin: 0;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.25em;
   font-weight: 900;
   color: #ffffff;
   text-shadow:
@@ -19899,7 +19894,8 @@ export const useTutorialStore = create<TutorialState>((set) => ({
   justify-content: center;
   gap: 12px;
   width: 100%;
-  margin-top: 2px;
+  margin-top: 8px;
+  margin-bottom: 24px;
 }
 
 .subtitle-line {
@@ -19910,7 +19906,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 }
 
 .subtitle-text {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--signal-green);
   margin: 0;
   letter-spacing: 0.35em;
@@ -19929,10 +19925,10 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 
 .btn-container-overhauled {
   width: 100%;
-  max-width: 440px;
+  max-width: 580px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
 }
 
 .neo-btn-large {
@@ -19945,8 +19941,8 @@ export const useTutorialStore = create<TutorialState>((set) => ({
     6px 6px 15px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 16px 24px;
-  border-radius: 10px;
+  padding: 24px 36px;
+  border-radius: 14px;
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
@@ -19997,7 +19993,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 }
 
 .btn-main-label {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 800;
   color: #a0aec0;
   letter-spacing: 0.18em;
@@ -20013,7 +20009,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 }
 
 .btn-sub-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   color: #4a5568;
   letter-spacing: 0.12em;
@@ -20069,9 +20065,7 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 }
 
 .title-screen-footer {
-  z-index: 2;
-  width: 100%;
-  margin-top: 8px;
+  display: none; /* Safely keep stylesheet bindings backward-compatible */
 }
 
 .footer-deco-line {
@@ -20084,14 +20078,14 @@ export const useTutorialStore = create<TutorialState>((set) => ({
     transparent
   );
   width: 100%;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .footer-status-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 8px;
+  font-size: 10px;
   color: #4a5568;
   letter-spacing: 0.15em;
   padding: 0 12px;
@@ -20350,4 +20344,4 @@ export const useTutorialStore = create<TutorialState>((set) => ({
 .led-elastic-spring {
   animation: led-elastic-pop 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
 }
-`};function v({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,g.useEffect)(()=>{let p=p=>{if(e.length===0)return;if(s&&c===`CODE`&&(m(p)||p.code===`ArrowLeft`||p.code===`KeyA`)){p.preventDefault(),d.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(p.code===`ArrowDown`||p.code===`KeyS`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(p.code===`ArrowUp`||p.code===`KeyW`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(p.code===`ArrowRight`||p.code===`KeyD`)p.preventDefault(),d.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(p.code===`ArrowLeft`||p.code===`KeyA`)if(p.preventDefault(),d.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else f(p)?(p.preventDefault(),t<e.length?(d.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(d.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(d.playErrorTick(),o())):m(p)&&(p.preventDefault(),t<e.length?h.isDir&&r[h.path]?(d.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(d.playSelectTick(),n(e.length+2)):t===e.length+2?(d.playErrorTick(),o()):(d.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,p),()=>window.removeEventListener(`keydown`,p)},[e,t,r,o,s,c,n,i,a,l,u])}var y=u();function b(){return(0,y.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`18`,height:`18`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,y.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function x({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r,setActiveIndex:i}){let s=()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,y.jsx)(b,{})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:s,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`,display:`flex`,alignItems:`center`,justifyContent:`center`},children:(0,y.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`,display:`flex`,alignItems:`center`,justifyContent:`center`},children:(0,y.jsx)(o,{size:18,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,height:`8.5vmin`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(h,{isFocused:n===r,onFocused:()=>i(r),onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),leftIcon:(0,y.jsx)(b,{}),mainLabel:`GITHUB`,subLabel:`OPEN SOURCE`,showArrow:!1,style:{flex:1,height:`100%`,boxSizing:`border-box`}}),(0,y.jsx)(h,{isFocused:n===r+1,onFocused:()=>i(r+1),onClick:s,leftIcon:(0,y.jsx)(a,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`DOWNLOAD .TXT`,subLabel:`SINGLE FILE FOR LLM CHAT`,showArrow:!1,style:{flex:1,height:`100%`,boxSizing:`border-box`}}),(0,y.jsx)(h,{isFocused:n===r+2,onFocused:()=>i(r+2),onClick:e,leftIcon:(0,y.jsx)(o,{size:18,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`BACK`,showArrow:!1,style:{flex:1,height:`100%`,boxSizing:`border-box`}})]})}function S(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function C(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>C(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>C(e,t,n)),n)}function w(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function T({onBack:e}){let[n]=(0,g.useState)(_),[a,o]=(0,g.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,f]=(0,g.useState)((0,g.useMemo)(()=>Object.keys(_).sort(),[])[0]||``),[m,h]=(0,g.useState)(!1),[b,T]=(0,g.useState)(`TOC`),E=(0,g.useRef)(null),D=(0,g.useMemo)(()=>S(Object.keys(_)),[]),O=(0,g.useMemo)(()=>D?C(D,a):[],[D,a]),[k,A]=(0,g.useState)(0);return v({visibleNodes:O,activeIndex:k,setActiveIndex:A,expandedDirs:a,setExpandedDirs:o,setSelectedFile:f,onBack:e,isMobile:m,mobileView:b,setMobileView:T,handleDownload:()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,g.useEffect)(()=>{if(typeof window<`u`){let e=()=>{h(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,g.useEffect)(()=>{if(k<O.length){let e=E.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[k,O.length]),(0,y.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 12px`},children:[(0,y.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,y.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE BROWSER`}),(0,y.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:m?b===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,y.jsxs)(`div`,{className:`source-view-workspace`,children:[(!m||b===`TOC`)&&(0,y.jsx)(`div`,{ref:E,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`24%`,height:m?`100%`:``},children:O.map((e,t)=>{let n=t===k,r=e.isDir&&!!a[e.path],p=!e.isDir&&e.path===u;return(0,y.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{d.playSelectTick(),A(t),e.isDir?o(t=>({...t,[e.path]:!t[e.path]})):(f(e.path),m&&T(`CODE`))},style:{paddingTop:m?`14px`:`6px`,paddingBottom:m?`14px`:`6px`,paddingRight:m?`16px`:`10px`,paddingLeft:`${e.depth*(m?22:16)+(m?16:10)}px`,borderRadius:`6px`,fontSize:m?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:p?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:p?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,y.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,y.jsx)(s,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,y.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,y.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!m||b===`CODE`)&&(0,y.jsxs)(`div`,{onMouseOver:()=>p.getState().setCursorType(`text`),onMouseLeave:()=>p.getState().setCursorType(`default`),className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`76%`,height:m?`100%`:``,display:`flex`,flexDirection:`column`},children:[m&&(0,y.jsx)(`button`,{onClick:()=>{d.playSelectTick(),T(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,y.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,y.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:m?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,y.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,y.jsx)(t,{language:w(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:m?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,y.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,y.jsx)(x,{onBack:e,isMobile:m,activeIndex:k,visibleNodesLength:O.length,setActiveIndex:A})]})}export{T as SourceViewScreen};
+`};function v({visibleNodes:e,activeIndex:t,setActiveIndex:n,expandedDirs:r,setExpandedDirs:i,setSelectedFile:a,onBack:o,isMobile:s,mobileView:c,setMobileView:l,handleDownload:u}){(0,g.useEffect)(()=>{let p=p=>{if(e.length===0)return;if(s&&c===`CODE`&&(m(p)||p.code===`ArrowLeft`||p.code===`KeyA`)){p.preventDefault(),d.playSelectTick(),l(`TOC`);return}let h=e[t<e.length?t:0];if(p.code===`ArrowDown`||p.code===`KeyS`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length+2?0:t+1:t===e.length-1?e.length:t+1);else if(p.code===`ArrowUp`||p.code===`KeyW`)p.preventDefault(),d.playSelectTick(),n(t=>t>=e.length?t===e.length?e.length-1:t-1:t===0?e.length+2:t-1);else if(p.code===`ArrowRight`||p.code===`KeyD`)p.preventDefault(),d.playSelectTick(),t<e.length?h.isDir&&!r[h.path]&&i(e=>({...e,[h.path]:!0})):n(t=>t===e.length+2?0:t+1);else if(p.code===`ArrowLeft`||p.code===`KeyA`)if(p.preventDefault(),d.playSelectTick(),t<e.length)if(h.isDir&&r[h.path])i(e=>({...e,[h.path]:!1}));else{let t=h.path.split(`/`);if(t.length>1){let r=t.slice(0,-1).join(`/`),i=e.findIndex(e=>e.isDir&&e.path===r);if(i!==-1){n(i);return}}n(e.length+2)}else n(t=>t===e.length?e.length-1:t-1);else f(p)?(p.preventDefault(),t<e.length?(d.playHitConfirm(),h.isDir?i(e=>({...e,[h.path]:!e[h.path]})):(a(h.path),s&&l(`CODE`))):t===e.length?(d.playHitConfirm(),window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`)):t===e.length+1?u():t===e.length+2&&(d.playErrorTick(),o())):m(p)&&(p.preventDefault(),t<e.length?h.isDir&&r[h.path]?(d.playErrorTick(),i(e=>({...e,[h.path]:!1}))):(d.playSelectTick(),n(e.length+2)):t===e.length+2?(d.playErrorTick(),o()):(d.playSelectTick(),n(e.length+2)))};return window.addEventListener(`keydown`,p),()=>window.removeEventListener(`keydown`,p)},[e,t,r,o,s,c,n,i,a,l,u])}var y=u();function b(){return(0,y.jsx)(`svg`,{viewBox:`0 0 24 24`,width:`16`,height:`16`,stroke:`currentColor`,strokeWidth:`2.5`,fill:`none`,strokeLinecap:`round`,strokeLinejoin:`round`,children:(0,y.jsx)(`path`,{d:`M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22`})})}function x({onBack:e,isMobile:t,activeIndex:n,visibleNodesLength:r,setActiveIndex:i}){let s=()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)};return t?(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`8px`,width:`100%`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,display:`flex`,alignItems:`center`,justifyContent:`center`,boxSizing:`border-box`},children:(0,y.jsx)(b,{})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:s,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`,display:`flex`,alignItems:`center`,justifyContent:`center`},children:(0,y.jsx)(a,{size:16,strokeWidth:2.5,style:{flexShrink:0}})})}),(0,y.jsx)(`div`,{style:{flex:1,display:`flex`},children:(0,y.jsx)(`button`,{onClick:e,className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,boxSizing:`border-box`,display:`flex`,alignItems:`center`,justifyContent:`center`},children:(0,y.jsx)(o,{size:16,strokeWidth:2.5,style:{flexShrink:0}})})})]}):(0,y.jsxs)(`div`,{className:`source-view-footer`,style:{display:`flex`,flexDirection:`row`,gap:`16px`,width:`100%`,height:`50px`,boxSizing:`border-box`,marginTop:`12px`,flexShrink:0},children:[(0,y.jsx)(h,{variant:`led`,isFocused:n===r,onFocused:()=>i(r),onClick:()=>window.open(`https://github.com/stevencasteel/BOX-BATTLE`,`_blank`),leftIcon:(0,y.jsx)(b,{}),mainLabel:`GITHUB`,showArrow:!1,style:{flex:1,height:`100%`,boxSizing:`border-box`,justifyContent:`center`}}),(0,y.jsx)(h,{variant:`led`,isFocused:n===r+1,onFocused:()=>i(r+1),onClick:s,leftIcon:(0,y.jsx)(a,{size:16,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`DOWNLOAD CODE`,showArrow:!1,style:{flex:1,height:`100%`,boxSizing:`border-box`,justifyContent:`center`}}),(0,y.jsx)(h,{variant:`led`,isFocused:n===r+2,onFocused:()=>i(r+2),onClick:e,leftIcon:(0,y.jsx)(o,{size:16,strokeWidth:2.5,style:{flexShrink:0}}),mainLabel:`BACK TO MENU`,showArrow:!1,style:{flex:1,height:`100%`,boxSizing:`border-box`,justifyContent:`center`}})]})}function S(e){let t={name:`root`,path:``,isDir:!0,children:[],depth:-1};e.forEach(e=>{let n=e.split(`/`),r=t;n.forEach((t,i)=>{let a=i<n.length-1,o=n.slice(0,i+1).join(`/`),s=r.children.find(e=>e.name===t);s||(s={name:t,path:a?o:e,isDir:a,children:[],depth:i},r.children.push(s)),r=s})});let n=e=>{e.children.sort((e,t)=>e.isDir&&!t.isDir?-1:!e.isDir&&t.isDir?1:e.name.localeCompare(t.name)),e.children.forEach(n)};return n(t),t}function C(e,t,n=[]){return e.depth===-1?(e.children.forEach(e=>C(e,t,n)),n):(n.push(e),e.isDir&&t[e.path]&&e.children.forEach(e=>C(e,t,n)),n)}function w(e){let t=e.split(`.`).pop()||``;return t===`tsx`?`tsx`:t===`ts`?`typescript`:t===`js`||t===`jsx`?`javascript`:t===`css`?`css`:t===`json`?`json`:t===`md`?`markdown`:`text`}function T({onBack:e}){let[n]=(0,g.useState)(_),[a,o]=(0,g.useState)({src:!0,"src/components":!0,"src/core":!0}),[u,f]=(0,g.useState)((0,g.useMemo)(()=>Object.keys(_).sort(),[])[0]||``),[m,h]=(0,g.useState)(!1),[b,T]=(0,g.useState)(`TOC`),E=(0,g.useRef)(null),D=(0,g.useMemo)(()=>S(Object.keys(_)),[]),O=(0,g.useMemo)(()=>D?C(D,a):[],[D,a]),[k,A]=(0,g.useState)(0);return v({visibleNodes:O,activeIndex:k,setActiveIndex:A,expandedDirs:a,setExpandedDirs:o,setSelectedFile:f,onBack:e,isMobile:m,mobileView:b,setMobileView:T,handleDownload:()=>{d.playHitConfirm();let e=document.createElement(`a`);e.href=`./boxbattle_source_code.txt`,e.download=`boxbattle_source_code.txt`,document.body.appendChild(e),e.click(),document.body.removeChild(e)}}),(0,g.useEffect)(()=>{if(typeof window<`u`){let e=()=>{h(window.innerWidth<=800)};return e(),window.addEventListener(`resize`,e),()=>window.removeEventListener(`resize`,e)}},[]),(0,g.useEffect)(()=>{if(k<O.length){let e=E.current?.querySelector(`.file-item-active`);e&&e.scrollIntoView({block:`nearest`,behavior:`smooth`})}},[k,O.length]),(0,y.jsxs)(`div`,{className:`flex-col h-full w-full`,style:{justifyContent:`space-between`,boxSizing:`border-box`,padding:`16px 12px`},children:[(0,y.jsxs)(`div`,{className:`title-banner`,style:{marginTop:`0`,paddingTop:`0`},children:[(0,y.jsx)(`h2`,{style:{fontSize:`1.8rem`,margin:0,fontWeight:`bold`,textTransform:`uppercase`,letterSpacing:`0.15em`,color:`#fff`},children:`SOURCE BROWSER`}),(0,y.jsx)(`p`,{style:{color:`#718096`,margin:`4px 0 0`,fontSize:`11px`,letterSpacing:`0.15em`},children:m?b===`TOC`?`TAP FILE TO VIEW  •  DRAG TO SCROLL`:`SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE`:`UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT`})]}),(0,y.jsxs)(`div`,{className:`source-view-workspace`,children:[(!m||b===`TOC`)&&(0,y.jsx)(`div`,{ref:E,className:`directory-tree-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`24%`,height:m?`100%`:``},children:O.map((e,t)=>{let n=t===k,r=e.isDir&&!!a[e.path],p=!e.isDir&&e.path===u;return(0,y.jsxs)(`div`,{className:n?`file-item-active`:``,onClick:()=>{d.playSelectTick(),A(t),e.isDir?o(t=>({...t,[e.path]:!t[e.path]})):(f(e.path),m&&T(`CODE`))},style:{paddingTop:m?`14px`:`6px`,paddingBottom:m?`14px`:`6px`,paddingRight:m?`16px`:`10px`,paddingLeft:`${e.depth*(m?22:16)+(m?16:10)}px`,borderRadius:`6px`,fontSize:m?`13px`:`11px`,fontFamily:`monospace`,cursor:`pointer`,display:`flex`,alignItems:`center`,gap:`8px`,color:n?`var(--signal-green)`:p?`#ffffff`:e.isDir?`#718096`:`#4a5568`,background:n?`rgba(34, 197, 94, 0.08)`:p?`rgba(255, 255, 255, 0.03)`:`transparent`,border:n?`1px solid rgba(34, 197, 94, 0.25)`:`1px solid transparent`,textShadow:n?`0 0 6px var(--signal-green-glow)`:`none`,wordBreak:`break-all`,transition:`all 0.12s ease`,textAlign:`left`},children:[(0,y.jsx)(`span`,{style:{minWidth:`12px`,fontSize:`10px`},children:e.isDir?r?`▼`:`▶`:` `}),e.isDir?r?(0,y.jsx)(s,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(c,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):e.name.endsWith(`.ts`)||e.name.endsWith(`.tsx`)||e.name.endsWith(`.js`)?(0,y.jsx)(l,{size:16,strokeWidth:1.5,style:{flexShrink:0}}):(0,y.jsx)(i,{size:16,strokeWidth:1.5,style:{flexShrink:0}}),(0,y.jsx)(`span`,{style:{fontWeight:e.isDir?`bold`:`normal`},children:e.name})]},e.path+`-`+t)})}),(!m||b===`CODE`)&&(0,y.jsxs)(`div`,{onMouseOver:()=>p.getState().setCursorType(`text`),onMouseLeave:()=>p.getState().setCursorType(`default`),className:`code-viewer-pane neo-pressed`,style:{WebkitOverflowScrolling:`touch`,width:m?`100%`:`76%`,height:m?`100%`:``,display:`flex`,flexDirection:`column`},children:[m&&(0,y.jsx)(`button`,{onClick:()=>{d.playSelectTick(),T(`TOC`)},className:`neo-btn`,style:{width:`100%`,padding:`12px`,fontSize:`12px`,marginBottom:`12px`,borderColor:`var(--signal-green)`,color:`var(--signal-green)`,flexShrink:0,borderRadius:`8px`,display:`flex`,alignItems:`center`,justifyContent:`center`,gap:`8px`},children:`📁 BACK TO DIRECTORY`}),u?(0,y.jsxs)(`div`,{style:{textAlign:`left`,fontSize:`11px`,fontFamily:`monospace`,display:`flex`,flexDirection:`column`,height:`100%`,overflow:`hidden`},children:[(0,y.jsxs)(`div`,{style:{color:`hsl(142, 70%, 75%)`,marginBottom:`14px`,fontFamily:`monospace`,flexShrink:0,fontSize:m?`10px`:`11px`,wordBreak:`break-all`},children:[`// FILE: `,u]}),(0,y.jsx)(`div`,{style:{flexGrow:1,overflow:`auto`},children:(0,y.jsx)(t,{language:w(u),style:r,customStyle:{margin:0,padding:0,background:`transparent`,fontSize:m?`10px`:`11px`,lineHeight:`1.5`},children:n[u]||``})})]}):(0,y.jsx)(`span`,{style:{color:`#4a5568`,fontSize:`11px`},children:`Select a file in the directory tree to view content.`})]})]}),(0,y.jsx)(x,{onBack:e,isMobile:m,activeIndex:k,visibleNodesLength:O.length,setActiveIndex:A})]})}export{T as SourceViewScreen};
