@@ -146,7 +146,7 @@ export function SourceViewFooter({
         onFocused={() => setActiveIndex(visibleNodesLength + 1)}
         onClick={handleDownload}
         leftIcon={<Download size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
-        mainLabel="DOWNLOAD CODE"
+        mainLabel="DOWNLOAD"
         showArrow={false}
         style={{ flex: 1, height: "100%", boxSizing: "border-box", justifyContent: "center" }}
       />
@@ -157,7 +157,7 @@ export function SourceViewFooter({
         onFocused={() => setActiveIndex(visibleNodesLength + 2)}
         onClick={onBack}
         leftIcon={<ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
-        mainLabel="BACK TO MENU"
+        mainLabel="BACK"
         showArrow={false}
         style={{ flex: 1, height: "100%", boxSizing: "border-box", justifyContent: "center" }}
       />

@@ -162,27 +162,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
       className="flex-col h-full w-full"
       style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "0 12px" }}
     >
-      <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
-        <h2
-          style={{
-            fontSize: "1.8rem",
-            margin: 0,
-            fontWeight: "bold",
-            textTransform: "uppercase",
-            letterSpacing: "0.15em",
-            color: "#fff",
-          }}
-        >
-          SOURCE CODE
-        </h2>
-        <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
-          {isMobile
-            ? mobileView === "TOC"
-              ? "TAP FILE TO VIEW  •  DRAG TO SCROLL"
-              : "SWIPE TO SCROLL  •  TAP BUTTON TO EXIT CODE"
-            : "UP/DOWN/LEFT/RIGHT: NAVIGATE  •  JUMP: ENTER/OPEN  •  ATTACK/DASH: EXIT"}
-        </p>
-      </div>
+
 
       <div className="source-view-workspace">
         {(!isMobile || mobileView === "TOC") && (

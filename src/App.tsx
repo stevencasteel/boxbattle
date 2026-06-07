@@ -223,21 +223,31 @@ export default function App() {
           className={`cabinet-outer ${isTouchDevice ? "cabinet-mobile" : ""}`}
           style={{ width: "100%", height: "100%" }}
         >
-          <HudPanel
-            key={`${currentScreen}-${retryCount}`}
-            isTouchDevice={isTouchDevice}
-            isPlayingScreen={isPlayingScreen}
-          />
+          {currentScreen !== "SOURCE_VIEW" && (
+            <HudPanel
+              key={`${currentScreen}-${retryCount}`}
+              isTouchDevice={isTouchDevice}
+              isPlayingScreen={isPlayingScreen}
+            />
+          )}
 
           <div
-            className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"} ${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} ${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""} ${isTouchDevice ? "viewport-mobile" : ""}`}
+            className={`game-viewport-container ${isPlayingScreen ? "viewport-playing" : "viewport-menu"} ${currentScreen === "SOURCE_VIEW" ? "viewport-sourceview" : ""} ${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} ${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""} ${isTouchDevice ? "viewport-mobile" : ""}`}
             ref={viewportRef}
           >
             <div style={{ position: "relative", flexGrow: 1, display: "flex", minHeight: 0 }}>
               <GameArena playHoverTick={playHoverTick} />
 
               {!isPlayingScreen && (
-                <div className="screen-inner" style={{ position: "absolute", inset: 0, zIndex: 10 }}>
+                <div 
+                  className="screen-inner" 
+                  style={{ 
+                    position: "absolute", 
+                    inset: 0, 
+                    zIndex: 10,
+                    ...(currentScreen === "SOURCE_VIEW" ? { padding: "16px 16px 12px 16px" } : {})
+                  }}
+                >
                   {currentScreen === "TITLE" && (
                     <TitleScreen
                       menuIndex={menuIndex}
@@ -371,7 +381,9 @@ export default function App() {
             </div>
           </div>
 
-          <DialogueConsole playerDialogue={playerDialogue} bossDialogue={bossDialogue} isTouchDevice={isTouchDevice} />
+          {currentScreen !== "SOURCE_VIEW" && (
+            <DialogueConsole playerDialogue={playerDialogue} bossDialogue={bossDialogue} isTouchDevice={isTouchDevice} />
+          )}
 
           {isPlayingScreen && isTouchDevice && <TouchOverlay />}
         </div>

@@ -583,3 +583,11 @@
     transform: translate(1.5px, 1.5px) rotate(1deg);
   }
 }
+
+
+.game-viewport-container.viewport-sourceview {
+  aspect-ratio: auto !important;
+  flex-grow: 1 !important;
+  height: 100% !important;
+  max-height: none !important;
+}
