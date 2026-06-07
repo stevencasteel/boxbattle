@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/7/2026, 1:55:43 AM
+ [SYSTEM] Generated: 6/7/2026, 2:15:02 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -3871,7 +3871,7 @@ import { motion } from "framer-motion";
 import { DialogueState } from "@/hooks/useGameDialogue";
 import { useSessionStore } from "@/store/useGameStore";
 import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
-import { Software3DRenderer } from "@/core/visuals/Software3DRenderer";
+
 
 interface DialogueConsoleProps { playerDialogue: DialogueState; bossDialogue: DialogueState; isTouchDevice: boolean; }
 
@@ -3896,18 +3896,7 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
                 ctx.fillStyle = baseColor;
                 ctx.fillRect(0, 0, w, h);
 
-                const strokeColor = "rgba(255, 255, 255, 0.45)";
-                const patternRadius = Math.min(w, h) / 2;
                 
-                // Flat projection for UI panel
-                const projectFlat = (u: number, v: number) => {
-                    return {
-                        x: w / 2 + u * patternRadius * 2.0,
-                        y: h / 2 + v * patternRadius * 2.0
-                    };
-                };
-                
-                Software3DRenderer.drawSacredGeometry(ctx, stageIdx, t, strokeColor, projectFlat);
             }
             frameId = requestAnimationFrame(render);
         };
@@ -10202,6 +10191,7 @@ export interface IAudioManager {
   playBossTelegraph(): void;
   playBossLunge(): void;
   playBossSwipe(): void;
+  playBossPhaseShift(x?: number): void;
   playMenuConfirm(): void;
   playMenuBack(): void;
   playSelectTick(): void;
@@ -14096,30 +14086,31 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     subtitle: "STAGE 2 - VERTICAL COMPRESSION",
     midBossId: "scarlet-lock",
     midBossDisplayName: "SCARLET LOCK",
-    midBossMaxHp: 48,
+    midBossMaxHp: 70,
     solids: [
-      // Narrow walls compressing horizontal gameplay space
       { x: 0, y: 0, width: 280, height: 1000 },
       { x: 720, y: 0, width: 280, height: 1000 },
       { x: 280, y: 920, width: 440, height: 80 },
-      { x: 280, y: 0, width: 440, height: 280 }, // Lowered dropped ceiling
-      { x: 280, y: 680, width: 120, height: 32 },
-      { x: 600, y: 480, width: 120, height: 32 },
+      { x: 280, y: 0, width: 440, height: 280 },
+      { x: 400, y: 820, width: 200, height: 32 },
+      { x: 280, y: 600, width: 140, height: 32 },
+      { x: 580, y: 440, width: 140, height: 32 },
     ],
     onewayPlatforms: [
-      { x: 400, y: 580, width: 200, height: 16 },
-      { x: 400, y: 360, width: 200, height: 16 },
+      { x: 420, y: 720, width: 160, height: 16 },
+      { x: 420, y: 520, width: 160, height: 16 },
+      { x: 420, y: 320, width: 160, height: 16 },
     ],
     hazards: [
-      { x: 280, y: 880, width: 80, height: 40 },
-      { x: 640, y: 880, width: 80, height: 40 },
+      { x: 280, y: 880, width: 120, height: 40 },
+      { x: 600, y: 880, width: 120, height: 40 },
     ],
     spawners: [],
     spawnAnchors: [
-      { id: "redoubt-floor", x: 500, y: 840, tags: ["low", "ground"] },
-      { id: "redoubt-mid-left", x: 340, y: 620, tags: ["mid", "left", "perch"] },
-      { id: "redoubt-mid-right", x: 660, y: 420, tags: ["mid", "right", "perch"] },
-      { id: "redoubt-air-center", x: 500, y: 440, tags: ["air", "center"] },
+      { id: "redoubt-floor", x: 500, y: 740, tags: ["low", "ground"] },
+      { id: "redoubt-mid-left", x: 340, y: 550, tags: ["mid", "left", "perch"] },
+      { id: "redoubt-mid-right", x: 660, y: 390, tags: ["mid", "right", "perch"] },
+      { id: "redoubt-air-center", x: 500, y: 300, tags: ["air", "center"] },
     ],
     encounterWaves: [
       {
@@ -14155,12 +14146,12 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         ]
       }
     ],
-    playerStart: { x: 360, y: 800 },
+    playerStart: { x: 360, y: 740 },
     visualShapes: [
       { type: "polygon", points: [{x:280,y:200},{x:320,y:240},{x:290,y:300},{x:280,y:280}], colorRole: "arena-infection", infectionSeams: true },
       { type: "polygon", points: [{x:720,y:600},{x:680,y:640},{x:710,y:700},{x:720,y:680}], colorRole: "arena-infection", infectionSeams: true }
     ],
-    bossStart: { x: 640, y: 800 },
+    bossStart: { x: 640, y: 740 },
   },
   {
     id: "stage-3",
@@ -14168,32 +14159,30 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     subtitle: "STAGE 3 - FLOORLESS HAZARDS",
     midBossId: "carminal-orbit",
     midBossDisplayName: "CARMINAL ORBIT",
-    midBossMaxHp: 58,
+    midBossMaxHp: 85,
     solids: [
       { x: 0, y: 920, width: 40, height: 80 },
       { x: 960, y: 920, width: 40, height: 80 },
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 380, y: 480, width: 240, height: 32 },
+      { x: 400, y: 500, width: 200, height: 32 },
     ],
     onewayPlatforms: [
-      // Tiny orbiting ledges
-      { x: 120, y: 640, width: 160, height: 16 },
-      { x: 720, y: 640, width: 160, height: 16 },
-      { x: 120, y: 320, width: 160, height: 16 },
-      { x: 720, y: 320, width: 160, height: 16 },
+      { x: 160, y: 640, width: 140, height: 16 },
+      { x: 700, y: 640, width: 140, height: 16 },
+      { x: 160, y: 340, width: 140, height: 16 },
+      { x: 700, y: 340, width: 140, height: 16 },
     ],
-    // Spike bed covering the bottom floor completely
     hazards: [
       { x: 40, y: 920, width: 920, height: 80 },
     ],
     spawners: [],
     spawnAnchors: [
-      { id: "orbit-center-block", x: 500, y: 420, tags: ["mid", "center", "ground"] },
-      { id: "orbit-left-cat", x: 200, y: 580, tags: ["mid", "left", "perch"] },
-      { id: "orbit-right-cat", x: 800, y: 580, tags: ["mid", "right", "perch"] },
-      { id: "orbit-air-high", x: 500, y: 200, tags: ["air", "center"] },
+      { id: "orbit-center-block", x: 500, y: 440, tags: ["mid", "center", "ground"] },
+      { id: "orbit-left-cat", x: 230, y: 580, tags: ["mid", "left", "perch"] },
+      { id: "orbit-right-cat", x: 770, y: 580, tags: ["mid", "right", "perch"] },
+      { id: "orbit-air-high", x: 500, y: 220, tags: ["air", "center"] },
     ],
     encounterWaves: [
       {
@@ -14239,25 +14228,25 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     subtitle: "STAGE 4 - PATH OF PAIN MATRIX",
     midBossId: "vermilion-needle",
     midBossDisplayName: "VERMILION NEEDLE",
-    midBossMaxHp: 64,
+    midBossMaxHp: 90,
     solids: [
-      { x: 0, y: 920, width: 240, height: 80 },
-      { x: 760, y: 920, width: 240, height: 80 },
-      { x: 240, y: 960, width: 520, height: 40 },
+      { x: 0, y: 920, width: 220, height: 80 },
+      { x: 780, y: 920, width: 220, height: 80 },
+      { x: 220, y: 960, width: 560, height: 40 },
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 40, y: 400, width: 140, height: 32 },
-      { x: 820, y: 400, width: 140, height: 32 },
+      { x: 40, y: 360, width: 160, height: 32 },
+      { x: 800, y: 360, width: 160, height: 32 },
     ],
     onewayPlatforms: [],
-    hazards: [{ x: 240, y: 920, width: 520, height: 80 }],
+    hazards: [{ x: 220, y: 920, width: 560, height: 80 }],
     spawners: [],
     spawnAnchors: [
-      { id: "choir-left-solid", x: 110, y: 340, tags: ["high", "left", "perch"] },
-      { id: "choir-right-solid", x: 890, y: 340, tags: ["high", "right", "perch"] },
-      { id: "choir-mid-ledge-l", x: 330, y: 590, tags: ["mid", "left"] },
-      { id: "choir-mid-ledge-r", x: 670, y: 590, tags: ["mid", "right"] },
+      { id: "choir-left-solid", x: 120, y: 300, tags: ["high", "left", "perch"] },
+      { id: "choir-right-solid", x: 880, y: 300, tags: ["high", "right", "perch"] },
+      { id: "choir-mid-ledge-l", x: 340, y: 580, tags: ["mid", "left"] },
+      { id: "choir-mid-ledge-r", x: 660, y: 580, tags: ["mid", "right"] },
       { id: "choir-air-mid", x: 500, y: 280, tags: ["air", "center"] },
     ],
     encounterWaves: [
@@ -14297,14 +14286,14 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     playerStart: { x: 100, y: 800 },
     bossStart: { x: 900, y: 800 },
     dissolvePlatforms: [
-      { x: 240, y: 640, width: 140, height: 16 },
-      { x: 620, y: 640, width: 140, height: 16 },
+      { x: 280, y: 640, width: 120, height: 16 },
+      { x: 600, y: 640, width: 120, height: 16 },
     ],
     pogoPosts: [
       { x: 470, y: 720, width: 60, height: 32 },
     ],
     dashResetGates: [
-      { x: 480, y: 460, width: 40, height: 40 },
+      { x: 480, y: 440, width: 40, height: 40 },
     ]
   },
   {
@@ -14313,28 +14302,28 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     subtitle: "STAGE 5 - ORGANIC CYSTS",
     midBossId: "marrow-king",
     midBossDisplayName: "MARROW KING",
-    midBossMaxHp: 74,
+    midBossMaxHp: 95,
     solids: [
-      { x: 0, y: 920, width: 300, height: 80 },
-      { x: 700, y: 920, width: 300, height: 80 },
-      { x: 300, y: 960, width: 400, height: 40 },
+      { x: 0, y: 920, width: 260, height: 80 },
+      { x: 740, y: 920, width: 260, height: 80 },
+      { x: 260, y: 960, width: 480, height: 40 },
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 280, y: 580, width: 440, height: 32 },
+      { x: 280, y: 560, width: 440, height: 32 },
     ],
     onewayPlatforms: [
-      { x: 40, y: 380, width: 200, height: 16 },
-      { x: 760, y: 380, width: 200, height: 16 },
+      { x: 40, y: 360, width: 220, height: 16 },
+      { x: 740, y: 360, width: 220, height: 16 },
     ],
-    hazards: [{ x: 300, y: 920, width: 400, height: 80 }],
+    hazards: [{ x: 260, y: 920, width: 480, height: 80 }],
     spawners: [],
     spawnAnchors: [
-      { id: "marrow-high-left", x: 140, y: 320, tags: ["high", "left", "perch"] },
-      { id: "marrow-high-right", x: 860, y: 320, tags: ["high", "right", "perch"] },
-      { id: "marrow-center-growth", x: 500, y: 520, tags: ["mid", "center", "ground"] },
-      { id: "marrow-low-l", x: 160, y: 860, tags: ["low", "left", "ground"] },
-      { id: "marrow-low-r", x: 840, y: 860, tags: ["low", "right", "ground"] },
+      { id: "marrow-high-left", x: 150, y: 300, tags: ["high", "left", "perch"] },
+      { id: "marrow-high-right", x: 850, y: 300, tags: ["high", "right", "perch"] },
+      { id: "marrow-center-growth", x: 500, y: 500, tags: ["mid", "center", "ground"] },
+      { id: "marrow-low-l", x: 150, y: 860, tags: ["low", "left", "ground"] },
+      { id: "marrow-low-r", x: 850, y: 860, tags: ["low", "right", "ground"] },
       { id: "marrow-air", x: 500, y: 220, tags: ["air", "center"] },
     ],
     encounterWaves: [
@@ -14374,11 +14363,11 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     ],
     playerStart: { x: 120, y: 800 },
     visualShapes: [
-      { type: "circle", center: {x: 120, y: 480}, radius: 90, colorRole: "arena-infection", infectionSeams: true },
-      { type: "circle", center: {x: 880, y: 480}, radius: 90, colorRole: "arena-infection", infectionSeams: true },
-      { type: "circle", center: {x: 500, y: 820}, radius: 130, colorRole: "arena-stone", infectionSeams: false }
+      { type: "circle", center: {x: 150, y: 460}, radius: 100, colorRole: "arena-infection", infectionSeams: true },
+      { type: "circle", center: {x: 850, y: 460}, radius: 100, colorRole: "arena-infection", infectionSeams: true },
+      { type: "circle", center: {x: 500, y: 800}, radius: 120, colorRole: "arena-stone", infectionSeams: false }
     ],
-    bossStart: { x: 880, y: 800 },
+    bossStart: { x: 850, y: 800 },
   },
   {
     id: "stage-6",
@@ -14386,26 +14375,26 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     subtitle: "STAGE 6 - SLAB COMPRESSORS",
     midBossId: "rust-cathedral",
     midBossDisplayName: "RUST CATHEDRAL",
-    midBossMaxHp: 88,
+    midBossMaxHp: 100,
     solids: [
-      { x: 0, y: 900, width: 1000, height: 100 },
+      { x: 40, y: 900, width: 920, height: 100 },
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 100, y: 440, width: 200, height: 140 },
-      { x: 700, y: 440, width: 200, height: 140 },
-      { x: 400, y: 550, width: 200, height: 40 },
+      { x: 100, y: 400, width: 180, height: 200 },
+      { x: 720, y: 400, width: 180, height: 200 },
+      { x: 380, y: 540, width: 240, height: 40 },
     ],
     onewayPlatforms: [
-      { x: 300, y: 400, width: 100, height: 16 },
-      { x: 600, y: 400, width: 100, height: 16 },
+      { x: 280, y: 380, width: 120, height: 16 },
+      { x: 600, y: 380, width: 120, height: 16 },
     ],
     hazards: [],
     spawners: [],
     spawnAnchors: [
-      { id: "cath-high-left", x: 200, y: 380, tags: ["high", "left", "perch"] },
-      { id: "cath-high-right", x: 800, y: 380, tags: ["high", "right", "perch"] },
-      { id: "cath-center-slab", x: 500, y: 490, tags: ["mid", "center", "ground"] },
+      { id: "cath-high-left", x: 190, y: 340, tags: ["high", "left", "perch"] },
+      { id: "cath-high-right", x: 810, y: 340, tags: ["high", "right", "perch"] },
+      { id: "cath-center-slab", x: 500, y: 480, tags: ["mid", "center", "ground"] },
       { id: "cath-low-l", x: 330, y: 840, tags: ["low", "left", "ground"] },
       { id: "cath-low-r", x: 670, y: 840, tags: ["low", "right", "ground"] },
     ],
@@ -14453,7 +14442,7 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     subtitle: "STAGE 7 - THE FINAL CRUCIBLE",
     midBossId: "false-square",
     midBossDisplayName: "THE FALSE SQUARE",
-    midBossMaxHp: 110,
+    midBossMaxHp: 120,
     solids: [
       { x: 0, y: 920, width: 320, height: 80 },
       { x: 680, y: 920, width: 320, height: 80 },
@@ -14470,11 +14459,11 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     hazards: [{ x: 320, y: 920, width: 360, height: 80 }],
     spawners: [],
     spawnAnchors: [
-      { id: "pantheon-cat-l", x: 140, y: 392, tags: ["high", "left", "perch"] },
-      { id: "pantheon-cat-r", x: 860, y: 392, tags: ["high", "right", "perch"] },
-      { id: "pantheon-center-bridge", x: 500, y: 592, tags: ["mid", "center", "ground"] },
-      { id: "pantheon-low-l", x: 184, y: 872, tags: ["low", "left", "ground"] },
-      { id: "pantheon-low-r", x: 816, y: 872, tags: ["low", "right", "ground"] },
+      { id: "pantheon-cat-l", x: 140, y: 390, tags: ["high", "left", "perch"] },
+      { id: "pantheon-cat-r", x: 860, y: 390, tags: ["high", "right", "perch"] },
+      { id: "pantheon-center-bridge", x: 500, y: 590, tags: ["mid", "center", "ground"] },
+      { id: "pantheon-low-l", x: 180, y: 860, tags: ["low", "left", "ground"] },
+      { id: "pantheon-low-r", x: 820, y: 860, tags: ["low", "right", "ground"] },
     ],
     encounterWaves: [
       {
@@ -14484,8 +14473,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [5, 8],
         maxActiveMinions: 3,
         entries: [
-          { type: "TURRET", anchorTags: ["perch"], weight: 40 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 40 },
+          { type: "COMPASS_WASP", anchorTags: ["high"], weight: 40 },
+          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 40 },
           { type: "FLYER", anchorIds: ["pantheon-center-bridge"], weight: 20 }
         ]
       },
@@ -14495,9 +14484,9 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [4, 7],
         maxActiveMinions: 4,
         entries: [
-          { type: "FLYER", anchorTags: ["high"], weight: 35 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 35 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 30 }
+          { type: "HYMN_NAIL", anchorTags: ["high"], weight: 35 },
+          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 35 },
+          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 30 }
         ]
       },
       {
@@ -14506,10 +14495,10 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [3, 6],
         maxActiveMinions: 5,
         entries: [
-          { type: "FLYER", anchorTags: ["high"], weight: 30 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 20 },
-          { type: "TURRET", anchorTags: ["perch"], weight: 20 }
+          { type: "COMPASS_WASP", anchorTags: ["high"], weight: 30 },
+          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 30 },
+          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 20 },
+          { type: "BELL_HAMMER", anchorTags: ["perch"], weight: 20 }
         ]
       }
     ],
@@ -15973,14 +15962,7 @@ export class BossVisuals {
     const nowTime = performance.now();
     const time = nowTime / 1000;
 
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    ctx.strokeStyle = activeState === "TELEGRAPH" ? "hsla(45, 100%, 70%, 0.65)" : "hsla(350, 80%, 60%, 0.28)";
-    ctx.lineWidth = activeState === "TELEGRAPH" ? 3.5 : 1.4;
-    ctx.beginPath();
-    ctx.ellipse(0, -boss.size.height / 2, boss.size.width * (0.74 + boss.currentPhase * 0.08), boss.size.height * 0.72, time * 1.5, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+
 
     const geometry = Software3DRenderer.getTransformedBossGeometry(stageIdx, boss.currentPhase, time);
 
@@ -16923,7 +16905,7 @@ export class Software3DRenderer {
         sizeW: number, sizeH: number, scaleX: number, scaleY: number,
         yaw: number, pitch: number, roll: number, baseHslColor: string,
         alpha: number = 1.0, pivotY: "center" | "feet" = "center",
-        bossStageIdx: number = -1
+        _bossStageIdx: number = -1
     ) {
         const projected: { x: number; y: number; z: number }[] = [];
         const hslMatch = baseHslColor.match(/hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
@@ -16999,62 +16981,7 @@ export class Software3DRenderer {
             ctx.fill();
             ctx.stroke();
 
-            // Projection mapping on ALL visible faces of the 3D box model!
-            if (bossStageIdx >= 0) {
-                ctx.save();
-                ctx.beginPath();
-                ctx.moveTo(projected[firstIdx].x, projected[firstIdx].y);
-                for (let i = 1; i < face.indices.length; i++) {
-                    ctx.lineTo(projected[face.indices[i]].x, projected[face.indices[i]].y);
-                }
-                ctx.closePath();
-                ctx.clip();
-                
-                const time = performance.now() / 1000;
-                // Modulate projection intensity to respect the 3D face's direct lighting
-                const strokeColor = `hsla(${h}, ${s}%, ${Math.min(100, shadedLightness + 35)}%, 0.8)`;
-                
-                // Establish a screen-space projection mapped center at the box model's origin
-                const transformLocalPoint = (lx: number, ly: number, lz: number) => {
-                    const x0 = lx * sizeW * scaleX;
-                    const lyVal = pivotY === "feet" ? (ly - 0.5) * sizeH * scaleY : ly * sizeH * scaleY;
-                    const z0 = lz * ((sizeW + sizeH) / 2);
-                    
-                    const x1 = x0 * cosY + z0 * sinY;
-                    const y1 = lyVal;
-                    const z1 = -x0 * sinY + z0 * cosY;
-                    
-                    const x2 = x1;
-                    const y2 = y1 * cosP - z1 * sinP;
-
-                    
-                    const x3 = x2 * cosR - y2 * sinR;
-                    const y3 = x2 * sinR + y2 * cosR;
-                    
-                    return { x: posX + x3, y: posY + y3 };
-                };
-
-                const project3D = (u: number, v: number) => {
-                    let lx: number, ly: number, lz: number;
-                    if (face.color === "FRONT") {
-                        lx = u; ly = v; lz = -0.5;
-                    } else if (face.color === "BACK") {
-                        lx = -u; ly = v; lz = 0.5;
-                    } else if (face.color === "LEFT") {
-                        lx = -0.5; ly = v; lz = u;
-                    } else if (face.color === "RIGHT") {
-                        lx = 0.5; ly = v; lz = -u;
-                    } else if (face.color === "TOP") {
-                        lx = u; ly = -0.5; lz = v;
-                    } else { // BOTTOM
-                        lx = u; ly = 0.5; lz = -v;
-                    }
-                    return transformLocalPoint(lx, ly, lz);
-                };
-                
-                Software3DRenderer.drawSacredGeometry(ctx, bossStageIdx, time, strokeColor, project3D);
-                ctx.restore();
-            }
+            
         }
         ctx.restore();
     }
@@ -18024,7 +17951,103 @@ export class GapRingPattern implements AttackPattern {
   }
 }
 
+export class CompressionMarchPattern implements AttackPattern {
+  public id = "COMPRESSION_MARCH";
+  public tags: AttackTag[] = ["arena-denial", "reposition"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.2;
+  }
+}
+
+export class SatelliteTaxPattern implements AttackPattern {
+  public id = "SATELLITE_TAX";
+  public tags: AttackTag[] = ["projectile-heavy", "arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 55;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.0;
+  }
+}
+
+export class PogoTaxPattern implements AttackPattern {
+  public id = "POGO_TAX";
+  public tags: AttackTag[] = ["arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 55;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.0;
+  }
+}
+
+export class SicknessLeanPattern implements AttackPattern {
+  public id = "SICKNESS_LEAN";
+  public tags: AttackTag[] = ["arena-denial", "reposition"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.0;
+  }
+}
+
+export class WeightTransferPattern implements AttackPattern {
+  public id = "WEIGHT_TRANSFER";
+  public tags: AttackTag[] = ["melee", "arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 60;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.5;
+  }
+}
+
 export const ALL_PATTERNS: AttackPattern[] = [
+  new CompressionMarchPattern(),
+  new SatelliteTaxPattern(),
+  new PogoTaxPattern(),
+  new SicknessLeanPattern(),
+  new WeightTransferPattern(),
+
   new OmniBurstPattern(),
   new VolleyPattern(),
   new GateDropPattern(),
@@ -18051,18 +18074,17 @@ export function selectBestAttack(ctx: BossAttackContext): AttackPattern {
   if (stageIdx === 0) {
     candidates = ALL_PATTERNS.filter(p => ["OMNI_BURST", "VOLLEY", "PREDICTIVE_SHOT"].includes(p.id));
   } else if (stageIdx === 1) {
-    candidates = ALL_PATTERNS.filter(p => ["GATE_DROP", "LOCKSTEP_VOLLEY", "VOLLEY"].includes(p.id));
+    candidates = ALL_PATTERNS.filter(p => ["GATE_DROP", "LOCKSTEP_VOLLEY", "COMPRESSION_MARCH"].includes(p.id));
   } else if (stageIdx === 2) {
-    candidates = ALL_PATTERNS.filter(p => ["APHELION_RING", "PERIHELION_DIVE", "FAN_BURST"].includes(p.id));
+    candidates = ALL_PATTERNS.filter(p => ["APHELION_RING", "PERIHELION_DIVE", "SATELLITE_TAX"].includes(p.id));
   } else if (stageIdx === 3) {
-    candidates = ALL_PATTERNS.filter(p => ["NEEDLE_RAIN", "DASH_THREAD", "PREDICTIVE_SHOT"].includes(p.id));
+    candidates = ALL_PATTERNS.filter(p => ["NEEDLE_RAIN", "DASH_THREAD", "POGO_TAX"].includes(p.id));
   } else if (stageIdx === 4) {
-    candidates = ALL_PATTERNS.filter(p => ["BELLY_TIDE", "BLISTER_SPAWN", "OMNI_BURST"].includes(p.id));
+    candidates = ALL_PATTERNS.filter(p => ["BELLY_TIDE", "BLISTER_SPAWN", "SICKNESS_LEAN"].includes(p.id));
   } else if (stageIdx === 5) {
-    candidates = ALL_PATTERNS.filter(p => ["CATHEDRAL_TOLL", "FALLING_NAVE", "GAP_RING"].includes(p.id));
+    candidates = ALL_PATTERNS.filter(p => ["CATHEDRAL_TOLL", "FALLING_NAVE", "WEIGHT_TRANSFER"].includes(p.id));
   } else if (stageIdx === 6) {
-    // Stage 7 (False Square) imitates preceding attacks randomly with glitches
-    candidates = ALL_PATTERNS.filter(p => !["BLISTER_SPAWN"].includes(p.id)); // exclude spawner to maintain boss footprint focus
+    candidates = ALL_PATTERNS.filter(p => !["BLISTER_SPAWN"].includes(p.id));
   }
 
   let bestPattern = candidates[0] || ALL_PATTERNS[0];
@@ -18092,7 +18114,8 @@ import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { setVec } from "@/core/VecUtils";
 import { selectBestAttack, BossAttackContext, IBossAttackState } from "./BossAttackPatterns";
-import { useSessionStore } from "@/store/useGameStore";
+import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
+import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
 import { MinionFactory } from "./MinionFactory";
 
 export abstract class BossState implements IState {
@@ -18283,6 +18306,21 @@ export class BossAttackState extends BossState implements IBossAttackState {
         break;
       case "CATHEDRAL_TOLL":
         this.fireCathedralToll();
+        break;
+      case "COMPRESSION_MARCH":
+        this.fireCompressionMarch();
+        break;
+      case "SATELLITE_TAX":
+        this.fireSatelliteTax();
+        break;
+      case "POGO_TAX":
+        this.firePogoTax();
+        break;
+      case "SICKNESS_LEAN":
+        this.fireSicknessLean();
+        break;
+      case "WEIGHT_TRANSFER":
+        this.fireWeightTransfer();
         break;
     }
   }
@@ -18682,6 +18720,117 @@ export class BossAttackState extends BossState implements IBossAttackState {
     this.owner.world.minions.push(cyst);
     
     this.owner.world.events.publishBlast(spawnX, this.owner.position.y, "hsl(82, 38%, 44%)");
+  }
+
+  private fireCompressionMarch() {
+    this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.3 });
+    this.owner.velocity.x = this.owner.facingDirection * 150;
+    for (let y = 300; y <= 800; y += 150) {
+      this.owner.world.spawnProjectile(
+        40, y, 1, 0, "boss", 1, 350, 2.5, "hsl(4, 88%, 54%)", "needle"
+      );
+      this.owner.world.spawnProjectile(
+        960, y, -1, 0, "boss", 1, 350, 2.5, "hsl(4, 88%, 54%)", "needle"
+      );
+    }
+    this.owner.world.audio.playBossSwipe();
+  }
+
+  private fireSatelliteTax() {
+    this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.2 });
+    const projectileCount = 6;
+    const angleStep = (Math.PI * 2) / projectileCount;
+    for (let i = 0; i < projectileCount; i++) {
+      const angle = i * angleStep;
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
+      this.owner.world.spawnProjectile(
+        this.owner.position.x + dirX * 50,
+        this.owner.position.y + dirY * 50,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        320,
+        4.0,
+        "hsl(338, 76%, 55%)",
+        "homing"
+      );
+    }
+    this.owner.world.audio.playBossTelegraph();
+  }
+
+  private firePogoTax() {
+    const stage = GAUNTLET_STAGES[3];
+    const pogoX = stage.pogoPosts && stage.pogoPosts[0] ? stage.pogoPosts[0].x + stage.pogoPosts[0].width / 2 : 500;
+    this.owner.world.events.publishSpark(pogoX, 80, Math.PI / 2, "hsl(356, 94%, 62%)", true, 12);
+    for (let i = -2; i <= 2; i++) {
+      this.owner.world.spawnProjectile(
+        pogoX + i * 30,
+        80,
+        0,
+        1,
+        "boss",
+        1,
+        600,
+        2.5,
+        "hsl(356, 94%, 62%)",
+        "needle"
+      );
+    }
+    this.owner.world.audio.playErrorTick();
+  }
+
+  private fireSicknessLean() {
+    this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.45 });
+    this.owner.world.events.publish("STATE_PROJECTED", {
+      playerHP: useGameplayStore.getState().playerHP,
+      bossHP: this.owner.health.currentHealth,
+      healingCharges: this.owner.world.player ? (this.owner.world.player as Player).healingCharges : 0,
+      determination: this.owner.world.player ? (this.owner.world.player as Player).determinationCounter : 0
+    });
+    useGameplayStore.getState().triggerGlitch(250);
+    const count = 8;
+    for (let i = 0; i < count; i++) {
+      const angle = (i * Math.PI * 2) / count;
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
+      this.owner.world.spawnProjectile(
+        this.owner.position.x,
+        this.owner.position.y,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        260,
+        3.0,
+        "hsl(82, 38%, 44%)",
+        "swirl"
+      );
+    }
+    this.owner.world.audio.playBossPhaseShift();
+  }
+
+  private fireWeightTransfer() {
+    this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 12, duration: 0.4 });
+    this.owner.velocity.y = -650;
+    this.owner.physics.isGrounded = false;
+    
+    setTimeout(() => {
+      if (this.owner && !this.owner.isDead) {
+        this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 20, duration: 0.4 });
+        this.owner.world.events.publishSpark(this.owner.position.x, 900, 0, "hsl(15, 82%, 48%)", true, 20, "line");
+        this.owner.world.events.publishBlast(this.owner.position.x, 900, "hsl(15, 82%, 48%)");
+        
+        if (this.owner.world.player) {
+          const playerPhys = this.owner.world.player.getComponent(PhysicsComponent);
+          if (playerPhys) {
+            playerPhys.disablePlatformCollisionTimer = 1.5;
+          }
+        }
+      }
+    }, 600);
+    this.owner.world.audio.playBossSwipe();
   }
 
   private fireCathedralToll() {
