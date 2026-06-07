@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BYONI51T.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-C5rCHuCx.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -5049,314 +5049,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
       />
     </div>
   );
-}`,"src/components/menus/TitleScreen.css":`.title-screen-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  box-sizing: border-box;
-  height: 100%;
-  width: 100%;
-  padding: 4px 18px;
-  position: relative;
-}
-
-.title-grid-overlay {
-  position: absolute;
-  inset: 0;
-  background-size: 24px 24px;
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.title-screen-header {
-  z-index: 2;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 2px;
-}
-
-.system-tag {
-  font-size: 10px;
-  color: #4a5568;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  font-weight: bold;
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 4px 10px;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.title-banner-overhauled {
-  text-align: center;
-  margin-top: 2px;
-  width: 100%;
-}
-
-.title-banner-overhauled h1 {
-  font-size: 26px;
-  margin: 0;
-  letter-spacing: 0.22em;
-  font-weight: 900;
-  color: #ffffff;
-  text-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.95),
-    0 0 10px rgba(255, 255, 255, 0.05);
-  text-transform: uppercase;
-}
-
-.title-subtitle-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-  margin-top: 2px;
-}
-
-.subtitle-line {
-  height: 1px;
-  flex-grow: 1;
-  max-width: 60px;
-  background: linear-gradient(to right, transparent, var(--signal-green), transparent);
-}
-
-.subtitle-text {
-  font-size: 10px;
-  color: var(--signal-green);
-  margin: 0;
-  letter-spacing: 0.35em;
-  font-weight: bold;
-  text-shadow: 0 0 8px var(--signal-green-glow);
-}
-
-.title-screen-center {
-  z-index: 2;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-grow: 1;
-}
-
-.btn-container {
-  width: 100%;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 20px;
-  box-sizing: border-box;
-}
-
-.btn-container-overhauled {
-  width: 100%;
-  max-width: 440px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.neo-btn-large {
-  display: flex;
-  align-items: center;
-  position: relative;
-  background: #0f1218;
-  box-shadow:
-    -4px -4px 10px rgba(255, 255, 255, 0.015),
-    6px 6px 15px rgba(0, 0, 0, 0.8),
-    inset 1px 1px 0px rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 16px 24px;
-  border-radius: 10px;
-  cursor: pointer;
-  width: 100%;
-  box-sizing: border-box;
-  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
-  outline: none;
-  text-align: left;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.neo-btn-large:hover {
-  background: #141922;
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.neo-btn-large:active {
-  transform: scale(0.98);
-}
-
-.neo-btn-large-focused {
-  background: #0c0e12;
-  border-color: var(--signal-green);
-  box-shadow:
-    0 0 15px rgba(34, 197, 94, 0.15),
-    inset 0 0 8px rgba(34, 197, 94, 0.1),
-    6px 6px 18px rgba(0, 0, 0, 0.95);
-}
-
-.neo-btn-large .btn-indicator-light {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #1e2430;
-  margin-right: 18px;
-  transition: background 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
-  flex-shrink: 0;
-  border: 1px solid rgba(0, 0, 0, 0.5);
-}
-
-.neo-btn-large-focused .btn-indicator-light {
-  background: var(--signal-green);
-  box-shadow:
-    0 0 10px var(--signal-green),
-    0 0 20px var(--signal-green-glow);
-}
-
-.btn-label-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-grow: 1;
-}
-
-.btn-main-label {
-  font-size: 13px;
-  font-weight: 800;
-  color: #a0aec0;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  transition: color 0.15s ease;
-  white-space: nowrap;
-}
-
-.neo-btn-large-focused .btn-main-label {
-  color: #ffffff;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
-}
-
-.btn-sub-label {
-  font-size: 9px;
-  font-weight: 500;
-  color: #4a5568;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  transition: color 0.15s ease;
-  white-space: pre-line;
-  line-height: 1.4;
-}
-
-.neo-btn-large-focused .btn-sub-label {
-  color: var(--signal-green);
-  opacity: 0.85;
-}
-
-.cursor-arrow-large {
-  position: absolute !important;
-  right: 24px !important;
-  width: 14px !important;
-  height: 14px !important;
-  color: var(--signal-green) !important;
-  animation: arrow-blink 0.4s infinite alternate !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  margin-left: 0 !important;
-  margin-top: 0 !important;
-}
-
-.cursor-arrow {
-  position: absolute !important;
-  right: 24px !important;
-  width: 10px !important;
-  height: 10px !important;
-  color: var(--signal-green) !important;
-  animation: arrow-blink 0.4s infinite alternate !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  margin-left: 0 !important;
-  margin-top: 0 !important;
-}
-
-.title-screen-footer {
-  z-index: 2;
-  width: 100%;
-  margin-top: 8px;
-}
-
-.footer-deco-line {
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(255, 255, 255, 0.05) 20%,
-    rgba(255, 255, 255, 0.05) 80%,
-    transparent
-  );
-  width: 100%;
-  margin-bottom: 6px;
-}
-
-.footer-status-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 8px;
-  color: #4a5568;
-  letter-spacing: 0.15em;
-  padding: 0 12px;
-  text-transform: uppercase;
-}
-
-.footer-center-prompt {
-  color: #718096;
-  font-weight: bold;
-}
-
-.title-screen-container .neo-btn-large {
-  padding: 16px 24px;
-  border-radius: 10px;
-}
-
-.title-screen-container .neo-btn-large-focused {
-  background: #0c0e12;
-  border-color: var(--signal-green);
-  box-shadow:
-    0 0 15px rgba(34, 197, 94, 0.15),
-    inset 0 0 8px rgba(34, 197, 94, 0.1),
-    6px 6px 18px rgba(0, 0, 0, 0.95);
-}
-
-.title-screen-container .neo-btn-large .btn-indicator-light {
-  width: 8px;
-  height: 8px;
-  margin-right: 18px;
-}
-
-.title-screen-container .btn-main-label {
-  font-size: 13px;
-}
-
-.title-screen-container .btn-sub-label {
-  font-size: 9px;
-}
-
-.title-screen-container .cursor-arrow-large {
-  font-size: 14px;
-  margin-left: 8px;
-}
+}`,"src/components/menus/TitleScreen.css":`/* TitleScreen styles inherited globally from neumorphism.css to maintain DRY chancel configuration */
 `,"src/components/menus/TitleScreen.tsx":`import { Gamepad2, Sliders, Award, Code2 } from "lucide-react";
 import { MenuContainer, MenuHeader, MenuButton } from "./MenuPrimitives";
 
@@ -5725,7 +5418,8 @@ export class CinematicSystem {
     this.cinematicActive = false;
   }
 }
-`,"src/core/EncounterDirector.ts":`import { IWorld } from "./Interfaces";
+`,"src/core/EncounterDirector.ts":`import { distance } from "@/core/VecUtils";
+import { IWorld } from "./Interfaces";
 import { SpawnAnchor, MinionType, EncounterWave } from "./levelData";
 import { BaseMinion } from "@/entities/BaseMinion";
 import { MinionFactory } from "@/entities/MinionFactory";
@@ -5904,8 +5598,8 @@ export class EncounterDirector {
     let highestSafetyScore = -Infinity;
 
     for (const anchor of candidates) {
-      const dp = player ? Math.sqrt(Math.pow(player.position.x - anchor.x, 2) + Math.pow(player.position.y - anchor.y, 2)) : 500;
-      const db = boss ? Math.sqrt(Math.pow(boss.position.x - anchor.x, 2) + Math.pow(boss.position.y - anchor.y, 2)) : 500;
+      const dp = player ? distance(player.position, anchor) : 500;
+      const db = boss ? distance(boss.position, anchor) : 500;
 
       let safetyScore = dp * 1.0 + db * 0.45;
 
@@ -9041,6 +8735,62 @@ export function zeroVec(v: Vector2D): Vector2D {
   return v;
 }
 
+export function distance(
+  a: { x: number; y: number },
+  b: { x: number; y: number }
+): number {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+export function distanceSq(
+  a: { x: number; y: number },
+  b: { x: number; y: number }
+): number {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return dx * dx + dy * dy;
+}
+
+export function magnitude(v: { x: number; y: number }): number {
+  return Math.sqrt(v.x * v.x + v.y * v.y);
+}
+
+export function intersectsAABB(
+  pos1: { x: number; y: number },
+  size1: { width: number; height: number },
+  pos2: { x: number; y: number },
+  size2: { width: number; height: number }
+): boolean {
+  const halfW1 = size1.width / 2;
+  const halfH1 = size1.height / 2;
+  const halfW2 = size2.width / 2;
+  const halfH2 = size2.height / 2;
+
+  return (
+    pos1.x + halfW1 > pos2.x - halfW2 &&
+    pos1.x - halfW1 < pos2.x + halfW2 &&
+    pos1.y + halfH1 > pos2.y - halfH2 &&
+    pos1.y - halfH1 < pos2.y + halfH2
+  );
+}
+
+export function intersectsAABBWithRect(
+  pos: { x: number; y: number },
+  size: { width: number; height: number },
+  rect: { x: number; y: number; width: number; height: number }
+): boolean {
+  const halfW = size.width / 2;
+  const halfH = size.height / 2;
+
+  return (
+    pos.x + halfW > rect.x &&
+    pos.x - halfW < rect.x + rect.width &&
+    pos.y + halfH > rect.y &&
+    pos.y - halfH < rect.y + rect.height
+  );
+}
 `,"src/core/World.ts":`import { IWorld, IEntity, IPhysicsWorld, IProjectile, Rectangle, IEventBus, IAudioManager, IInputProvider } from "./Interfaces";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { ObjectPool } from "./ObjectPool";
@@ -9981,11 +9731,11 @@ export class SFXManager {
 `,"src/core/audio/sfx/BossSFX.ts":`import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
-import { SFX_PRESETS } from "../sfxPresetData";
+import { SFX_PRESETS, DORIAN_RATIOS } from "../sfxPresetData";
 import { SynthFactory } from "./SynthFactory";
 import { IEventBus } from "@/core/Interfaces";
 
-const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
+
 
 export class BossSFX {
   private helper: SFXHelper;
@@ -10349,11 +10099,11 @@ export class InterfaceSFX {
 `,"src/core/audio/sfx/PlayerSFX.ts":`import * as Tone from "tone";
 import { AudioContextManager } from "../AudioContextManager";
 import { SFXHelper } from "./SFXHelper";
-import { SFX_PRESETS } from "../sfxPresetData";
+import { SFX_PRESETS, DORIAN_RATIOS } from "../sfxPresetData";
 import { SynthFactory } from "./SynthFactory";
 import { IEventBus } from "@/core/Interfaces";
 
-const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
+
 
 export class PlayerSFX {
   private helper: SFXHelper;
@@ -10853,6 +10603,8 @@ export const SFX_PRESETS = {
     },
   },
 };
+
+export const DORIAN_RATIOS = [1.0000, 1.1225, 1.1892, 1.3348, 1.4983, 1.6818, 1.7818, 2.0000, 2.2449, 2.3784, 2.6697, 2.9966];
 `,"src/core/design/ColorRoles.ts":`export type ColorRole =
   | "player-agency"
   | "boss-lethal"
@@ -12150,7 +11902,8 @@ export class HazardSystem {
     return false;
   }
 }
-`,"src/core/systems/MinionCollisionSystem.ts":`import { Player } from "@/entities/Player";
+`,"src/core/systems/MinionCollisionSystem.ts":`import { intersectsAABB } from "@/core/VecUtils";
+import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { EntityStatus, IWorld } from "@/core/Interfaces";
 import { BaseMinion } from "@/entities/BaseMinion";
@@ -12169,14 +11922,7 @@ export class MinionCollisionSystem {
       const extBox = (minion as BaseMinion).getExtendedHitbox ? (minion as BaseMinion).getExtendedHitbox!() : null;
 
       if (extBox) {
-        const pW = player.size.width / 2;
-        const pH = player.size.height / 2;
-
-        const isLanceColliding =
-          player.position.x + pW > extBox.x - extBox.width / 2 &&
-          player.position.x - pW < extBox.x + extBox.width / 2 &&
-          player.position.y + pH > extBox.y - extBox.height / 2 &&
-          player.position.y - pH < extBox.y + extBox.height / 2;
+        const isLanceColliding = intersectsAABB(player.position, player.size, extBox, extBox);
 
         if (isLanceColliding) {
           isColliding = true;
@@ -12185,16 +11931,7 @@ export class MinionCollisionSystem {
       }
 
       if (!isColliding) {
-        const pW = player.size.width / 2;
-        const pH = player.size.height / 2;
-        const mW = minion.size.width / 2;
-        const mH = minion.size.height / 2;
-
-        isColliding =
-          player.position.x + pW > minion.position.x - mW &&
-          player.position.x - pW < minion.position.x + mW &&
-          player.position.y + pH > minion.position.y - mH &&
-          player.position.y - pH < minion.position.y + mH;
+        isColliding = intersectsAABB(player.position, player.size, minion.position, minion.size);
       }
 
       if (isColliding) {
@@ -12217,7 +11954,8 @@ export class MinionCollisionSystem {
     }
   }
 }
-`,"src/core/systems/TraversalHazards.ts":`import { Rectangle } from "../Interfaces";
+`,"src/core/systems/TraversalHazards.ts":`import { intersectsAABBWithRect } from "@/core/VecUtils";
+import { Rectangle } from "../Interfaces";
 import { Player } from "@/entities/Player";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 
@@ -12273,13 +12011,7 @@ export class DissolvePlatform {
     } else if (this.state === "respawning") {
       this.timer -= dt;
       if (this.timer <= 0) {
-        const pW = player.size.width / 2;
-        const pH = player.size.height / 2;
-        const isOverlapping =
-          player.position.x + pW > this.rect.x &&
-          player.position.x - pW < this.rect.x + this.rect.width &&
-          player.position.y + pH > this.rect.y &&
-          player.position.y - pH < this.rect.y + this.rect.height;
+        const isOverlapping = intersectsAABBWithRect(player.position, player.size, this.rect);
 
         if (isOverlapping) {
           this.timer = 0.05; // Delay solidification until player clears the area
@@ -12299,14 +12031,7 @@ export class PogoPost {
   }
 
   public update(_dt: number, player: Player): void {
-    const pW = player.size.width / 2;
-    const pH = player.size.height / 2;
-
-    const isOverlapping =
-      player.position.x + pW > this.rect.x &&
-      player.position.x - pW < this.rect.x + this.rect.width &&
-      player.position.y + pH > this.rect.y &&
-      player.position.y - pH < this.rect.y + this.rect.height;
+    const isOverlapping = intersectsAABBWithRect(player.position, player.size, this.rect);
 
     if (isOverlapping) {
       const isPogoActive = player.meleeComponent.attackActive && player.meleeComponent.attackDirection === "down";
@@ -12359,14 +12084,7 @@ export class DashResetGate {
 
     if (!this.active) return;
 
-    const pW = player.size.width / 2;
-    const pH = player.size.height / 2;
-
-    const isOverlapping =
-      player.position.x + pW > this.rect.x &&
-      player.position.x - pW < this.rect.x + this.rect.width &&
-      player.position.y + pH > this.rect.y &&
-      player.position.y - pH < this.rect.y + this.rect.height;
+    const isOverlapping = intersectsAABBWithRect(player.position, player.size, this.rect);
 
     if (isOverlapping && this.active) {
       this.active = false;
@@ -18110,7 +17828,8 @@ export class MeleeComponent implements IEntityComponent {
     return dx * dx + dy * dy;
   }
 }
-`,"src/entities/components/PhysicsComponent.ts":`import { IEntityComponent } from "@/entities/EntityComponent";
+`,"src/entities/components/PhysicsComponent.ts":`import { intersectsAABBWithRect } from "@/core/VecUtils";
+import { IEntityComponent } from "@/entities/EntityComponent";
 import { BaseEntity } from "@/entities/BaseEntity";
 import { Rectangle } from "@/core/Interfaces";
 import { UNITS } from "@/core/Units";
@@ -18445,15 +18164,7 @@ export class PhysicsComponent implements IEntityComponent {
   }
 
   private isOverlapping(x: number, y: number, rect: Rectangle): boolean {
-    const halfWidth = this.owner.size.width / 2;
-    const halfHeight = this.owner.size.height / 2;
-
-    const left = x - halfWidth;
-    const right = x + halfWidth;
-    const top = y - halfHeight;
-    const bottom = y + halfHeight;
-
-    return right > rect.x && left < rect.x + rect.width && bottom > rect.y && top < rect.y + rect.height;
+    return intersectsAABBWithRect({ x, y }, this.owner.size, rect);
   }
 
   public teardown(): void {}
