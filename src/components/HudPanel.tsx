@@ -290,7 +290,7 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
   const isGameOver = gameResult !== "PLAYING";
   const activeBHP = isGameOver ? 0 : bossHP;
 
-  const bossWidth = (activeBHP / UNITS.BOSS_MAX_HP) * 100 + "%";
+  const bossWidth = Math.max(0, Math.min(100, (activeBHP / UNITS.BOSS_MAX_HP) * 100)) + "%";
 
   if (isTouchDevice) {
     return (

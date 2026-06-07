@@ -54,7 +54,19 @@ export class DissolvePlatform {
     } else if (this.state === "respawning") {
       this.timer -= dt;
       if (this.timer <= 0) {
-        this.state = "idle";
+        const pW = player.size.width / 2;
+        const pH = player.size.height / 2;
+        const isOverlapping =
+          player.position.x + pW > this.rect.x &&
+          player.position.x - pW < this.rect.x + this.rect.width &&
+          player.position.y + pH > this.rect.y &&
+          player.position.y - pH < this.rect.y + this.rect.height;
+
+        if (isOverlapping) {
+          this.timer = 0.05; // Delay solidification until player clears the area
+        } else {
+          this.state = "idle";
+        }
       }
     }
   }

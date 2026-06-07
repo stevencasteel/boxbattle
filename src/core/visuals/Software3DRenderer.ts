@@ -99,7 +99,7 @@ export class Software3DRenderer {
         return geom;
     }
 
-    public static getTransformedBossGeometry(_phase: number, time: number): Geometry {
+    public static getTransformedBossGeometry(_phase: number, _time: number): Geometry {
         const baseBox = [
             { x: -0.5, y: -0.5, z: -0.5 }, { x: 0.5, y: -0.5, z: -0.5 },
             { x: 0.5, y: 0.5, z: -0.5 }, { x: -0.5, y: 0.5, z: -0.5 },
@@ -107,20 +107,7 @@ export class Software3DRenderer {
             { x: 0.5, y: 0.5, z: 0.5 }, { x: -0.5, y: 0.5, z: 0.5 },
         ];
 
-        const w = 1.0;
-        const h = 1.0;
-        const d = 0.9;
-
-        const vertices = baseBox.map((v) => {
-            let x = v.x * w;
-            const y = v.y * h;
-            const z = v.z * d;
-
-            const offset = Math.sin(time * 8 + y * 2) * 0.12 * Math.sign(y);
-            x += offset;
-
-            return { x, y, z };
-        });
+        const vertices = baseBox.map((v) => ({ x: v.x, y: v.y, z: v.z * 0.9 }));
 
         return {
             vertices,

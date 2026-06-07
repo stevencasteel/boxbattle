@@ -1,7 +1,7 @@
 export const UNITS = {
   // Core Gameplay Balancing Parameters
   PLAYER_MAX_HP: 5,
-  BOSS_MAX_HP: 38,
+  BOSS_MAX_HP: 80,
   BOSS_PHASE_2_HP_PCT: 0.70,
   BOSS_PHASE_3_HP_PCT: 0.40,
 
