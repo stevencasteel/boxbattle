@@ -4,207 +4,88 @@ import { DialogueState } from "@/hooks/useGameDialogue";
 import { useSessionStore } from "@/store/useGameStore";
 import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
 
-interface DialogueConsoleProps {
-  playerDialogue: DialogueState;
-  bossDialogue: DialogueState;
-  isTouchDevice: boolean;
-}
+interface DialogueConsoleProps { playerDialogue: DialogueState; bossDialogue: DialogueState; isTouchDevice: boolean; }
 
 function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typing: boolean }) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let frameId: number;
-
-    const render = () => {
-      const w = canvas.width;
-      const h = canvas.height;
-      const t = performance.now() / 1000;
-
-      ctx.clearRect(0, 0, w, h);
-
-      if (speaker === "player") {
-        ctx.fillStyle = "hsl(142, 72%, 56%)";
-        ctx.fillRect(0, 0, w, h);
-
-        if (typing) {
-          ctx.fillStyle = "#ffffff";
-          ctx.beginPath();
-          ctx.arc(w / 2, h / 2, 4 + Math.sin(t * 12) * 2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      } else {
-        const stageIdx = useSessionStore.getState().currentStageIndex;
-
-        ctx.fillStyle = "hsl(350, 82%, 58%)";
-        if (stageIdx === 4) ctx.fillStyle = "hsl(82, 38%, 44%)";
-        ctx.fillRect(0, 0, w, h);
-
-        if (stageIdx === 0) {
-          ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(w, h);
-          ctx.stroke();
-        } else if (stageIdx === 1) {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-          ctx.fillRect(8, 0, 6, h);
-          ctx.fillRect(17, 0, 6, h);
-          ctx.fillRect(26, 0, 6, h);
-        } else if (stageIdx === 2) {
-          ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.arc(w / 2, h / 2, 10, 0, Math.PI * 2);
-          ctx.arc(w / 2, h / 2, 16, 0, Math.PI * 2);
-          ctx.stroke();
-        } else if (stageIdx === 3) {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-          ctx.beginPath();
-          ctx.moveTo(w / 2, 0);
-          ctx.lineTo(w / 2 + 10, 14);
-          ctx.lineTo(w / 2 - 10, 14);
-          ctx.closePath();
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.moveTo(w / 2, h);
-          ctx.lineTo(w / 2 + 10, h - 14);
-          ctx.lineTo(w / 2 - 10, h - 14);
-          ctx.closePath();
-          ctx.fill();
-        } else if (stageIdx === 4) {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-          ctx.beginPath();
-          ctx.arc(14, 14, 6 + Math.sin(t * 4) * 1.5, 0, Math.PI * 2);
-          ctx.arc(34, 34, 8 + Math.cos(t * 3.5) * 2, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (stageIdx === 5) {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-          ctx.fillRect(8, 8, 12, 12);
-          ctx.fillRect(28, 24, 12, 12);
-        } else if (stageIdx === 6) {
-          const split = (t * 8) % 4 === 0;
-          if (split) {
-            ctx.fillStyle = "rgba(0,0,0,0.9)";
-            ctx.fillRect(w / 2 - 8, 0, 16, h);
-          } else {
-            ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(6, 6, w - 12, h - 12);
-          }
-        }
-      }
-
-      frameId = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      cancelAnimationFrame(frameId);
-    };
-  }, [speaker, typing]);
-
-  return <canvas ref={canvasRef} width={48} height={48} style={{ width: "100%", height: "100%", display: "block", borderRadius: "5px" }} />;
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    useEffect(() => {
+        const canvas = canvasRef.current; if (!canvas) return;
+        const ctx = canvas.getContext("2d"); if (!ctx) return;
+        let frameId: number;
+        const render = () => {
+            const w = canvas.width, h = canvas.height, t = performance.now() / 1000;
+            ctx.clearRect(0, 0, w, h);
+            if (speaker === "player") {
+                ctx.fillStyle = "hsl(142, 72%, 56%)"; ctx.fillRect(0, 0, w, h);
+                if (typing) { ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(w / 2, h / 2, 4 + Math.sin(t * 12) * 2, 0, Math.PI * 2); ctx.fill(); }
+            } else {
+                const stageIdx = useSessionStore.getState().currentStageIndex;
+                const colors = ["hsl(350, 82%, 58%)", "hsl(4, 88%, 54%)", "hsl(338, 76%, 55%)", "hsl(356, 94%, 62%)", "hsl(82, 38%, 44%)", "hsl(15, 82%, 48%)", "hsl(345, 58%, 46%)"];
+                ctx.fillStyle = colors[stageIdx] || colors[0];
+                ctx.fillRect(0, 0, w, h);
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.8)"; ctx.fillStyle = "rgba(0, 0, 0, 0.8)"; ctx.lineWidth = 3;
+                
+                if (stageIdx === 0) { // Prime Wound: Diagonal fault line
+                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w, h); ctx.stroke();
+                } else if (stageIdx === 1) { // Scarlet Lock: Prison bars
+                    ctx.fillRect(8, 0, 6, h); ctx.fillRect(17, 0, 6, h); ctx.fillRect(26, 0, 6, h);
+                } else if (stageIdx === 2) { // Carminal Orbit: Concentric circles
+                    ctx.beginPath(); ctx.arc(w/2, h/2, 10, 0, Math.PI*2); ctx.arc(w/2, h/2, 16, 0, Math.PI*2); ctx.stroke();
+                } else if (stageIdx === 3) { // Vermilion Needle: Inward teeth
+                    ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2+10, 14); ctx.lineTo(w/2-10, 14); ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(w/2, h); ctx.lineTo(w/2+10, h-14); ctx.lineTo(w/2-10, h-14); ctx.closePath(); ctx.fill();
+                } else if (stageIdx === 4) { // Marrow King: Blisters
+                    ctx.beginPath(); ctx.arc(14, 14, 6 + Math.sin(t*4)*1.5, 0, Math.PI*2); ctx.arc(34, 34, 8 + Math.cos(t*3.5)*2, 0, Math.PI*2); ctx.fill();
+                } else if (stageIdx === 5) { // Rust Cathedral: Block insets
+                    ctx.fillRect(8, 8, 12, 12); ctx.fillRect(28, 24, 12, 12);
+                } else if (stageIdx === 6) { // False Square: Fractures
+                    const split = (t * 8) % 4 === 0;
+                    if (split) { ctx.fillRect(w/2 - 8, 0, 16, h); } 
+                    else { ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.lineWidth = 1.5; ctx.strokeRect(6, 6, w-12, h-12); }
+                }
+            }
+            frameId = requestAnimationFrame(render);
+        };
+        render();
+        return () => cancelAnimationFrame(frameId);
+    }, [speaker, typing]);
+    return <canvas ref={canvasRef} width={48} height={48} style={{ width: "100%", height: "100%", display: "block", borderRadius: "5px" }} />;
 }
 
 export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }: DialogueConsoleProps) {
-  const mobileClass = isTouchDevice ? "is-mobile" : "";
+    const mobileClass = isTouchDevice ? "is-mobile" : "";
+    const leftState = playerDialogue.active ? "active" : bossDialogue.active ? "inactive" : "idle";
+    const rightState = bossDialogue.active ? "active" : playerDialogue.active ? "inactive" : "idle";
+    const currentStageIndex = useSessionStore((state) => state.currentStageIndex);
+    const activeStage = GAUNTLET_STAGES[currentStageIndex];
+    const bossName = activeStage ? activeStage.midBossDisplayName : "BOSS";
 
-  const leftState = playerDialogue.active 
-    ? "active" 
-    : bossDialogue.active 
-      ? "inactive" 
-      : "idle";
+    const getVariants = (speaker: "player" | "boss") => ({
+        active: { scale: 1.02, opacity: 1, borderColor: speaker === "player" ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)", boxShadow: speaker === "player" ? "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(34, 197, 94, 0.15)" : "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(239, 68, 68, 0.15)" },
+        inactive: { scale: 0.96, opacity: 0.15, borderColor: "rgba(0, 0, 0, 0.3)", boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)" },
+        idle: { scale: 0.98, opacity: 0.35, borderColor: "rgba(0, 0, 0, 0.3)", boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)" }
+    });
 
-  const rightState = bossDialogue.active 
-    ? "active" 
-    : playerDialogue.active 
-      ? "inactive" 
-      : "idle";
-
-  const currentStageIndex = useSessionStore((state) => state.currentStageIndex);
-  const activeStage = GAUNTLET_STAGES[currentStageIndex];
-  const bossName = activeStage ? activeStage.midBossDisplayName : "BOSS";
-
-  const getVariants = (speaker: "player" | "boss") => ({
-    active: {
-      scale: 1.02,
-      opacity: 1,
-      borderColor: speaker === "player" ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)",
-      boxShadow: speaker === "player" 
-        ? "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(34, 197, 94, 0.15)"
-        : "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(239, 68, 68, 0.15)",
-    },
-    inactive: {
-      scale: 0.96,
-      opacity: 0.15,
-      borderColor: "rgba(0, 0, 0, 0.3)",
-      boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)",
-    },
-    idle: {
-      scale: 0.98,
-      opacity: 0.35,
-      borderColor: "rgba(0, 0, 0, 0.3)",
-      boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)",
-    }
-  });
-
-  return (
-    <div className={`dialogue-console ${mobileClass}`}>
-      <motion.div
-        animate={leftState}
-        variants={getVariants("player")}
-        transition={{ type: "spring", stiffness: 220, damping: 25 }}
-        className={`dialogue-box-left neo-pressed ${mobileClass}`}
-      >
-        <div 
-          className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`}
-          style={{ overflow: "hidden", display: "flex", padding: 0 }}
-        >
-          <PortraitCanvas speaker="player" typing={playerDialogue.isTyping} />
+    return (
+        <div className={`dialogue-console ${mobileClass}`}>
+            <motion.div animate={leftState} variants={getVariants("player")} transition={{ type: "spring", stiffness: 220, damping: 25 }} className={`dialogue-box-left neo-pressed ${mobileClass}`}>
+                <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`} style={{ overflow: "hidden", display: "flex", padding: 0 }}>
+                    <PortraitCanvas speaker="player" typing={playerDialogue.isTyping} />
+                </div>
+                <div className="dialogue-text-container">
+                    <div className={`dialogue-speaker-label ${mobileClass}`}>PLAYER</div>
+                    <div className={`dialogue-body-text ${mobileClass}`}>{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
+                </div>
+            </motion.div>
+            <motion.div animate={rightState} variants={getVariants("boss")} transition={{ type: "spring", stiffness: 220, damping: 25 }} className={`dialogue-box-right neo-pressed ${mobileClass}`}>
+                <div className="dialogue-text-container" style={{ textAlign: "right" }}>
+                    <div className={`dialogue-speaker-label ${mobileClass}`} style={{ color: "var(--signal-red)" }}>{bossName}</div>
+                    <div className={`dialogue-body-text ${mobileClass}`}>{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
+                </div>
+                <div className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`} style={{ overflow: "hidden", display: "flex", padding: 0 }}>
+                    <PortraitCanvas speaker="boss" typing={bossDialogue.isTyping} />
+                </div>
+            </motion.div>
         </div>
-        <div className="dialogue-text-container">
-          <div className={`dialogue-speaker-label ${mobileClass}`}>
-            PLAYER
-          </div>
-          <div className={`dialogue-body-text ${mobileClass}`}>
-            {playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        animate={rightState}
-        variants={getVariants("boss")}
-        transition={{ type: "spring", stiffness: 220, damping: 25 }}
-        className={`dialogue-box-right neo-pressed ${mobileClass}`}
-      >
-        <div className="dialogue-text-container" style={{ textAlign: "right" }}>
-          <div
-            className={`dialogue-speaker-label ${mobileClass}`}
-            style={{ color: "var(--signal-red)" }}
-          >
-            {bossName}
-          </div>
-          <div className={`dialogue-body-text ${mobileClass}`}>
-            {bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}
-          </div>
-        </div>
-        <div 
-          className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`}
-          style={{ overflow: "hidden", display: "flex", padding: 0 }}
-        >
-          <PortraitCanvas speaker="boss" typing={bossDialogue.isTyping} />
-        </div>
-      </motion.div>
-    </div>
-  );
+    );
 }

@@ -1,7 +1,18 @@
 import { LevelConfig } from "../levelData";
 import { Rectangle } from "../Interfaces";
 
+
+export interface VisualShape {
+    type: "organic" | "polygon" | "circle";
+    points?: {x: number, y: number}[];
+    center?: {x: number, y: number};
+    radius?: number;
+    colorRole: "arena-stone" | "arena-infection";
+    infectionSeams?: boolean;
+}
+
 export interface StageConfig extends LevelConfig {
+    visualShapes?: VisualShape[];
   id: string;
   title: string;
   subtitle: string;
@@ -153,6 +164,11 @@ export const GAUNTLET_STAGES: StageConfig[] = [
       }
     ],
     playerStart: { x: 300, y: 800 },
+    visualShapes: [
+        { type: "polygon", points: [{x:220,y:200},{x:260,y:240},{x:230,y:300},{x:220,y:280}], colorRole: "arena-infection", infectionSeams: true },
+        { type: "polygon", points: [{x:780,y:600},{x:740,y:640},{x:770,y:700},{x:780,y:680}], colorRole: "arena-infection", infectionSeams: true }
+    ],
+
     bossStart: { x: 700, y: 800 },
   },
   {
@@ -366,6 +382,12 @@ export const GAUNTLET_STAGES: StageConfig[] = [
       }
     ],
     playerStart: { x: 120, y: 800 },
+    visualShapes: [
+        { type: "circle", center: {x: 150, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeams: true },
+        { type: "circle", center: {x: 850, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeems: true },
+        { type: "circle", center: {x: 500, y: 800}, radius: 120, colorRole: "arena-stone", infectionSeams: false }
+    ],
+
     bossStart: { x: 880, y: 800 },
   },
   {

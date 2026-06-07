@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/6/2026, 6:45:50 PM
+ [SYSTEM] Generated: 6/6/2026, 7:02:57 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -17,7 +17,6 @@
 │   ├── BOXBATTLE_SYSTEMS_ARCHITECTURE.txt
 │   ├── DESIGN_EXCLUSIONS.txt
 │   ├── GAUNTLET_OVERHAUL_DESIGN.md
-│   ├── implementation_plan.md
 │   ├── MUSIC_ARCHITECTURE.txt
 │   └── TODO.txt
 ├── node_modules/ (contents skipped)
@@ -2077,166 +2076,6 @@ misc:
 
 
 
-
-
-
-● ./docs/implementation_plan.md
-────────────────────────────────────────────────────
-# Box Battle Gauntlet Overhaul Implementation Plan
-
-This implementation plan describes the technical steps to transform the current Box Battle vertical slice into a data-driven combat gauntlet based on the specifications in `GAUNTLET_OVERHAUL_DESIGN.md`.
-
-## User Review Required
-
-We are changing core gameplay rules and visuals. Below are the key design points and potential impacts for user review:
-
-> [!IMPORTANT]
-> **Core Gameplay and Physics Scaling Changes:**
-> - **Player Dimensions:** The player hitbox shrinks from `32x64` to a perfect `40x40` square. To preserve the physics feel and jump capabilities, wall-sliding and double-jumping contact probes will be dynamically adjusted.
-> - **Continuous Run / 7-Stage Gauntlet:** The single-level structure is replaced by a linear sequence of 7 stages, interspersed with traversal trials ("Path of Pain" interludes). Checkpointing will save progress between stages, but dying in a traversal section or during a wave will restart that stage.
-
-> [!WARNING]
-> **Complete visual overhaul of shape and color grammar:**
-> - Saturated color tones will be strictly reserved for semantic roles: Green for player agency, Red/Bruised Red/Orange-Red for Bosses/Hazards, Yellow for warnings/telegraphs, Violet for determination/healing, and Blue/Cyan for minion logic.
-> - Background and static map structures will be rendered in desaturated, cool greys/blues to keep gameplay signals clean and legible.
-
-## Open Questions
-
-1. **Checkpointing Policy:** Should we default to "stage" checkpointing (saving slot progress when a stage/trial is cleared, reloading the player at full HP at the start of that stage), or do you want to test the full "hardcore" Pantheon experience (no checkpoints, restart from Stage 1)? We propose **Stage Checkpointing** as default, with an optional "Steel Soul" config.
-2. **Procedural Audio Synthesis:** Do you want the Web Audio API synthesizer (`SoundSynth.ts`) to be fully expanded to pitch ticks matching shape sides (e.g. 6-ticks for hexagons), or is it okay to start with a simplified tonal distinction (high/sharp saw/triangle waves for needle/flying threats, low growls/decay for heavy organic/bosses)?
-
----
-
-## Proposed Changes
-
-We will group the changes into incremental phases.
-
-### Phase 1: Core Design System & Color/Shape Renderers
-
-We will define the new chromatic rules and procedural rendering system.
-
-#### [NEW] [ColorRoles.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/core/design/ColorRoles.ts)
-- Define standard HSL values for color roles: `player-agency`, `boss-lethal`, `telegraph`, `determination`, `minion-logic`, `minion-organic`, `hazard`, `arena-stone`, `arena-infection`.
-- Export a helper to convert a role name to an HSL string or return variants (light/dark/opacity).
-
-#### [NEW] [ShapeRenderer.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/core/visuals/ShapeRenderer.ts)
-- Implement procedural path formulas:
-  - `spikyRadius(theta, base, points, amp, sharpness)`
-  - `organicRadius(theta, base, seed, contamination)`
-  - `corruptedBoxPoint(x, y, corruption, time, seed)`
-- Provide a drawing router `drawVisualProfile(ctx, x, y, width, height, profile, time)` that draws outline and fill based on the `VisualProfile` (hex, corrupted-box, perfect-square, needle, saw, orb, etc.).
-
-#### [MODIFY] [Player.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/entities/Player.ts)
-- Change player size in constructor to `{ width: 40, height: 40 }`.
-- Set `squashPivot = "center"`.
-- Retune jump force or wall probes if needed for the square shape.
-
-#### [MODIFY] [PlayerVisuals.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/entities/handlers/PlayerVisuals.ts)
-- Replace `Software3DRenderer.drawGeometry` call with a flat 2D perfect square drawing using the green HSL role. Add squash/stretch deformation based on velocity.
-
----
-
-### Phase 2: Data-Driven Gauntlet & Stage Morphing
-
-We will transition the codebase from running a single level configuration to a 7-stage gauntlet controller.
-
-#### [NEW] [GauntletDirector.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/core/GauntletDirector.ts)
-- Track current stage index, trial status, cleared waves count, and active stage configurations.
-- Transition from Stage 1 through Stage 7.
-- Handle checkpoint save/load interfaces.
-- **Stage-Select Debug Warps:** Register global keyboard listener for digit keys '1' through '9'. Pressing any of these keys at any time (including from the Title screen) will instantly invoke `GauntletDirector.loadStage(index)`, reset all active gameplay loops, transition the screen state to `PLAYING`, and spawn the player at the start of that respective stage or trial.
-
-#### [NEW] [GauntletStages.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/core/design/GauntletStages.ts)
-- Define all 7 `StageConfig` structures detailing:
-  - solids, hazards, and oneway platforms.
-  - waves, spawn anchors, mid-boss config, and visual themes.
-  - event dialogues.
-  - Traversal trials (Path of Pain layouts) between stages.
-
-#### [MODIFY] [EncounterDirector.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/core/EncounterDirector.ts)
-- Evolve this class to read wave metadata from the active stage config.
-- Implement threat and footprint budget checks:
-  - `currentBudget = clamp(baseBudget - bossPresencePenalty, 1, stage.maxBudget)`
-- Implement safety anchor scoring:
-  - `anchorSafety(anchor, player, boss)` chooses the highest safety anchor among options instead of picking at random.
-
-#### [MODIFY] [StaticMapRenderer.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/core/StaticMapRenderer.ts)
-- Invalidate cache when stage morphs lock in, calling `resetCache()`.
-- Add generic rendering for solids (with rounded corners) and spike count calculations based on dynamic bounds instead of hardcoded default map coordinates.
-
----
-
-### Phase 3: Dialogue Event Scripting
-
-We will implement an event-driven scripting system for dialogues.
-
-#### [NEW] [DialogueScript.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/core/DialogueScript.ts)
-- Define dialogue configuration structures.
-- Map dialogue triggers: `stage-start`, `wave-cleared`, `boss-enter`, `boss-phase`, `player-low-hp`, `boss-defeated`, `gauntlet-complete`.
-
-#### [MODIFY] [BattleDirector.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/core/BattleDirector.ts)
-- Subscribe to game loop lifecycle events to trigger lines from the dialogue script.
-- Support boss specific labels and portrait identifiers in trigger payloads.
-
-#### [MODIFY] [DialogueConsole.tsx](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/components/DialogueConsole.tsx)
-- Pull custom speaker names and portrait identities.
-- Draw generated portrait canvas patterns for bosses (Prime Wound diagonal fault, Scarlet Lock vertical bars, etc.).
-
----
-
-### Phase 4: Combat Roster & Projectile Overhaul
-
-We will implement new shapes for projectiles and customize minion spawning.
-
-#### [MODIFY] [Projectile.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/entities/Projectile.ts) & [ProjectileStrategy.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/entities/ProjectileStrategy.ts)
-- Define new shapes: `needle`, `shard`, `saw`, `thorn`, `ring-gap`, `comet`.
-- Support segmented spine and swirl trails using mathematical interpolations.
-- Remove standard circle bodies for boss/enemy projectiles and replace them with points/spikes.
-
-#### [NEW] Custom Minions
-- **Pit Lancer:** patrols platforms, strong knockback thrusts when near pits.
-- **Compass Wasp:** orbits point, then dives along tangent lines.
-- **Clampjaw:** heavy, slow rectangle that sweeps wall-to-wall.
-- **Hymn Nail:** hovers as pogo platform, becomes hostile if overused.
-- **Blister Ox:** heavy blob, jumps and triggers shockwaves on impact.
-- **Bell Hammer:** slams at marked tiles.
-- **Shard Choir:** clusters of small triangular projectiles.
-- **Mirror Shielder:** chamfered shield plate, vulnerable from rear.
-
-#### [MODIFY] [MinionVisuals.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/core/visuals/MinionVisuals.ts)
-- Draw procedurally structured spawn cages (e.g. tuning forks for Hymn Nail, unfolding hexagons for Turret Seed, membrane bubble for Blister Ox) instead of generic cylindrical wireframes.
-
----
-
-### Phase 5: Config-Driven Bosses & False Square Finale
-
-#### [MODIFY] [Boss.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/entities/Boss.ts)
-- Drive boss behaviors through `BossConfig` configurations (maxHp, size, phases, attack list, portrait pattern).
-- Implement boss-specific mechanics (Scarlet Lock gate drops, Carminal Orbit perihelion dives, Rust Cathedral Nave drops, False Square glitching).
-
----
-
-### Phase 6: Path of Pain Traversal Mechanics
-
-#### [NEW] [TraversalHazards.ts](file:///Users/stevencasteel/Desktop/BOX%20BATTLE/src/core/systems/TraversalHazards.ts)
-- Implement `DissolvePlatform` (cracks, collapses, respawns after delay).
-- Implement `PogoPost` (bouncing resets jump/dash, contact from sides damages player).
-- Implement `DashResetGate` (green diamond outlines that replenish dash).
-
----
-
-## Verification Plan
-
-### Automated Tests
-- Build verification: Run `npm run build` or `tsc --noEmit` to ensure type checks pass.
-- Run dev mode: Propose running `npm run dev` to playtest the vertical slice locally.
-
-### Manual Verification
-1. **Visual Reading Test:** Verify desaturated background vs. highlighted entity colors. Confirm boss portraits draw custom math signatures.
-2. **Silhouette Identification:** Check spawn cages to ensure their shapes match the incoming minion silhouette (hex, triangle, etc.).
-3. **Traversal Mechanics:** Test pogo hits on PogoPosts and check if dash/double-jump charges are successfully restored. Verify dissolve platform timing (0.45s stable, 0.35s collapse, 1.6s respawn).
-4. **Dialogue Scripting:** Verify dialogues trigger correctly on wave completions, phase shifts, and defeats.
-5. **Stage Select Debug keys:** Press keys '1' through '7' on the Title screen, settings menus, and mid-game. Verify that the simulation immediately restarts at the beginning of the selected stage.
 
 
 
@@ -11853,6 +11692,7 @@ export class StateProjectionSystem {
 ────────────────────────────────────────────────────
 import { Rectangle } from "./Interfaces";
 import { UNITS } from "@/core/Units";
+import { useSessionStore } from "@/store/useGameStore";
 
 export class StaticMapRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -11883,10 +11723,11 @@ export class StaticMapRenderer {
       for (const hazard of hazards) {
         const spikeWidth = 20;
         const spikeCount = Math.floor(hazard.width / spikeWidth);
+        const startY = (hazard.y === 920 && hazard.height === 80) ? 960 : hazard.y + hazard.height;
         for (let i = 0; i < spikeCount; i++) {
-          sctx.moveTo(hazard.x + i * spikeWidth, hazard.y + hazard.height);
+          sctx.moveTo(hazard.x + i * spikeWidth, startY);
           sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, hazard.y);
-          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, hazard.y + hazard.height);
+          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, startY);
         }
       }
       sctx.fill();
@@ -11899,6 +11740,8 @@ export class StaticMapRenderer {
     }
     sctx.fill();
 
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+
     sctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
     sctx.lineWidth = 3.2;
     sctx.lineJoin = "round";
@@ -11906,9 +11749,12 @@ export class StaticMapRenderer {
     sctx.shadowBlur = 6.4;
     
     sctx.beginPath();
+    this.drawInnerPerimeterPath(sctx, 1.6, stageIdx);
+    
     for (const solid of solids) {
       const isBoundary = solid.x <= 40 || solid.x + solid.width >= 960 || solid.y <= 40 || solid.y + solid.height >= 920;
-      if (!isBoundary) {
+      const isStage2Boundary = stageIdx === 1 && (solid.x <= 220 || solid.x + solid.width >= 780);
+      if (!isBoundary && !isStage2Boundary) {
         this.drawRoundedRectPath(sctx, solid.x + 1.6, solid.y + 1.6, solid.width - 3.2, solid.height - 3.2, 6.4);
       }
     }
@@ -11918,9 +11764,12 @@ export class StaticMapRenderer {
     sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
     sctx.lineWidth = 0.8;
     sctx.beginPath();
+    this.drawInnerPerimeterPath(sctx, 2.8, stageIdx);
+    
     for (const solid of solids) {
       const isBoundary = solid.x <= 40 || solid.x + solid.width >= 960 || solid.y <= 40 || solid.y + solid.height >= 920;
-      if (!isBoundary) {
+      const isStage2Boundary = stageIdx === 1 && (solid.x <= 220 || solid.x + solid.width >= 780);
+      if (!isBoundary && !isStage2Boundary) {
         this.drawRoundedRectPath(sctx, solid.x + 4, solid.y + 4, solid.width - 8, solid.height - 8, 4);
       }
     }
@@ -11940,6 +11789,70 @@ export class StaticMapRenderer {
     ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
     ctx.lineTo(x, y + rad);
     ctx.quadraticCurveTo(x, y, x + rad, y);
+  }
+
+  private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number, stageIdx: number) {
+    if (stageIdx === 1) { // Stage 2: Narrow Redoubt
+      const ceilingY = 40 - inset;
+      const leftWallX = 220 - inset;
+      const rightWallX = 780 + inset;
+      const floorY = 920 + inset;
+
+      ctx.moveTo(leftWallX, ceilingY);
+      ctx.lineTo(rightWallX, ceilingY);
+      ctx.lineTo(rightWallX, floorY);
+      ctx.lineTo(leftWallX, floorY);
+      ctx.closePath();
+    } else if (stageIdx === 3 || stageIdx === 4) { // Stage 4: Dissolving Choir / Stage 5: Marrow Rot
+      const ceilingY = 40 - inset;
+      const leftWallX = 40 - inset;
+      const rightWallX = 960 + inset;
+      const leftFloorY = 920 + inset;
+      const rightFloorY = 920 + inset;
+      const leftPitWallX = (stageIdx === 3 ? 260 : 340) - inset;
+      const rightPitWallX = (stageIdx === 3 ? 740 : 660) + inset;
+      const pitFloorY = 960 + inset;
+
+      ctx.moveTo(leftWallX, ceilingY);
+      ctx.lineTo(rightWallX, ceilingY);
+      ctx.lineTo(rightWallX, rightFloorY);
+      ctx.lineTo(rightPitWallX, rightFloorY);
+      ctx.lineTo(rightPitWallX, pitFloorY);
+      ctx.lineTo(leftPitWallX, pitFloorY);
+      ctx.lineTo(leftPitWallX, leftFloorY);
+      ctx.lineTo(leftWallX, leftFloorY);
+      ctx.closePath();
+    } else if (stageIdx === 5) { // Stage 6: Rust Cathedral
+      const ceilingY = 40 - inset;
+      const leftWallX = 40 - inset;
+      const rightWallX = 960 + inset;
+      const floorY = 900 + inset;
+
+      ctx.moveTo(leftWallX, ceilingY);
+      ctx.lineTo(rightWallX, ceilingY);
+      ctx.lineTo(rightWallX, floorY);
+      ctx.lineTo(leftWallX, floorY);
+      ctx.closePath();
+    } else { // Stage 1, Stage 3, Stage 7
+      const ceilingY = 40 - inset;
+      const leftWallX = 40 - inset;
+      const rightWallX = 960 + inset;
+      const leftFloorY = 920 + inset;
+      const rightFloorY = 920 + inset;
+      const leftPitWallX = 320 - inset;
+      const rightPitWallX = 680 + inset;
+      const pitFloorY = 960 + inset;
+
+      ctx.moveTo(leftWallX, ceilingY);
+      ctx.lineTo(rightWallX, ceilingY);
+      ctx.lineTo(rightWallX, rightFloorY);
+      ctx.lineTo(rightPitWallX, rightFloorY);
+      ctx.lineTo(rightPitWallX, pitFloorY);
+      ctx.lineTo(leftPitWallX, pitFloorY);
+      ctx.lineTo(leftPitWallX, leftFloorY);
+      ctx.lineTo(leftWallX, leftFloorY);
+      ctx.closePath();
+    }
   }
 
   public renderBackground(): void {
@@ -16019,8 +15932,7 @@ export class DashResetGate {
 ● ./src/core/visuals/BossVisuals.ts
 ────────────────────────────────────────────────────
 import { Boss } from "@/entities/Boss";
-import { drawVisualProfile, VisualProfile } from "./ShapeRenderer";
-import { useSessionStore } from "@/store/useGameStore";
+import { Software3DRenderer } from "./Software3DRenderer";
 
 export class BossVisuals {
   static draw(ctx: CanvasRenderingContext2D, boss: Boss, alpha: number): void {
@@ -16034,56 +15946,37 @@ export class BossVisuals {
 
     ctx.save();
 
-    const stageIdx = useSessionStore.getState().currentStageIndex;
-
-    const profile: VisualProfile = {
-      shapeFamily: "corrupted-box",
-      danger: boss.currentPhase === 3 ? 0.9 : 0.4,
-      weight: 0.8,
-      corruption: 0.15,
-      hueRole: "boss-lethal",
-      strokePx: 3.0,
-      spinRate: 0.05,
-      wobbleAmp: 0.1,
-      cornerRadius: 0,
-      phaseOffset: stageIdx * 10
-    };
-
-    if (stageIdx === 1) { // Scarlet Lock
-      profile.shapeFamily = "corrupted-box";
-      profile.corruption = 0.35;
-    } else if (stageIdx === 2) { // Carminal Orbit
-      profile.shapeFamily = "diamond";
-      profile.spinRate = 1.0;
-    } else if (stageIdx === 3) { // Vermilion Needle
-      profile.shapeFamily = "needle";
-      profile.hueRole = "hazard";
-      profile.spinRate = 2.0;
-    } else if (stageIdx === 4) { // Marrow King
-      profile.shapeFamily = "blister";
-      profile.hueRole = "minion-organic";
-      profile.corruption = 0.65;
-    } else if (stageIdx === 5) { // Rust Cathedral
-      profile.shapeFamily = "corrupted-box";
-      profile.corruption = 0.55;
-    } else if (stageIdx === 6) { // False Square
-      profile.shapeFamily = "perfect-square";
-      profile.spinRate = Math.sin(performance.now() * 0.005) * 0.4;
-      profile.wobbleAmp = 0.4;
-      profile.hueRole = performance.now() % 1000 < 500 ? "boss-lethal" : "hazard";
-    }
-
+    let baseColor = "hsl(350, 80%, 60%)";
     if (boss.health.isFlashing()) {
-      profile.hueRole = "impact-white";
+      baseColor = "hsl(0, 0%, 100%)";
     } else if (activeState === "TELEGRAPH") {
-      profile.hueRole = "telegraph";
+      baseColor = "hsl(45, 100%, 50%)";
     }
 
     const feetY = drawY + boss.size.height / 2;
-    const drawW = boss.size.width * boss.visualScale.x;
-    const drawH = boss.size.height * boss.visualScale.y;
 
-    drawVisualProfile(ctx, drawX, feetY - boss.size.height / 2, drawW, drawH, profile, performance.now() / 1000);
+    ctx.translate(drawX, feetY);
+    ctx.rotate(boss.rotation);
+
+    const yaw = 0.15 * boss.facingDirection + (boss.velocity.x / boss.lungeSpeed) * 0.45;
+    const pitch = 0.08 + (boss.velocity.y / 1200) * 0.25;
+
+    Software3DRenderer.drawGeometry(
+      ctx,
+      Software3DRenderer.BOX_GEOMETRY,
+      0,
+      0,
+      boss.size.width,
+      boss.size.height,
+      boss.visualScale.x,
+      boss.visualScale.y,
+      yaw,
+      pitch,
+      0,
+      baseColor,
+      1.0,
+      "feet"
+    );
 
     ctx.restore();
   }
@@ -16093,7 +15986,7 @@ export class BossVisuals {
 
 ● ./src/core/visuals/MinionVisuals.ts
 ────────────────────────────────────────────────────
-import { drawVisualProfile } from "./ShapeRenderer";
+import { Software3DRenderer } from "./Software3DRenderer";
 import { TrigLUT } from "@/core/TrigLUT";
 import { BaseMinion } from "@/entities/BaseMinion";
 import { Boss } from "@/entities/Boss";
@@ -16246,21 +16139,62 @@ export class MinionVisuals {
       ctx.translate(0, minion.size.height / 2);
     }
 
-    const profile = minion.getVisualProfile();
-    const isTelegraph = minion.attackState === "TELEGRAPH";
+    const geom = (minion.id.includes("TURRET") || minion.id.includes("SHIELDER") || minion.id.includes("BELL_HAMMER"))
+      ? Software3DRenderer.HEXAGON_GEOMETRY
+      : Software3DRenderer.BOX_GEOMETRY;
 
-    if (minion.health.isFlashing()) {
-      profile.hueRole = "impact-white";
-    } else if (isTelegraph) {
-      profile.hueRole = "telegraph";
+    const yaw = 0.15 * minion.facingDirection + (minion.velocity.x / 450) * 0.35;
+    const pitch = 0.08 + (minion.velocity.y / 1000) * 0.22;
+    const pivotY = minion.squashPivot === "feet" ? "feet" : "center";
+    const posY = pivotY === "feet" ? 0 : -minion.size.height / 2;
+    const localY = minion.squashPivot === "feet" ? -minion.size.height / 2 : 0;
+
+    if (minion.isDying) {
+      const shrapnelProgress = 1.0 - minion.dissolveTimer / 0.5;
+      Software3DRenderer.drawFragments(
+        ctx,
+        geom,
+        0,
+        posY,
+        minion.size.width,
+        minion.size.height,
+        minion.visualScale.x,
+        minion.visualScale.y,
+        yaw,
+        pitch,
+        0,
+        minion.minionColor,
+        shrapnelProgress,
+        180,
+        minion.dissolveTimer / 0.5,
+        pivotY
+      );
+    } else {
+      let baseColor = minion.minionColor;
+      if (minion.health.isFlashing()) {
+        baseColor = "hsl(0, 0%, 100%)";
+      } else if (minion.attackState === "TELEGRAPH") {
+        baseColor = "hsl(45, 100%, 50%)";
+      }
+
+      Software3DRenderer.drawGeometry(
+        ctx,
+        geom,
+        0,
+        posY,
+        minion.size.width,
+        minion.size.height,
+        minion.visualScale.x,
+        minion.visualScale.y,
+        yaw,
+        pitch,
+        0,
+        baseColor,
+        1.0,
+        pivotY
+      );
     }
 
-    const drawW = minion.size.width * minion.visualScale.x;
-    const drawH = minion.size.height * minion.visualScale.y;
-
-    drawVisualProfile(ctx, 0, -minion.size.height / 2, drawW, drawH, profile, nowTime / 1000);
-
-    const localY = -minion.size.height / 2;
     ctx.fillStyle = "black";
     ctx.fillRect(minion.facingDirection * 6.4 - 1.6, localY - 9.6, 4.8, 3.2);
     ctx.restore();
