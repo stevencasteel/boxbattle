@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-wE6pSESG.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BSZE-pI-.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -5731,6 +5731,7 @@ import { SpawnAnchor, MinionType } from "./levelData";
 import { MinionFactory } from "@/entities/MinionFactory";
 import { TrigLUT } from "./TrigLUT";
 import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
+import { useSessionStore } from "@/store/useGameStore";
 
 export class EncounterDirector {
   private world: IWorld;
@@ -5797,6 +5798,22 @@ export class EncounterDirector {
     }
   }
 
+  private getMinionThreatValue(type: MinionType): number {
+    switch (type) {
+      case "TURRET": return 2;
+      case "LANCER": return 2;
+      case "PIT_LANCER": return 3;
+      case "FLYER": return 2;
+      case "COMPASS_WASP": return 3;
+      case "CLAMPJAW": return 4;
+      case "SHIELDER": return 3;
+      case "HYMN_NAIL": return 2;
+      case "BLISTER_OX": return 5;
+      case "BELL_HAMMER": return 4;
+      default: return 2;
+    }
+  }
+
   private triggerNextWave() {
     const waves = this.activeStageConfig.encounterWaves;
     if (waves.length === 0) return;
@@ -5805,9 +5822,24 @@ export class EncounterDirector {
     const wave = waves[this.currentWaveIndex % waves.length];
     this.currentWaveIndex++;
 
-    const limit = Math.min(wave.maxActiveMinions, 4);
+    // Calculate maximum threat based on active boss footprint and narrow map constraints
+    const bossActive = this.world.boss && !this.world.boss.isDead;
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+    const isNarrowMap = stageIdx === 1; // Narrow Redoubt
 
-    for (let i = 0; i < limit; i++) {
+    let maxThreatBudget = bossActive ? 4 : 8;
+    if (isNarrowMap) {
+      maxThreatBudget = bossActive ? 2 : 4;
+    }
+
+    let activeThreat = 0;
+    for (const m of this.world.minions) {
+      activeThreat += this.getMinionThreatValue(m.id.split("-")[1] as MinionType);
+    }
+
+    const maxCandidates = Math.min(wave.maxActiveMinions, isNarrowMap ? 2 : 4);
+
+    for (let i = 0; i < maxCandidates; i++) {
       const entryRand = TrigLUT.randomGameplay() * 100;
       let accumulatedWeight = 0;
       let selectedEntry = wave.entries[0];
@@ -5820,13 +5852,19 @@ export class EncounterDirector {
         }
       }
 
+      const candidateThreat = this.getMinionThreatValue(selectedEntry.type);
+      if (activeThreat + candidateThreat > maxThreatBudget) {
+        continue; // Exceeds tactical screen footprint and threat budget bounds
+      }
+
       const anchor = this.findSafeAnchor(selectedEntry.anchorIds, selectedEntry.anchorTags);
       if (anchor) {
         this.spawnMinion(selectedEntry.type, anchor);
+        activeThreat += candidateThreat;
       }
     }
 
-    // Play colosseum rattle/confirm
+    // Play colosseum rattle/confirm feedback
     this.world.audio.playDashRecharge();
   }
 
@@ -5843,40 +5881,30 @@ export class EncounterDirector {
       return null;
     }
 
-    const shuffled = [...candidates];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(TrigLUT.randomGameplay() * (i + 1));
-      const temp = shuffled[i];
-      shuffled[i] = shuffled[j];
-      shuffled[j] = temp;
-    }
-
     const player = this.world.player;
     const boss = this.world.boss;
 
-    for (const anchor of shuffled) {
-      let isSafe = true;
+    let bestAnchor: SpawnAnchor | null = null;
+    let highestSafetyScore = -Infinity;
 
-      if (player) {
-        const dx = player.position.x - anchor.x;
-        const dy = player.position.y - anchor.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 208) isSafe = false;
-      }
+    for (const anchor of candidates) {
+      const dp = player ? Math.sqrt(Math.pow(player.position.x - anchor.x, 2) + Math.pow(player.position.y - anchor.y, 2)) : 500;
+      const db = boss ? Math.sqrt(Math.pow(boss.position.x - anchor.x, 2) + Math.pow(boss.position.y - anchor.y, 2)) : 500;
 
-      if (boss && isSafe) {
-        const dx = boss.position.x - anchor.x;
-        const dy = boss.position.y - anchor.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 96) isSafe = false;
-      }
+      // Safe Spawn Anchor scoring formula to calculate tactical placement
+      let safetyScore = dp * 1.0 + db * 0.45;
 
-      if (isSafe) {
-        return anchor;
+      // Penalize anchors that spawn directly on top of active hazards or exit lanes
+      if (dp < 160) safetyScore -= 300;
+      if (db < 80) safetyScore -= 150;
+
+      if (safetyScore > highestSafetyScore) {
+        highestSafetyScore = safetyScore;
+        bestAnchor = anchor;
       }
     }
 
-    return shuffled[0] || null;
+    return bestAnchor || candidates[0] || null;
   }
 
   private spawnMinion(type: MinionType, anchor: SpawnAnchor) {
@@ -14544,6 +14572,7 @@ export interface AttackPattern {
   configure(state: IBossAttackState): void;
 }
 
+// Stage 1 (Prime Wound) patterns
 export class OmniBurstPattern implements AttackPattern {
   public id = "OMNI_BURST";
   public tags: AttackTag[] = ["projectile-heavy", "arena-denial"];
@@ -14587,6 +14616,192 @@ export class VolleyPattern implements AttackPattern {
   }
 }
 
+// Stage 2 (Scarlet Lock) patterns
+export class GateDropPattern implements AttackPattern {
+  public id = "GATE_DROP";
+  public tags: AttackTag[] = ["arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (ctx.phase * 10);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 3;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.5;
+  }
+}
+
+export class LockstepVolleyPattern implements AttackPattern {
+  public id = "LOCKSTEP_VOLLEY";
+  public tags: AttackTag[] = ["projectile-heavy"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 40;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (ctx.distanceToPlayer > 200 ? 15 : 0);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 4;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.4;
+  }
+}
+
+// Stage 3 (Carminal Orbit) patterns
+export class AphelionRingPattern implements AttackPattern {
+  public id = "APHELION_RING";
+  public tags: AttackTag[] = ["projectile-heavy", "arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 55;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.2;
+  }
+}
+
+export class PerihelionDivePattern implements AttackPattern {
+  public id = "PERIHELION_DIVE";
+  public tags: AttackTag[] = ["melee", "reposition"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 60;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (ctx.playerIsAirborne ? 20 : 0);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.0;
+  }
+}
+
+// Stage 4 (Vermilion Needle) patterns
+export class NeedleRainPattern implements AttackPattern {
+  public id = "NEEDLE_RAIN";
+  public tags: AttackTag[] = ["projectile-heavy"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 5;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.5;
+  }
+}
+
+export class DashThreadPattern implements AttackPattern {
+  public id = "DASH_THREAD";
+  public tags: AttackTag[] = ["melee", "reposition"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 55;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 0.9;
+  }
+}
+
+// Stage 5 (Marrow King) patterns
+export class BellyTidePattern implements AttackPattern {
+  public id = "BELLY_TIDE";
+  public tags: AttackTag[] = ["arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (!ctx.playerIsAirborne ? 20 : 0);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.0;
+  }
+}
+
+export class BlisterSpawnPattern implements AttackPattern {
+  public id = "BLISTER_SPAWN";
+  public tags: AttackTag[] = ["arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 45;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (ctx.activeMinionsCount < 2 ? 25 : 0);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 0.6;
+  }
+}
+
+// Stage 6 (Rust Cathedral) patterns
+export class CathedralTollPattern implements AttackPattern {
+  public id = "CATHEDRAL_TOLL";
+  public tags: AttackTag[] = ["arena-denial", "projectile-heavy"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 60;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.5;
+  }
+}
+
+export class FallingNavePattern implements AttackPattern {
+  public id = "FALLING_NAVE";
+  public tags: AttackTag[] = ["arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (ctx.distanceToPlayer < 200 ? 15 : 0);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 4;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.8;
+  }
+}
+
+// Base helper patterns
 export class FanBurstPattern implements AttackPattern {
   public id = "FAN_BURST";
   public tags: AttackTag[] = ["projectile-heavy", "reposition"];
@@ -14650,6 +14865,16 @@ export class GapRingPattern implements AttackPattern {
 export const ALL_PATTERNS: AttackPattern[] = [
   new OmniBurstPattern(),
   new VolleyPattern(),
+  new GateDropPattern(),
+  new LockstepVolleyPattern(),
+  new AphelionRingPattern(),
+  new PerihelionDivePattern(),
+  new NeedleRainPattern(),
+  new DashThreadPattern(),
+  new BellyTidePattern(),
+  new BlisterSpawnPattern(),
+  new CathedralTollPattern(),
+  new FallingNavePattern(),
   new FanBurstPattern(),
   new PredictiveShotPattern(),
   new GapRingPattern()
@@ -14658,21 +14883,30 @@ export const ALL_PATTERNS: AttackPattern[] = [
 export function selectBestAttack(ctx: BossAttackContext): AttackPattern {
   const stageIdx = useSessionStore.getState().currentStageIndex;
 
-  if (stageIdx === 1) { // Scarlet Lock loves Volleys
-    return ALL_PATTERNS.find(p => p.id === "VOLLEY") || ALL_PATTERNS[0];
-  } else if (stageIdx === 2) { // Carminal Orbit loves Fan Burst
-    return ALL_PATTERNS.find(p => p.id === "FAN_BURST") || ALL_PATTERNS[0];
-  } else if (stageIdx === 3) { // Vermilion Needle loves Predictive
-    return ALL_PATTERNS.find(p => p.id === "PREDICTIVE_SHOT") || ALL_PATTERNS[0];
-  } else if (stageIdx === 6) { // False Square Glitches to Gap Ring
-    const rand = Math.random();
-    if (rand < 0.35) return ALL_PATTERNS.find(p => p.id === "GAP_RING") || ALL_PATTERNS[0];
+  // Filter patterns by what is valid for the stage to express the chromatic/geometric narrative
+  let candidates = ALL_PATTERNS;
+
+  if (stageIdx === 0) {
+    candidates = ALL_PATTERNS.filter(p => ["OMNI_BURST", "VOLLEY", "PREDICTIVE_SHOT"].includes(p.id));
+  } else if (stageIdx === 1) {
+    candidates = ALL_PATTERNS.filter(p => ["GATE_DROP", "LOCKSTEP_VOLLEY", "VOLLEY"].includes(p.id));
+  } else if (stageIdx === 2) {
+    candidates = ALL_PATTERNS.filter(p => ["APHELION_RING", "PERIHELION_DIVE", "FAN_BURST"].includes(p.id));
+  } else if (stageIdx === 3) {
+    candidates = ALL_PATTERNS.filter(p => ["NEEDLE_RAIN", "DASH_THREAD", "PREDICTIVE_SHOT"].includes(p.id));
+  } else if (stageIdx === 4) {
+    candidates = ALL_PATTERNS.filter(p => ["BELLY_TIDE", "BLISTER_SPAWN", "OMNI_BURST"].includes(p.id));
+  } else if (stageIdx === 5) {
+    candidates = ALL_PATTERNS.filter(p => ["CATHEDRAL_TOLL", "FALLING_NAVE", "GAP_RING"].includes(p.id));
+  } else if (stageIdx === 6) {
+    // Stage 7 (False Square) imitates preceding attacks randomly with glitches
+    candidates = ALL_PATTERNS.filter(p => !["BLISTER_SPAWN"].includes(p.id)); // exclude spawner to maintain boss footprint focus
   }
 
-  let bestPattern = ALL_PATTERNS[0];
+  let bestPattern = candidates[0] || ALL_PATTERNS[0];
   let highestScore = -1;
 
-  for (const p of ALL_PATTERNS) {
+  for (const p of candidates) {
     const score = p.score(ctx);
     if (score > highestScore) {
       highestScore = score;
@@ -14692,6 +14926,7 @@ import { HealthComponent } from "@/entities/components/HealthComponent";
 import { setVec } from "@/core/VecUtils";
 import { selectBestAttack, BossAttackContext, IBossAttackState } from "./BossAttackPatterns";
 import { useSessionStore } from "@/store/useGameStore";
+import { MinionFactory } from "./MinionFactory";
 
 export abstract class BossState implements IState {
   protected owner: Boss;
@@ -14723,7 +14958,7 @@ export class BossCooldownState extends BossState {
       this.duration = this.overrideDuration;
       this.overrideDuration = -1;
     } else {
-      this.duration = this.owner.currentPhase === 3 ? 1.2 : 2.0;
+      this.duration = this.owner.currentPhase === 3 ? 1.0 : 1.8;
     }
     setVec(this.owner.targetVisualScale, 1.0, 1.0);
   }
@@ -14744,7 +14979,7 @@ export class BossPatrolState extends BossState {
 
   public enter(): void {
     setVec(this.owner.targetVisualScale, 1.0, 1.0);
-    this.duration = this.owner.currentPhase === 3 ? 1.0 : 2.0;
+    this.duration = this.owner.currentPhase === 3 ? 0.8 : 1.8;
   }
 
   public update(dt: number): void {
@@ -14766,7 +15001,7 @@ export class BossPatrolState extends BossState {
     if (player && !player.isDead) {
       const distance = Math.abs(player.position.x - this.owner.position.x);
       const distanceY = Math.abs(player.position.y - this.owner.position.y);
-      if (distance < 120 && distanceY < 60) {
+      if (distance < 130 && distanceY < 60) {
         this.owner.stateMachine.changeState(this.owner.telegraphState);
         return;
       }
@@ -14803,7 +15038,7 @@ export class BossMeleeState extends BossState {
 }
 
 export class BossAttackState extends BossState implements IBossAttackState {
-  public attackType: "SINGLE_SHOT" | "VOLLEY" | "OMNI_BURST" | "FAN_BURST" | "PREDICTIVE_SHOT" | "GAP_RING" = "SINGLE_SHOT";
+  public attackType: string = "SINGLE_SHOT";
   public durationTimer: number = 0;
   public volleyCount: number = 0;
   public volleyTimer: number = 0;
@@ -14844,44 +15079,170 @@ export class BossAttackState extends BossState implements IBossAttackState {
       this.owner.recentAttackIds.shift();
     }
 
-    this.attackType = pattern.id as "SINGLE_SHOT" | "VOLLEY" | "OMNI_BURST" | "FAN_BURST" | "PREDICTIVE_SHOT" | "GAP_RING";
+    this.attackType = pattern.id;
     pattern.configure(this);
 
     this.executeImmediateFire();
   }
 
   private executeImmediateFire() {
-    if (this.attackType === "OMNI_BURST") {
-      this.fireOmniBurst();
-    } else if (this.attackType === "FAN_BURST") {
-      this.fireFanBurst();
-    } else if (this.attackType === "PREDICTIVE_SHOT") {
-      this.firePredictiveShot();
-    } else if (this.attackType === "GAP_RING") {
-      this.fireGapRing();
+    switch (this.attackType) {
+      case "OMNI_BURST":
+        this.fireOmniBurst();
+        break;
+      case "FAN_BURST":
+        this.fireFanBurst();
+        break;
+      case "PREDICTIVE_SHOT":
+        this.firePredictiveShot();
+        break;
+      case "GAP_RING":
+        this.fireGapRing();
+        break;
+      case "APHELION_RING":
+        this.fireAphelionRing();
+        break;
+      case "PERIHELION_DIVE":
+        this.firePerihelionDive();
+        break;
+      case "DASH_THREAD":
+        this.fireDashThread();
+        break;
+      case "BELLY_TIDE":
+        this.fireBellyTide();
+        break;
+      case "BLISTER_SPAWN":
+        this.fireBlisterSpawn();
+        break;
+      case "CATHEDRAL_TOLL":
+        this.fireCathedralToll();
+        break;
     }
   }
 
   public update(dt: number): void {
     this.durationTimer -= dt;
 
-    if (this.attackType === "VOLLEY" && this.volleyCount > 0) {
+    const player = this.owner.world.player;
+    if (!player || player.isDead) return;
+
+    if (this.volleyCount > 0) {
       this.volleyTimer -= dt;
       if (this.volleyTimer <= 0) {
-        this.owner.fireSingleShotAtPlayer();
+        this.executeVolleyStep();
         this.volleyCount--;
-        this.volleyTimer = this.owner.currentPhase === 3 ? 0.10 : 0.12;
+        this.volleyTimer = this.getVolleyInterval();
       }
     }
 
     if (this.durationTimer <= 0) {
-      let cooldown = 1.2;
-      if (this.attackType === "VOLLEY") cooldown = 2.0;
-      else if (this.attackType === "OMNI_BURST") cooldown = 2.5;
-      else if (this.attackType === "GAP_RING") cooldown = 3.0;
+      let cooldown = 1.0;
+      if (this.attackType === "VOLLEY" || this.attackType === "LOCKSTEP_VOLLEY") cooldown = 1.6;
+      else if (["OMNI_BURST", "APHELION_RING", "GAP_RING", "CATHEDRAL_TOLL"].includes(this.attackType)) cooldown = 2.2;
 
       this.owner.cooldownState.setDuration(cooldown);
       this.owner.stateMachine.changeState(this.owner.cooldownState);
+    }
+  }
+
+  private getVolleyInterval(): number {
+    const phase = this.owner.currentPhase;
+    switch (this.attackType) {
+      case "VOLLEY":
+        return phase === 3 ? 0.08 : 0.12;
+      case "LOCKSTEP_VOLLEY":
+        return 0.25;
+      case "GATE_DROP":
+        return 0.3;
+      case "NEEDLE_RAIN":
+        return 0.14;
+      case "FALLING_NAVE":
+        return 0.35;
+      default:
+        return 0.15;
+    }
+  }
+
+  private executeVolleyStep() {
+    const player = this.owner.world.player;
+    if (!player || player.isDead) return;
+
+    const phase = this.owner.currentPhase;
+
+    if (this.attackType === "VOLLEY") {
+      this.owner.fireSingleShotAtPlayer();
+    } else if (this.attackType === "LOCKSTEP_VOLLEY") {
+      // Fire modulo repeating lane projectiles
+      const laneCount = 5;
+      const stepWidth = 140;
+      const originX = 220; // safe bounds centered
+      const activeLane = (this.volleyCount + phase) % laneCount;
+      const targetX = originX + activeLane * stepWidth;
+
+      this.owner.world.spawnProjectile(
+        targetX,
+        80, // fire fromdropped ceiling top
+        0,
+        1,
+        "boss",
+        1,
+        420,
+        3.0,
+        "hsl(4, 88%, 54%)"
+      );
+      this.owner.world.audio.playSelectTick();
+    } else if (this.attackType === "GATE_DROP") {
+      // Gate Drop warning line spawning red vertical bars
+      const targetX = player.position.x + (TrigLUT.randomGameplay() * 120 - 60);
+      this.owner.world.events.publishSpark(targetX, 80, Math.PI/2, "hsl(4, 100%, 72%)", false, 8, "line");
+
+      // Spawn column of hazard-like needles
+      for (let yOffset = 80; yOffset < 900; yOffset += 96) {
+        this.owner.world.spawnProjectile(
+          targetX,
+          yOffset,
+          0,
+          1,
+          "boss",
+          1,
+          500,
+          2.0,
+          "hsl(4, 88%, 54%)"
+        );
+      }
+      this.owner.world.audio.playErrorTick();
+    } else if (this.attackType === "NEEDLE_RAIN") {
+      // Fast, narrow descending needles
+      const offset = (this.volleyCount * 140) % 600;
+      const targetX = 200 + offset;
+      this.owner.world.spawnProjectile(
+        targetX,
+        80,
+        0,
+        1,
+        "boss",
+        1,
+        640,
+        2.5,
+        "hsl(356, 94%, 62%)"
+      );
+    } else if (this.attackType === "FALLING_NAVE") {
+      // Heavy blocks descending from the ceiling
+      const targetX = player.position.x;
+      this.owner.world.events.publishSpark(targetX, 40, Math.PI/2, "hsl(45, 100%, 60%)", true, 16);
+      
+      const proj = this.owner.world.spawnProjectile(
+        targetX,
+        40,
+        0,
+        1,
+        "boss",
+        2,
+        350,
+        3.0,
+        "hsl(15, 82%, 48%)"
+      );
+      proj.size = { width: 44, height: 44 }; // Heavy footprint
     }
   }
 
@@ -14889,15 +15250,13 @@ export class BossAttackState extends BossState implements IBossAttackState {
     const phase = this.owner.currentPhase;
     const projectileCount = phase === 1 ? 12 : phase === 2 ? 18 : 24;
     const angleStep = (Math.PI * 2) / projectileCount;
-
     const stageIdx = useSessionStore.getState().currentStageIndex;
 
     for (let i = 0; i < projectileCount; i++) {
       const angle = i * angleStep;
       const dirX = TrigLUT.cos(angle);
       const dirY = TrigLUT.sin(angle);
-
-      const color = stageIdx === 4 ? "hsl(82, 38%, 44%)" : undefined; // Marrow King color
+      const color = stageIdx === 4 ? "hsl(82, 38%, 44%)" : undefined;
 
       this.owner.world.spawnProjectile(
         this.owner.position.x + dirX * 40,
@@ -14926,15 +15285,13 @@ export class BossAttackState extends BossState implements IBossAttackState {
     const totalSpread = (phase === 2 ? 55 : 80) * (Math.PI / 180);
     const startAngle = centerAngle - totalSpread / 2;
     const step = totalSpread / (count - 1);
-
     const stageIdx = useSessionStore.getState().currentStageIndex;
 
     for (let i = 0; i < count; i++) {
       const angle = startAngle + i * step;
       const dirX = TrigLUT.cos(angle);
       const dirY = TrigLUT.sin(angle);
-
-      const color = stageIdx === 2 ? "hsl(338, 76%, 55%)" : undefined; // Carminal Orbit color
+      const color = stageIdx === 2 ? "hsl(338, 76%, 55%)" : undefined;
 
       this.owner.world.spawnProjectile(
         this.owner.position.x + dirX * 40,
@@ -14965,9 +15322,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
 
     const dirX = dx / mag;
     const dirY = dy / mag;
-
     const stageIdx = useSessionStore.getState().currentStageIndex;
-    const color = stageIdx === 3 ? "hsl(356, 94%, 62%)" : undefined; // Vermilion Needle
+    const color = stageIdx === 3 ? "hsl(356, 94%, 62%)" : undefined;
 
     const proj = this.owner.world.spawnProjectile(
       this.owner.position.x + dirX * 45,
@@ -14980,7 +15336,6 @@ export class BossAttackState extends BossState implements IBossAttackState {
       6.0,
       color
     );
-
     proj.size = { width: 17.6, height: 17.6 };
   }
 
@@ -15024,6 +15379,156 @@ export class BossAttackState extends BossState implements IBossAttackState {
     }
   }
 
+  private fireAphelionRing() {
+    const player = this.owner.world.player;
+    if (!player) return;
+
+    // Expanding ring leaving precisely one angular gap centered roughly on the player
+    const dx = player.position.x - this.owner.position.x;
+    const dy = player.position.y - this.owner.position.y;
+    const targetAngle = TrigLUT.atan2(dy, dx);
+
+    const projCount = 20;
+    const angleStep = (Math.PI * 2) / projCount;
+    const gapWidth = 0.45; // radians of safety escape path
+
+    for (let i = 0; i < projCount; i++) {
+      const angle = i * angleStep;
+      let diff = Math.abs(angle - targetAngle) % (Math.PI * 2);
+      if (diff > Math.PI) diff = Math.PI * 2 - diff;
+
+      // Skip generating bullets inside the gap arc
+      if (diff < gapWidth) continue;
+
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
+
+      this.owner.world.spawnProjectile(
+        this.owner.position.x + dirX * 40,
+        this.owner.position.y + dirY * 40,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        220,
+        5.0,
+        "hsl(338, 76%, 55%)"
+      );
+    }
+    this.owner.world.audio.playBossTelegraph();
+  }
+
+  private firePerihelionDive() {
+    const player = this.owner.world.player;
+    if (!player) return;
+
+    const dx = player.position.x - this.owner.position.x;
+    const dy = player.position.y - this.owner.position.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist > 0) {
+      // Propel boss directly at player with high-velocity homing lunge
+      this.owner.velocity.x = (dx / dist) * this.owner.lungeSpeed * 0.95;
+      this.owner.velocity.y = (dy / dist) * this.owner.lungeSpeed * 0.5;
+      this.owner.physics.isGrounded = false;
+      this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.2 });
+    }
+  }
+
+  private fireDashThread() {
+    const player = this.owner.world.player;
+    if (!player) return;
+
+    const dx = player.position.x - this.owner.position.x;
+    const dy = player.position.y - this.owner.position.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist > 0) {
+      const dirX = dx / dist;
+      const dirY = dy / dist;
+
+      // Publish warning spark line along lunge vector
+      this.owner.world.events.publishSpark(
+        this.owner.position.x,
+        this.owner.position.y,
+        TrigLUT.atan2(dirY, dirX),
+        "hsl(356, 94%, 62%)",
+        false,
+        20,
+        "line"
+      );
+
+      // Dash thread lunge
+      this.owner.velocity.x = dirX * this.owner.lungeSpeed * 1.1;
+      this.owner.velocity.y = dirY * this.owner.lungeSpeed * 0.45;
+      this.owner.physics.isGrounded = false;
+    }
+  }
+
+  private fireBellyTide() {
+    // Large ground wave expanding left and right
+    this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 12, duration: 0.3 });
+    this.owner.applyScaleImpulse(-0.3, 0.3);
+
+    // Spawn left ground wave
+    this.owner.world.spawnProjectile(
+      this.owner.position.x - 40,
+      this.owner.position.y + 12,
+      -1,
+      0,
+      "boss",
+      1,
+      300,
+      3.0,
+      "hsl(82, 38%, 44%)"
+    );
+
+    // Spawn right ground wave
+    this.owner.world.spawnProjectile(
+      this.owner.position.x + 40,
+      this.owner.position.y + 12,
+      1,
+      0,
+      "boss",
+      1,
+      300,
+      3.0,
+      "hsl(82, 38%, 44%)"
+    );
+    this.owner.world.audio.playBossSwipe();
+  }
+
+  private fireBlisterSpawn() {
+    // Spawns a mini cyst minion near the boss footprint
+    const player = this.owner.world.player;
+    if (!player) return;
+
+    const spawnX = this.owner.position.x + (player.position.x > this.owner.position.x ? -120 : 120);
+    const mId = \`cyst-spawn-\${Date.now()}\`;
+    
+    // Choose Clamjaw or PitLancer as a cyst spawn helper
+    const type = TrigLUT.randomGameplay() < 0.5 ? "CLAMPJAW" : "PIT_LANCER";
+    const cyst = MinionFactory.createMinion(type, mId, { x: spawnX, y: this.owner.position.y }, this.owner.world);
+    this.owner.world.minions.push(cyst);
+    
+    this.owner.world.events.publishBlast(spawnX, this.owner.position.y, "hsl(82, 38%, 44%)");
+  }
+
+  private fireCathedralToll() {
+    // Rhythmic, expanding shockwaves
+    this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 15, duration: 0.4 });
+    const rings = 2;
+    for (let i = 0; i < rings; i++) {
+      const delay = i * 0.25;
+      setTimeout(() => {
+        if (this.owner && !this.owner.isDead) {
+          this.owner.world.events.publishBlast(this.owner.position.x, this.owner.position.y, "hsl(15, 82%, 48%)");
+          this.owner.fireSingleShotAtPlayer();
+        }
+      }, delay * 1000);
+    }
+  }
+
   public exit(): void {}
 }
 
@@ -15032,7 +15537,7 @@ export class BossTelegraphState extends BossState {
 
   public enter(): void {
     this.owner.velocity.x = 0;
-    this.duration = this.owner.currentPhase === 3 ? 0.35 : 0.6;
+    this.duration = this.owner.currentPhase === 3 ? 0.3 : 0.55;
     setVec(this.owner.visualScale, 1.25, 0.75);
     setVec(this.owner.targetVisualScale, 1.15, 0.85);
     this.owner.world.events.publish("BOSS_TELEGRAPH", undefined);
