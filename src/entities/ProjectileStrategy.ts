@@ -40,7 +40,7 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         const isLvl2 = damage >= 3;
         if (TrigLUT.random() < (isLvl2 ? 0.35 : 0.08)) {
             const angle = TrigLUT.atan2(velY, velX) + Math.PI + (TrigLUT.random() * 0.4 - 0.2);
-            world.publishSpark(posX, posY, angle, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line");
+            world.publishSpark(posX, posY, angle, isLvl2 ? "hsl(142, 100%, 70%)" : "hsl(142, 71%, 58%)", false, 1, "line");
         }
     }
     shouldCheckClashes(): boolean { return true; }
@@ -51,7 +51,7 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         return targets;
     }
     getProjIntensity(damage: number): number { return damage >= 3 ? 1.6 : 0.6; }
-    getBlastColor(damage: number, _customColor: string | null): string { return damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)"; }
+    getBlastColor(damage: number, _customColor: string | null): string { return damage >= 3 ? "hsl(142, 100%, 70%)" : "hsl(142, 71%, 58%)"; }
     getSparkCount(damage: number): number { return damage >= 3 ? 18 : 4; }
     getSparkTurbulence(damage: number): number { return damage >= 3 ? 20 : 5; }
     
@@ -61,11 +61,11 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         const offsetY = data.drawY - data.posY;
         
         ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
-        const mainColor = isLvl2 ? "rgba(234, 179, 8, " : "rgba(34, 197, 94, ";
+        const mainColor = isLvl2 ? "rgba(52, 211, 153, " : "rgba(34, 197, 94, ";
         const outerGrad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX + offsetX, data.oldestY + offsetY);
         outerGrad.addColorStop(0.0, mainColor + "0.45)"); outerGrad.addColorStop(1.0, mainColor + "0.0)");
         ctx.strokeStyle = outerGrad; ctx.lineWidth = data.projWidth * 1.5;
-        ctx.shadowColor = isLvl2 ? "rgba(234, 179, 8, 0.6)" : "rgba(34, 197, 94, 0.6)"; ctx.shadowBlur = 12;
+        ctx.shadowColor = isLvl2 ? "rgba(52, 211, 153, 0.6)" : "rgba(34, 197, 94, 0.6)"; ctx.shadowBlur = 12;
         drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize, offsetX, offsetY);
         ctx.restore();
     }
@@ -76,7 +76,7 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         ctx.save();
         if (isLvl2) {
             const geom = Software3DRenderer.getPrismGeometry("proj-diamond", [{x:0,y:-0.5},{x:0.3,y:0},{x:0,y:0.5},{x:-0.3,y:0}], 0.8);
-            Software3DRenderer.drawGeometry(ctx, geom, 0, 0, data.width * 1.5, data.height * 1.5, 1, 1, 0, 0, angle + Math.PI/2, "hsl(45, 100%, 60%)", 1.0, "center");
+            Software3DRenderer.drawGeometry(ctx, geom, 0, 0, data.width * 1.5, data.height * 1.5, 1, 1, 0, 0, angle + Math.PI/2, "hsl(142, 100%, 65%)", 1.0, "center");
         } else {
             Software3DRenderer.drawGeometry(ctx, Software3DRenderer.BOX_GEOMETRY, 0, 0, data.width, data.height, 1, 1, 0, 0, angle + Math.PI/4, "hsl(142, 72%, 56%)", 1.0, "center");
         }

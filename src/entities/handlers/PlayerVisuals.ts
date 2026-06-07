@@ -25,7 +25,7 @@ chargeGradCtx.fillRect(0, 0, 64, 64);
 
 const chargeGradLvl2 = chargeGradCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
 chargeGradLvl2.addColorStop(0.0, '#ffffff');
-chargeGradLvl2.addColorStop(0.3, 'hsl(45, 100%, 75%)');
+chargeGradLvl2.addColorStop(0.3, 'hsl(142, 100%, 75%)');
 chargeGradLvl2.addColorStop(1.0, 'rgba(255,255,255,0)');
 const chargeGradLvl2Canvas = document.createElement("canvas");
 chargeGradLvl2Canvas.width = 64;

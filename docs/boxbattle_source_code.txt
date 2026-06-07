@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/6/2026, 10:38:25 PM
+ [SYSTEM] Generated: 6/6/2026, 10:44:24 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -17,6 +17,7 @@
 │   ├── BOXBATTLE_SYSTEMS_ARCHITECTURE.txt
 │   ├── DESIGN_EXCLUSIONS.txt
 │   ├── GAUNTLET_OVERHAUL_DESIGN.md
+│   ├── Limited Chromatic Hierarchy.txt
 │   ├── MUSIC_ARCHITECTURE.txt
 │   └── TODO.txt
 ├── node_modules/ (contents skipped)
@@ -1132,6 +1133,21 @@ Every gameplay layout and asset adjustment must pass the following checks:
     0.35\text{s}?
   - Does the arena background remain desaturated so green, red, and yellow
     signals stay distinct?
+
+
+● ./docs/Limited Chromatic Hierarchy.txt
+────────────────────────────────────────────────────
+The most sophisticated framework used in professional game development for managing large palettes without visual chaos is called Limited Chromatic Hierarchy — though it's rarely labeled with a single name. It synthesizes several theories into a cohesive system. Let me diagram it, then walk through each layer.The framework is built on five interlocking layers.
+
+
+Here's how they work together:
+Tier 1 — the base tone field (60%) Most of the screen is intentionally desaturated. This is the "ground" — architecture, terrain, sky gradients, ambient light. Bloodborne, Elden Ring, and Dead Space all do this. The desaturation isn't dull — it's the instrument that makes everything else loud. Without it, you get the visual chaos of early-2000s games where everything competed.
+Tier 2 — chromatic role assignment (30%) This is the most advanced and least understood layer. Each saturated hue in the game is locked to a single semantic function and never reused for something else. In Hollow Knight: cyan = soul/magic. Orange = warmth/safety. Red = threat. The player learns this subconsciously in the first hour and then reads combat at a glance. The theoretical basis here is Munsell's color notation combined with Josef Albers' interaction of color — the idea that hues only read clearly when they carry consistent meaning.
+Tier 3 — temperature architecture Warm vs. cool halves of the palette are assigned to factions, biomes, or game states. Spelunky 2's jungle is warm; its ice caves are cool. In Street Fighter 6, player 1 tends warm, player 2 tends cool. This leverages how depth perception and attention work physiologically — warm colors advance, cool colors recede — so this layer doubles as a spatial grammar.
+Tier 4 — the accent signal (10%) Maximum saturation, maximum value, used exclusively for interactive affordances and critical feedback: loot drops, health pickups, telegraphed attacks, UI prompts. This is the only place a fully-saturated pure hue appears. Because it's rare, it triggers attention instantly. The danger is violating this layer — if anything decorative uses the accent range, the signal degrades.
+Tier 5 — the greyscale override check This is the QA layer. Before shipping, pull all saturation. If you lose hierarchy, spatial depth, or enemy readability — the value contrast map failed. High-end studios (Naughty Dog, FromSoftware art teams) treat this as mandatory. Value contrast is what makes games readable across different displays, in motion blur, and in peripheral vision during combat.
+The additional pieces that make it strike: Simultaneous contrast (Chevreul) is why a midtone gray next to warm orange looks bluish — your palette design has to anticipate this drift. Color memory theory (from environmental perception research) explains why players describe a game's palette in terms of 2–3 colors even if 30 were used — design toward the remembered palette, not the rendered one. And the Itten/Goethe emotional resonances (blue = cold/infinite, yellow = warmth/intellect, red = urgency) inform which hues get which semantic roles in Tier 2.
+Think of layers that would give the game its grammar.
 
 
 ● ./docs/MUSIC_ARCHITECTURE.txt
@@ -17997,7 +18013,7 @@ export class CompassWaspMinion extends BaseMinion {
     this.angle = TrigLUT.random() * Math.PI * 2;
   }
 
-  get minionColor(): string { return "hsl(45, 100%, 60%)"; }
+  get minionColor(): string { return this.state === "diving" ? "hsl(45, 100%, 60%)" : "hsl(194, 62%, 52%)"; }
 
   public getVisualProfile(): VisualProfile {
     return {
@@ -18005,7 +18021,7 @@ export class CompassWaspMinion extends BaseMinion {
       danger: 0.9,
       weight: 0.1,
       corruption: 0.2,
-      hueRole: "telegraph",
+      hueRole: this.state === "diving" ? "telegraph" : "minion-logic",
       strokePx: 2,
       spinRate: 3.5,
       wobbleAmp: 0.3,
@@ -19194,7 +19210,7 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         const isLvl2 = damage >= 3;
         if (TrigLUT.random() < (isLvl2 ? 0.35 : 0.08)) {
             const angle = TrigLUT.atan2(velY, velX) + Math.PI + (TrigLUT.random() * 0.4 - 0.2);
-            world.publishSpark(posX, posY, angle, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line");
+            world.publishSpark(posX, posY, angle, isLvl2 ? "hsl(142, 100%, 70%)" : "hsl(142, 71%, 58%)", false, 1, "line");
         }
     }
     shouldCheckClashes(): boolean { return true; }
@@ -19205,7 +19221,7 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         return targets;
     }
     getProjIntensity(damage: number): number { return damage >= 3 ? 1.6 : 0.6; }
-    getBlastColor(damage: number, _customColor: string | null): string { return damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)"; }
+    getBlastColor(damage: number, _customColor: string | null): string { return damage >= 3 ? "hsl(142, 100%, 70%)" : "hsl(142, 71%, 58%)"; }
     getSparkCount(damage: number): number { return damage >= 3 ? 18 : 4; }
     getSparkTurbulence(damage: number): number { return damage >= 3 ? 20 : 5; }
     
@@ -19215,11 +19231,11 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         const offsetY = data.drawY - data.posY;
         
         ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
-        const mainColor = isLvl2 ? "rgba(234, 179, 8, " : "rgba(34, 197, 94, ";
+        const mainColor = isLvl2 ? "rgba(52, 211, 153, " : "rgba(34, 197, 94, ";
         const outerGrad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX + offsetX, data.oldestY + offsetY);
         outerGrad.addColorStop(0.0, mainColor + "0.45)"); outerGrad.addColorStop(1.0, mainColor + "0.0)");
         ctx.strokeStyle = outerGrad; ctx.lineWidth = data.projWidth * 1.5;
-        ctx.shadowColor = isLvl2 ? "rgba(234, 179, 8, 0.6)" : "rgba(34, 197, 94, 0.6)"; ctx.shadowBlur = 12;
+        ctx.shadowColor = isLvl2 ? "rgba(52, 211, 153, 0.6)" : "rgba(34, 197, 94, 0.6)"; ctx.shadowBlur = 12;
         drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize, offsetX, offsetY);
         ctx.restore();
     }
@@ -19230,7 +19246,7 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         ctx.save();
         if (isLvl2) {
             const geom = Software3DRenderer.getPrismGeometry("proj-diamond", [{x:0,y:-0.5},{x:0.3,y:0},{x:0,y:0.5},{x:-0.3,y:0}], 0.8);
-            Software3DRenderer.drawGeometry(ctx, geom, 0, 0, data.width * 1.5, data.height * 1.5, 1, 1, 0, 0, angle + Math.PI/2, "hsl(45, 100%, 60%)", 1.0, "center");
+            Software3DRenderer.drawGeometry(ctx, geom, 0, 0, data.width * 1.5, data.height * 1.5, 1, 1, 0, 0, angle + Math.PI/2, "hsl(142, 100%, 65%)", 1.0, "center");
         } else {
             Software3DRenderer.drawGeometry(ctx, Software3DRenderer.BOX_GEOMETRY, 0, 0, data.width, data.height, 1, 1, 0, 0, angle + Math.PI/4, "hsl(142, 72%, 56%)", 1.0, "center");
         }
@@ -19711,7 +19727,7 @@ export class FireballComponent implements IEntityComponent {
         const vx = (targetX - startX) * 3.5;
         const vy = (targetY - startY) * 3.5;
 
-        this.owner.world.events.publishSpark(startX, startY, TrigLUT.atan2(vy, vx), isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line", 20);
+        this.owner.world.events.publishSpark(startX, startY, TrigLUT.atan2(vy, vx), isLvl2 ? "hsl(142, 100%, 70%)" : "hsl(142, 71%, 58%)", false, 1, "line", 20);
       }
 
       if (isLvl2 && TrigLUT.random() < 0.12) {
@@ -21057,7 +21073,7 @@ chargeGradCtx.fillRect(0, 0, 64, 64);
 
 const chargeGradLvl2 = chargeGradCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
 chargeGradLvl2.addColorStop(0.0, '#ffffff');
-chargeGradLvl2.addColorStop(0.3, 'hsl(45, 100%, 75%)');
+chargeGradLvl2.addColorStop(0.3, 'hsl(142, 100%, 75%)');
 chargeGradLvl2.addColorStop(1.0, 'rgba(255,255,255,0)');
 const chargeGradLvl2Canvas = document.createElement("canvas");
 chargeGradLvl2Canvas.width = 64;

@@ -59,7 +59,7 @@ export class FireballComponent implements IEntityComponent {
         const vx = (targetX - startX) * 3.5;
         const vy = (targetY - startY) * 3.5;
 
-        this.owner.world.events.publishSpark(startX, startY, TrigLUT.atan2(vy, vx), isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line", 20);
+        this.owner.world.events.publishSpark(startX, startY, TrigLUT.atan2(vy, vx), isLvl2 ? "hsl(142, 100%, 70%)" : "hsl(142, 71%, 58%)", false, 1, "line", 20);
       }
 
       if (isLvl2 && TrigLUT.random() < 0.12) {

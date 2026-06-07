@@ -128,7 +128,7 @@ export class CompassWaspMinion extends BaseMinion {
     this.angle = TrigLUT.random() * Math.PI * 2;
   }
 
-  get minionColor(): string { return "hsl(45, 100%, 60%)"; }
+  get minionColor(): string { return this.state === "diving" ? "hsl(45, 100%, 60%)" : "hsl(194, 62%, 52%)"; }
 
   public getVisualProfile(): VisualProfile {
     return {
@@ -136,7 +136,7 @@ export class CompassWaspMinion extends BaseMinion {
       danger: 0.9,
       weight: 0.1,
       corruption: 0.2,
-      hueRole: "telegraph",
+      hueRole: this.state === "diving" ? "telegraph" : "minion-logic",
       strokePx: 2,
       spinRate: 3.5,
       wobbleAmp: 0.3,
