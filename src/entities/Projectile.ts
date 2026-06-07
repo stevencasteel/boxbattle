@@ -116,7 +116,7 @@ export class Projectile extends BaseEntity implements IPoolable {
     this.trailRing[this.trailHead].x = this.position.x;
     this.trailRing[this.trailHead].y = this.position.y;
     this.trailHead = (this.trailHead + 1) % TRAIL_RING_SIZE;
-    const maxTrailLen = this.damage >= 3 ? 8 : 3;
+    const maxTrailLen = this.damage >= 3 ? 8 : 4;
     if (this.trailCount < TRAIL_RING_SIZE) this.trailCount++;
     if (this.trailCount > maxTrailLen) this.trailCount = maxTrailLen;
 
@@ -324,7 +324,9 @@ export class Projectile extends BaseEntity implements IPoolable {
         damage: this.damage,
         customColor: this.customColor,
         projWidth: this.size.width,
-            kind: this.kind,
+        kind: this.kind,
+        velX: this.velocity.x,
+        velY: this.velocity.y,
       });
 
       ctx.restore();

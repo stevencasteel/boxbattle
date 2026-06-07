@@ -254,23 +254,24 @@ export class BossAttackState extends BossState implements IBossAttackState {
     if (this.attackType === "VOLLEY") {
       this.owner.fireSingleShotAtPlayer();
     } else if (this.attackType === "LOCKSTEP_VOLLEY") {
-      // Fire modulo repeating lane projectiles
+      // Fire modulo repeating lane projectiles with segmented-spine trails
       const laneCount = 5;
       const stepWidth = 140;
-      const originX = 220; // safe bounds centered
+      const originX = 220;
       const activeLane = (this.volleyCount + phase) % laneCount;
       const targetX = originX + activeLane * stepWidth;
 
       this.owner.world.spawnProjectile(
         targetX,
-        80, // fire fromdropped ceiling top
+        80,
         0,
         1,
         "boss",
         1,
         420,
         3.0,
-        "hsl(4, 88%, 54%)"
+        "hsl(4, 88%, 54%)",
+        "segmented-spine"
       );
       this.owner.world.audio.playSelectTick();
     } else if (this.attackType === "GATE_DROP") {
@@ -289,7 +290,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
           1,
           500,
           2.0,
-          "hsl(4, 88%, 54%)"
+          "hsl(4, 88%, 54%)",
+          "needle"
         );
       }
       this.owner.world.audio.playErrorTick();
@@ -306,7 +308,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
         1,
         640,
         2.5,
-        "hsl(356, 94%, 62%)"
+        "hsl(356, 94%, 62%)",
+        "needle"
       );
     } else if (this.attackType === "FALLING_NAVE") {
       // Heavy blocks descending from the ceiling
@@ -322,9 +325,10 @@ export class BossAttackState extends BossState implements IBossAttackState {
         2,
         350,
         3.0,
-        "hsl(15, 82%, 48%)"
+        "hsl(15, 82%, 48%)",
+        "heavy-block"
       );
-      proj.size = { width: 44, height: 44 }; // Heavy footprint
+      proj.size = { width: 44, height: 44 };
     }
   }
 
@@ -349,7 +353,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
         1,
         280,
         4.0,
-        color
+        color,
+        "needle"
       );
     }
   }
@@ -384,7 +389,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
         1,
         300,
         5.0,
-        color
+        color,
+        "needle"
       );
     }
   }
@@ -416,7 +422,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
       2,
       450,
       6.0,
-      color
+      color,
+      "needle"
     );
     proj.size = { width: 17.6, height: 17.6 };
   }
@@ -456,7 +463,9 @@ export class BossAttackState extends BossState implements IBossAttackState {
         "boss",
         1,
         280,
-        4.0
+        4.0,
+        undefined,
+        "needle"
       );
     }
   }
@@ -472,14 +481,13 @@ export class BossAttackState extends BossState implements IBossAttackState {
 
     const projCount = 20;
     const angleStep = (Math.PI * 2) / projCount;
-    const gapWidth = 0.45; // radians of safety escape path
+    const gapWidth = 0.45;
 
     for (let i = 0; i < projCount; i++) {
       const angle = i * angleStep;
       let diff = Math.abs(angle - targetAngle) % (Math.PI * 2);
       if (diff > Math.PI) diff = Math.PI * 2 - diff;
 
-      // Skip generating bullets inside the gap arc
       if (diff < gapWidth) continue;
 
       const dirX = TrigLUT.cos(angle);
@@ -494,7 +502,8 @@ export class BossAttackState extends BossState implements IBossAttackState {
         1,
         220,
         5.0,
-        "hsl(338, 76%, 55%)"
+        "hsl(338, 76%, 55%)",
+        "needle"
       );
     }
     this.owner.world.audio.playBossTelegraph();
@@ -509,7 +518,6 @@ export class BossAttackState extends BossState implements IBossAttackState {
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     if (dist > 0) {
-      // Propel boss directly at player with high-velocity homing lunge
       this.owner.velocity.x = (dx / dist) * this.owner.lungeSpeed * 0.95;
       this.owner.velocity.y = (dy / dist) * this.owner.lungeSpeed * 0.5;
       this.owner.physics.isGrounded = false;
@@ -529,7 +537,6 @@ export class BossAttackState extends BossState implements IBossAttackState {
       const dirX = dx / dist;
       const dirY = dy / dist;
 
-      // Publish warning spark line along lunge vector
       this.owner.world.events.publishSpark(
         this.owner.position.x,
         this.owner.position.y,
@@ -540,7 +547,6 @@ export class BossAttackState extends BossState implements IBossAttackState {
         "line"
       );
 
-      // Dash thread lunge
       this.owner.velocity.x = dirX * this.owner.lungeSpeed * 1.1;
       this.owner.velocity.y = dirY * this.owner.lungeSpeed * 0.45;
       this.owner.physics.isGrounded = false;
@@ -548,11 +554,9 @@ export class BossAttackState extends BossState implements IBossAttackState {
   }
 
   private fireBellyTide() {
-    // Large ground wave expanding left and right
     this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 12, duration: 0.3 });
     this.owner.applyScaleImpulse(-0.3, 0.3);
 
-    // Spawn left ground wave
     this.owner.world.spawnProjectile(
       this.owner.position.x - 40,
       this.owner.position.y + 12,
@@ -562,10 +566,10 @@ export class BossAttackState extends BossState implements IBossAttackState {
       1,
       300,
       3.0,
-      "hsl(82, 38%, 44%)"
+      "hsl(82, 38%, 44%)",
+      "swirl"
     );
 
-    // Spawn right ground wave
     this.owner.world.spawnProjectile(
       this.owner.position.x + 40,
       this.owner.position.y + 12,
@@ -575,20 +579,19 @@ export class BossAttackState extends BossState implements IBossAttackState {
       1,
       300,
       3.0,
-      "hsl(82, 38%, 44%)"
+      "hsl(82, 38%, 44%)",
+      "swirl"
     );
     this.owner.world.audio.playBossSwipe();
   }
 
   private fireBlisterSpawn() {
-    // Spawns a mini cyst minion near the boss footprint
     const player = this.owner.world.player;
     if (!player) return;
 
     const spawnX = this.owner.position.x + (player.position.x > this.owner.position.x ? -120 : 120);
     const mId = `cyst-spawn-${Date.now()}`;
     
-    // Choose Clamjaw or PitLancer as a cyst spawn helper
     const type = TrigLUT.randomGameplay() < 0.5 ? "CLAMPJAW" : "PIT_LANCER";
     const cyst = MinionFactory.createMinion(type, mId, { x: spawnX, y: this.owner.position.y }, this.owner.world);
     this.owner.world.minions.push(cyst);
@@ -597,7 +600,6 @@ export class BossAttackState extends BossState implements IBossAttackState {
   }
 
   private fireCathedralToll() {
-    // Rhythmic, expanding shockwaves
     this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 15, duration: 0.4 });
     const rings = 2;
     for (let i = 0; i < rings; i++) {
