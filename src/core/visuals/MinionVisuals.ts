@@ -10,6 +10,7 @@ const frontCageScratch: CageSegment[] = [];
 
 const getShapePoints = (family: ShapeFamily): {x: number, y: number}[] => {
     switch(family) {
+        case "triangle": return [{x: 0, y: -0.58}, {x: 0.5, y: 0.28}, {x: -0.5, y: 0.28}];
         case "diamond": return [{x:0,y:-0.5},{x:0.5,y:0},{x:0,y:0.5},{x:-0.5,y:0}];
         case "kite": return [{x:0,y:-0.5},{x:0.4,y:-0.1},{x:0,y:0.5},{x:-0.4,y:-0.1}];
         case "needle": return [{x:0,y:-0.5},{x:0.15,y:0},{x:0,y:0.5},{x:-0.15,y:0}];

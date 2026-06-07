@@ -33,7 +33,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
     const mobileClass = isTouchDevice ? "is-mobile" : "";
     const leftState = playerDialogue.active ? "active" : bossDialogue.active ? "inactive" : "idle";
     const rightState = bossDialogue.active ? "active" : playerDialogue.active ? "inactive" : "idle";
-    const bossName = "PRIME WOUND";
+    const bossName = "PRIME APHELION";
 
     const getVariants = (speaker: "player" | "boss") => ({
         active: { scale: 1.02, opacity: 1, borderColor: speaker === "player" ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)", boxShadow: speaker === "player" ? "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(34, 197, 94, 0.15)" : "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(239, 68, 68, 0.15)" },

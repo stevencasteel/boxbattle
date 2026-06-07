@@ -10,7 +10,8 @@ import {
   ClampjawMinion,
   HymnNailMinion,
   BlisterOxMinion,
-  BellHammerMinion
+  BellHammerMinion,
+  ShardChoirMinion
 } from "./NewGauntletMinions";
 
 export class MinionFactory {
@@ -36,6 +37,8 @@ export class MinionFactory {
         return new BlisterOxMinion(id, position, world);
       case "BELL_HAMMER":
         return new BellHammerMinion(id, position, world);
+      case "SHARD_CHOIR":
+        return new ShardChoirMinion(id, position, world);
       default:
         throw new Error(`Unknown minion type: ${type}`);
     }

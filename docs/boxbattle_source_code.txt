@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/6/2026, 9:29:53 PM
+ [SYSTEM] Generated: 6/6/2026, 10:08:17 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -672,62 +672,27 @@ dashes, or boss phase changes).
 ────────────────────────────────────────────────────
 # Box Battle Gauntlet Overhaul Design
 
-Implementation design for transforming the current vertical slice into a complete Hollow Knight Colosseum of Fools + Pantheon + Path of Pain inspired challenge mode.
+This document details the complete technical design for transforming Box Battle into a precision combat gauntlet inspired by classic colosseum wave survival and precision traversal trials, set entirely within a single, morphing arena.
 
-This document is written for the next AI implementer. It intentionally includes concrete formulas, data structures, migration steps, and file-level hooks so the work can be built without rediscovering the whole codebase.
+---
 
 ## North Star
 
-Box Battle should become a precision combat gauntlet where every new stage feels like a different cruel lesson in geometry.
+Box Battle is a precision combat gauntlet where the player is tested against escalating geometric threats inside a singular crucible.
 
-The player is the only perfect square. Every other shape expresses contamination, possession, illness, weight, speed, or danger through geometric drift. The game should read instantly in motion: green means player agency, red means lethal boss pressure, yellow means imminent action, violet means determination/healing, blue/cyan means mechanical minion logic, and the arena itself remains mostly desaturated so those signals stay loud.
+Rather than transitioning between different levels, the entire game takes place within **Stage 1: The Old Pit (The Unified Crucible)**. To keep the gameplay dynamic, the arena’s platforms, hazard zones, and boundaries **morph natively** between waves. These physical transitions utilize zero-dependency interpolations, changing the routing of the battleground from wide split-floors to vertical redoubts, orbital platforms, and organic pockets.
 
-The complete mode is a chained ordeal:
+The player is the **only perfect square** in this world. Every other entity expresses danger, weight, or mechanical tracking through alternative geometric shapes. The game reads instantly in motion: green means player agency, red means lethal boss pressure, yellow means imminent telegraphing, violet means resolve and healing, and blue/cyan represents mechanical minion tracking logic.
 
-1. Colosseum waves: escalating minion fights inside bespoke arenas.
-2. Mid-stage boss intrusions: each arena introduces a unique boss after half of that arena's waves.
-3. Pantheon continuity: bosses do not vanish from the story; the gauntlet remembers them, remixes them, and later combines pressure patterns.
-4. Path of Pain traversal interludes: short precision platforming trials between combat stages, using pogo, dissolving platforms, spikes, wall movement, dash resets, and stage morphs.
-5. Final synthesis: the last sequence tests all shape, color, movement, and reading grammar taught earlier.
-
-The current game already has useful foundations: player movement, dash, double jump, pogo reset, healing/determination, boss phases, minion factory, projectile strategies, spawn cages, a static map renderer, particles, dialogue console, and event bus. The overhaul should evolve these systems into a data-driven gauntlet instead of replacing everything.
-
-## Existing Code Hooks
-
-Start from these files:
-
-- `src/core/levelData.ts`: current single `LevelConfig`, spawn anchors, waves.
-- `src/core/EncounterDirector.ts`: weighted minion spawning and phase budget logic.
-- `src/core/BattleDirector.ts`: dialogue timing, boss phase events, win/loss cinematics.
-- `src/entities/Boss.ts`, `src/entities/BossStates.ts`, `src/entities/BossAttackPatterns.ts`: current boss AI and attack scoring.
-- `src/entities/BaseMinion.ts`, `src/entities/MinionFactory.ts`, `src/entities/*Minion.ts`, `src/entities/MinionStates.ts`: minion architecture.
-- `src/entities/Projectile.ts`, `src/entities/ProjectileStrategy.ts`: projectile kinds, body/trail rendering, collisions.
-- `src/core/StaticMapRenderer.ts`: arena, platforms, hazards, cache invalidation.
-- `src/core/EntityRenderer.ts`, `src/core/visuals/BossVisuals.ts`, `src/core/visuals/MinionVisuals.ts`, `src/entities/handlers/PlayerVisuals.ts`: shape and color rendering.
-- `src/core/ParticleSystem.ts`, `src/core/ParticleRenderer.ts`: sparks, lines, rings, blast effects.
-- `src/hooks/useGameDialogue.ts`, `src/components/DialogueConsole.tsx`, `src/components/GameArena.css`: dialogue timing and portraits.
-
-Important current constraints:
-
-- Player is currently `32x64`; change visual and collision target to a perfect square.
-- Current boss is `48x48`, which can remain square-like only if boss silhouettes are corrupted square derivatives, never perfect squares.
-- Current minion colors use many saturated hues with mixed meanings; move them into the new chromatic grammar.
-- Static map cache currently assumes one layout; stage morphs need cache invalidation and dynamic geometry support.
-- Projectile `kind` exists but is lightly used; expand it into a real shape/trail grammar.
-- Minion spawn cage visuals are centralized in `MinionVisuals`; replace with shape-specific cages using the new visual language.
+---
 
 ## Core Design Laws
 
 ### 1. Silhouette First
-
-Every gameplay entity must be identifiable in a 48x48 greyscale thumbnail.
-
-QA rule:
+Every gameplay entity must be instantly identifiable in a 48x48 greyscale thumbnail. The visual separation between entities is calculated programmatically through edge density, area, convexity, and aspect ratios.
 
 ```ts
-// Future visual regression helper.
-// Render an entity's neutral frame into 48x48, desaturate it,
-// then compare edge density and occupied bounds against every other entity.
+// Silhouette validation structure for entity profiles
 interface SilhouetteFingerprint {
   areaRatio: number;        // filled pixels / 2304
   perimeterRatio: number;   // edge pixels / 2304
@@ -736,125 +701,51 @@ interface SilhouetteFingerprint {
   cornerEnergy: number;     // high curvature count / perimeter
   radialVariance: number;   // variance of outline radius from center
 }
-```
 
-Minimum silhouette separation:
+The minimum silhouette separation between any two active entities must satisfy:
+\Delta = |areaRatio_A - areaRatio_B| + 0.45 \cdot |aspect_A - aspect_B| + 0.75 \cdot |cornerEnergy_A - cornerEnergy_B| \ge 0.18
 
-```txt
-abs(areaRatioA - areaRatioB)
-+ abs(aspectA - aspectB) * 0.45
-+ abs(cornerEnergyA - cornerEnergyB) * 0.75
-+ abs(radialVarianceA - radialVarianceB) * 0.60
->= 0.18
-```
+2. Shape Contrast Carries Narrative
 
-If this fails, change shape before changing color.
+Danger and weight are mapped along clear geometric axes. Sharp, spiked, or
+sheared forms indicate hostile or lethal objects, while rounded and heavy blocks
+convey momentum and route obstruction:
 
-### 2. Shape Contrast Carries Narrative
-
-Danger axis:
-
-```txt
 round/soft -> chamfered -> square -> sheared -> cut/concave -> pointed/spiked
-safe          neutral       pure      unstable   hostile       lethal
-```
+(safe)        (neutral)    (pure)    (unstable) (hostile)      (lethal)
 
-Weight axis:
+3. The Player Is The Only Perfect Square
 
-```txt
-small/thin/fast -> medium -> large/thick/slow
-needle threat      duelist  boulder threat
-```
+The player's body is maintained as a stable 40 \times 40 square in both
+collision and rendering. During squashes, stretches, or dashes, the deformation
+reads as energy acting on purity rather than a permanent change in silhouette.
 
-These axes are independent. Do not equate sharp with big. A small sharp thing should feel like a wasp or blade. A large round thing should feel slow, heavy, oppressive, and difficult to route around.
-
-### 3. The Player Is The Only Perfect Square
-
-Change player to a true square in both collision and rendering:
-
-```ts
 // src/entities/Player.ts
 this.size = { width: 40, height: 40 };
 this.squashPivot = "center";
-```
 
-Then retune movement if needed:
+Wall slide forgiveness is extended using lateral probes rather than inflating
+the collision bounding box:
 
-- Keep player centerline visually lower with foot sparks, not taller body geometry.
-- Preserve jump height by keeping `PLAYER_JUMP_FORCE` initially unchanged.
-- Recheck wall slide feel because square height reduces wall contact forgiveness.
-- If wall cling becomes too strict, expand wall probe only, not the player body:
-
-```ts
 const wallProbeHeight = player.size.height + 18;
 const wallProbeWidth = player.size.width + 4;
-```
 
-The player's square may squash/stretch briefly during motion, but its resting identity is exact square. During dash and charge, deformation should read as energy acting on purity, not as a new permanent silhouette.
+Chromatic Grammar & budgets
 
-### 4. Hitboxes And Silhouettes May Differ
+Quantity Budget (Itten's Contrast of Quantity)
 
-Do not make advanced shapes break collision. Keep physics mostly AABB for performance and feel, but add a separate `VisualProfile` per entity.
+To keep the screen clean and legible during high-speed dashes, saturated colors
+are heavily budgeted:
 
-```ts
-export type ShapeFamily =
-  | "perfect-square"
-  | "corrupted-box"
-  | "hex"
-  | "diamond"
-  | "kite"
-  | "needle"
-  | "saw"
-  | "orb"
-  | "blister"
-  | "cage"
-  | "organic-platform";
+  - 60-70%: Desaturated arena stone and background mass.
+  - 18-25%: Structural outlines, platform rims, and inactive preview cages.
+  - 6-10%: Active combat entities.
+  - 2-4%: Telegraph warnings, critical hazards, and healing/determination
+    spirals.
+  - <1%: Pure white impact cores.
 
-export interface VisualProfile {
-  shapeFamily: ShapeFamily;
-  danger: number;          // 0 round/safe, 1 spiked/lethal
-  weight: number;          // 0 light, 1 massive
-  corruption: number;      // 0 clean, 1 heavily deformed
-  hueRole: ColorRole;
-  patternId?: PatternId;
-  strokePx: number;
-  spinRate: number;        // radians/sec
-  wobbleAmp: number;       // pixels or normalized path deformation
-  cornerRadius: number;    // 0 for perfect, larger for round
-  spikeCount?: number;
-  phaseOffset: number;
-}
-```
+Color Roles & Palettes
 
-## Chromatic Grammar
-
-Base on `docs/Limited Chromatic Hierarchy.txt`, but make it game-specific.
-
-### Screen Quantity Budget
-
-Use Itten's Contrast of Quantity so rare saturated colors dominate attention without flooding the screen.
-
-Target screen coverage:
-
-```txt
-Tier 1: 60-70% desaturated arena/background
-Tier 2: 18-25% structural outlines, platform rims, inactive cages
-Tier 3: 6-10% active entities
-Tier 4: 2-4% telegraphs, critical danger, healing/determination bursts
-Tier 5: <1% pure white impact cores
-```
-
-Runtime approximation:
-
-```ts
-const quantityWeight = saturation01 * Math.max(0.2, lightness01) * screenArea01;
-// Keep total quantityWeight of lethal red below 0.055 outside of boss ultimates.
-// Keep pure white quantityWeight below 0.006 except explosions.
-```
-
-### Color Roles
-
-```ts
 export type ColorRole =
   | "player-agency"
   | "boss-lethal"
@@ -870,172 +761,57 @@ export type ColorRole =
 
 export const COLOR_ROLES = {
   playerAgency: {
-    core: "hsl(142, 72%, 56%)",
+    core: "hsl(142, 72%, 56%)", // Pure green: reserved ONLY for player agency
     light: "hsl(142, 100%, 78%)",
-    dark: "hsl(148, 65%, 24%)",
-    use: "player body, player basic projectiles, dash echoes"
+    dark: "hsl(148, 65%, 24%)"
   },
   bossLethal: {
-    core: "hsl(350, 82%, 58%)",
+    core: "hsl(350, 82%, 58%)", // Deep red: reserved ONLY for Prime Wound and lethal boss threats
     light: "hsl(0, 100%, 72%)",
-    dark: "hsl(348, 70%, 28%)",
-    use: "boss bodies, boss projectiles, lethal boss arena ownership"
+    dark: "hsl(348, 70%, 28%)"
   },
   hazard: {
-    core: "hsl(358, 92%, 52%)",
-    light: "hsl(12, 100%, 66%)",
-    dark: "hsl(350, 80%, 22%)",
-    use: "spikes, saws, instant danger geometry"
+    core: "hsl(358, 92%, 52%)", // Sharp spikes and saw blades
+    light: "hsl(12, 100%, 66%)"
   },
   telegraph: {
-    core: "hsl(45, 100%, 60%)",
-    light: "hsl(52, 100%, 78%)",
-    dark: "hsl(34, 90%, 36%)",
-    use: "pre-attack warning only"
+    core: "hsl(45, 100%, 60%)"  // Yellow: warning states only; disappears on attack commitment
   },
   determination: {
-    core: "hsl(286, 85%, 62%)",
-    light: "hsl(292, 100%, 80%)",
-    dark: "hsl(276, 75%, 26%)",
-    use: "healing, resolve, swirls, recovery windows"
-  },
-  minionLogic: {
-    core: "hsl(194, 62%, 52%)",
-    light: "hsl(188, 85%, 70%)",
-    dark: "hsl(204, 45%, 24%)",
-    use: "mechanical minions, tracking projectiles, spawn cage math"
-  },
-  minionOrganic: {
-    core: "hsl(82, 38%, 44%)",
-    light: "hsl(90, 50%, 62%)",
-    dark: "hsl(76, 34%, 22%)",
-    use: "contaminated arena organisms and heavy organic minions"
-  },
-  arenaStone: {
-    core: "hsl(220, 10%, 12%)",
-    light: "hsl(215, 12%, 22%)",
-    dark: "hsl(230, 12%, 5%)",
-    use: "majority of arena mass"
-  },
-  arenaInfection: {
-    core: "hsl(330, 28%, 25%)",
-    light: "hsl(336, 42%, 38%)",
-    dark: "hsl(322, 30%, 12%)",
-    use: "background contamination and geometric drift"
+    core: "hsl(286, 85%, 62%)" // Violet: healing, resolve, and pogo spirals
   }
 } as const;
-```
 
-Rules:
+Visual Styling Constraints
 
-- Green is player agency only. Never use green for decorative arena rims except old code migration placeholders.
-- Red is lethal danger. Bosses can use different red families, but all must remain in the red/magenta/orange-red danger band.
-- Yellow is a warning state, not a faction. It should disappear after the attack commits.
-- Violet is determination/healing/metaphysical resolve. Avoid using it as arbitrary minion body color.
-- Blue/cyan is machine logic, prediction, tracking, cages, and non-lethal setup. Cyan projectiles can hurt only if they also carry red rims or yellow telegraph.
-- Arena colors are low saturation. The arena may glow only at edges, not fill the whole playfield.
+  - Green is never used for decorative arena rims or hazard highlights.
+  - Red always means damage or lethal pressure.
+  - No Rune Sigils: The boss HP panel is kept minimalist and clean, containing
+    only the health bar. The boss's mathematical identity is expressed strictly
+    through its world-space geometry and the left-aligned dialogue portrait.
+  - No Boss Distortion: Prime Wound is rendered with stable, solid 3D
+    square-derivative geometry. It rotates and leans dynamically based on
+    velocity, but does not undergo wild warping or stretching distortions.
 
-### Boss Red Variants
+Procedural Shape Construction
 
-Each boss has a unique shade, avatar pattern, and mathematical demarcation.
+All non-square silhouettes are constructed procedurally using normalized local
+points drawn through the 3D Software Renderer. This prevents bespoke canvas
+drawing commands from cluttering entity files.
 
-```ts
-export interface BossIdentity {
-  id: BossId;
-  displayName: string;
-  coreHsl: [number, number, number];
-  rimHsl: [number, number, number];
-  portraitPattern: PortraitPattern;
-  attackMath: BossMathSignature;
-}
-```
+Spiky Radius (Needles, Saw Blades, and Thorns)
 
-Boss palette examples:
+\gamma(\theta) = R_{base} \cdot \left(1 + A \cdot |\cos(\frac{\theta \cdot P}{2})|^S\right)
 
-```txt
-PRIME WOUND:       hsl(350, 82%, 58%) / clean red square-corruption
-THE SCARLET LOCK:  hsl(4, 88%, 54%)   / vertical prison bars, modular symmetry
-CARMINAL ORBIT:    hsl(338, 76%, 55%) / orbital ring glyphs, polar math
-RUST CATHEDRAL:    hsl(15, 82%, 48%)  / heavy orange-red, block compression
-VERMILION NEEDLE:  hsl(356, 94%, 62%) / tiny sharp repeated spikes
-MARROW KING:       hsl(345, 58%, 46%) / bruised red, organic rounded mass
-```
-
-Boss dialogue avatars are fully filled square portraits, but no two read alike:
-
-- Prime Wound: filled red square with one black diagonal fault line.
-- Scarlet Lock: filled red square with three darker vertical prison bars.
-- Carminal Orbit: filled magenta-red square with thin concentric circular cuts.
-- Rust Cathedral: filled orange-red square with heavy black block insets.
-- Vermilion Needle: filled bright red square with inward triangular teeth around edges.
-- Marrow King: filled bruised red square with organic darker blisters.
-
-Portrait generation formula:
-
-```ts
-function drawBossPortrait(ctx: CanvasRenderingContext2D, boss: BossIdentity, x: number, y: number, size: number, time: number) {
-  ctx.fillStyle = hsl(boss.coreHsl);
-  ctx.fillRect(x, y, size, size);
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(x, y, size, size);
-  ctx.clip();
-
-  // Pattern coordinates are normalized 0..1 so the portrait remains readable on mobile.
-  boss.portraitPattern.draw(ctx, x, y, size, time);
-  ctx.restore();
-
-  ctx.strokeStyle = hsl(boss.rimHsl);
-  ctx.lineWidth = Math.max(2, size * 0.045);
-  ctx.strokeRect(x + 1, y + 1, size - 2, size - 2);
-}
-```
-
-## Shape Grammar
-
-### Entity Families
-
-```txt
-Player: perfect square, green, exact stable rotation at rest.
-Bosses: corrupted square derivatives, red, high health, named pattern math.
-Minions: non-square silhouettes. They may be more dangerous than bosses moment-to-moment.
-Projectiles/weapons: points, spikes, needles, saw petals, shards.
-Platforms/background: round organic custom silhouettes, contaminated drift.
-Spawn cages: mathematical prisons that reveal the entity's shape before it spawns.
-Hazards: red spikes/saws/inner cuts. Always sharp.
-```
-
-### Procedural Shape Construction
-
-Use normalized local points and draw through a reusable shape renderer. Avoid a pile of bespoke `ctx.lineTo` code spread across entities.
-
-```ts
-export interface ShapePathSpec {
-  points?: Array<{ x: number; y: number }>;
-  radiusFn?: (theta: number, t: number) => number;
-  cornerRadius?: number;
-  innerCuts?: Array<{ angle: number; depth: number; widthRad: number }>;
-  spikeCount?: number;
-  spikeAmp?: number;
-  shear?: number;
-  wobble?: number;
-}
-```
-
-Star/spike projectile formula:
-
-```ts
 function spikyRadius(theta: number, base: number, points: number, amp: number, sharpness = 3): number {
-  // abs(cos) gives evenly repeated spikes. pow sharpens tips without adding extra vertices.
   const wave = Math.pow(Math.abs(Math.cos(theta * points * 0.5)), sharpness);
   return base * (1 + amp * wave);
 }
-```
 
-Organic platform formula:
+Organic Radius (Contaminated Platform Seams and Blisters)
 
-```ts
+\gamma(\theta) = R_{base} \cdot \left(1 + 0.06\sin(2\theta + \phi) + 0.04\sin(3.7\theta + 1.9\phi) + C \cdot 0.10\sin(7\theta + 0.6\phi)\right)
+
 function organicRadius(theta: number, base: number, seed: number, contamination: number): number {
   return base * (
     1
@@ -1044,951 +820,320 @@ function organicRadius(theta: number, base: number, seed: number, contamination:
     + contamination * 0.10 * Math.sin(theta * 7 + seed * 0.6)
   );
 }
-```
 
-Corrupted box formula:
+Corrupted Box Points (Boss and Elite Minion Base Geometry)
 
-```ts
 function corruptedBoxPoint(x: number, y: number, corruption: number, time: number, seed: number) {
   const shear = corruption * 0.16 * Math.sin(seed);
   const wobbleX = corruption * 3.0 * Math.sin(time * 4 + y * 0.08 + seed);
   const wobbleY = corruption * 2.0 * Math.cos(time * 3 + x * 0.07 + seed);
   return { x: x + y * shear + wobbleX, y: y + wobbleY };
 }
-```
 
-Inner cut formula for dangerous boxes:
+Single-Stage Morphing Architecture
 
-```ts
-// Cut triangular bites into a box edge. Use for bosses and cages, not player.
-interface InnerCut {
-  edge: "top" | "right" | "bottom" | "left";
-  center01: number;
-  width01: number;
-  depthPx: number;
-}
-```
+Instead of loading separate scene routes, The Old Pit morphs its layout
+on-the-fly. Transitions occur between waves, providing a dynamic battleground
+that alters routing and platform heights.
 
-### Rotation And Motion
-
-Spinning communicates instability and danger. Use it sparingly and semantically.
-
-```txt
-Stable:        0 to 0.3 rad/sec, eases back to cardinal angles.
-Agitated:      0.8 to 1.6 rad/sec, telegraph wobble.
-Dangerous:     2.4 to 5.0 rad/sec, active saw/projectile/minion attack.
-Unreadable:    >6.0 rad/sec, avoid except short impact bursts.
-```
-
-Rotation direction can encode behavior:
-
-- Clockwise: pursuing/player-targeting.
-- Counter-clockwise: arena hazard/environmental cycle.
-- Oscillating: telegraphing.
-- Snapping to 90 degrees: pure square/player agency.
-
-## Stage Structure
-
-Replace the single default level with a gauntlet sequence.
-
-```ts
-export interface GauntletConfig {
-  stages: StageConfig[];
-  globalDifficulty: DifficultyCurve;
-  checkpointPolicy: "none" | "stage" | "boss" | "assist";
-}
-
-export interface StageConfig {
+export interface MorphPlatform {
   id: string;
-  title: string;
-  theme: StageTheme;
-  layout: ArenaLayout;
-  traversalIntro?: TraversalTrialConfig;
-  waves: EncounterWaveV2[];
-  midBoss: BossConfig;
-  postBossWaveMutator: WaveMutatorConfig;
-  completionTrial?: TraversalTrialConfig;
-  dialogueScript: DialogueScript;
-  visualRules: StageVisualRules;
-}
-```
-
-Wave rule:
-
-- Each stage has 6-10 combat waves.
-- Mid-boss appears after half the waves are cleared.
-- After boss appears, minion spawns adapt to boss footprint and attack lanes.
-- Boss persists until defeated, but minions continue spawning in controlled budgets.
-- Defeating the boss does not immediately end the stage unless the stage script says so. Some stages should make the player survive a final revenge wave.
-
-Spawn budget formula:
-
-```ts
-const baseBudget = stage.difficulty.minionBudget;
-const bossPresencePenalty = boss.active ? Math.ceil(boss.visualMass * 1.4) : 0;
-const arenaWidthModifier = layout.tags.includes("narrow") ? -1 : 0;
-const currentBudget = clamp(baseBudget - bossPresencePenalty + arenaWidthModifier, 1, stage.difficulty.maxBudget);
-```
-
-Threat budget formula:
-
-```ts
-interface SpawnCandidate {
-  type: MinionTypeV2;
-  threat: number;       // 1 tiny nuisance, 5 elite killer
-  footprint: number;    // approximate occupied route pressure
+  from: Rectangle;
+  to: Rectangle;
+  duration: number;
+  easing: (t: number) => number;
+  t: number;
 }
 
-const maxThreat = boss.active ? stage.maxThreatWithBoss : stage.maxThreatBeforeBoss;
-const canSpawn = activeThreat + candidate.threat <= maxThreat
-  && activeFootprint + candidate.footprint <= layout.maxEnemyFootprint;
-```
+Morph Easing & Platform Interpolation
 
-Safe anchor formula:
+Physical layout shifts utilize clean, zero-dependency mathematical
+interpolation:
 
-```ts
-function anchorSafety(anchor, player, boss, layout) {
-  const dp = distance(anchor, player.position);
-  const db = boss ? distance(anchor, boss.position) : 9999;
-  const lanePenalty = isInActiveBossLane(anchor, boss) ? 300 : 0;
-  const exitPenalty = blocksRequiredTraversal(anchor, layout) ? 250 : 0;
-  return dp * 1.0 + db * 0.45 - lanePenalty - exitPenalty;
-}
-// Choose the highest safety anchor among weighted candidates, not the first valid one.
-```
+const easeInOutCubic = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-## Proposed Gauntlet
-
-### Stage 1: The Old Pit
-
-Purpose: preserve and elevate the current layout. This is the familiar arena the player already knows.
-
-Layout:
-
-- Keep current split floor, center spike pit, center bridge, left/right catwalks.
-- Redraw platforms as desaturated organic/stone masses with subtle contamination.
-- Keep at least one battle sequence using this layout exactly enough to feel recognizable.
-
-Bespoke minion: Pit Lancer.
-
-- Shape: long kite/needle body, not a box.
-- Behavior: patrols the low platforms and tries to shove the player into the center spike pit.
-- Special: when near pit edge, it pauses 0.2s then thrusts with extra knockback.
-
-Mid-boss: Prime Wound.
-
-- Silhouette: corrupted square boss, closest to current boss but with one diagonal internal cut.
-- Math signature: basic radial symmetry.
-- Attacks: current volley, omni burst, gap ring.
-- Dialogue: arrogant tutorial tyrant; establishes that the arena is judging shape purity.
-
-Post-boss spawn mutation:
-
-- Avoid center bridge spawns if boss occupies center.
-- Favor high perch turrets while boss controls ground.
-- Pit Lancers spawn only from pit-warning anchors when boss is away from pit.
-
-### Stage 2: The Narrow Redoubt
-
-Purpose: fulfill the request for narrow stage designs and teach vertical compression.
-
-Layout:
-
-- Width about 440-560 world units inside a full 1000 canvas.
-- Tall shaft with alternating one-way ledges and wall cling sections.
-- Bottom hazard strip, side squeeze hazards that periodically protrude.
-
-Bespoke minion: Clampjaw.
-
-- Shape: heavy rounded rectangle with concave biting mouth cut from one side.
-- Behavior: slow wall-to-wall sweeps that force jumps.
-- Danger: not very sharp, but high weight and contact damage.
-
-Mid-boss: Scarlet Lock.
-
-- Silhouette: red block with prison-bar inner cuts.
-- Math signature: modular vertical gates.
-- Attacks:
-  - Gate Drop: red vertical bars fall in columns.
-  - Lockstep Volley: projectiles fire in repeating modulo lanes.
-  - Compression March: boss walks slowly while arena side hazards pulse.
-
-Implementation math:
-
-```ts
-const laneCount = 5;
-const safeLane = (beatIndex * 2 + stageSeed) % laneCount;
-for (let lane = 0; lane < laneCount; lane++) {
-  if (lane === safeLane) continue;
-  spawnGateHazard(laneX(lane), telegraphTime);
-}
-```
-
-Post-boss spawn mutation:
-
-- Use fewer minions because the arena is narrow.
-- Spawn above or below the boss, never directly beside it unless the spawn is a slow heavy.
-
-### Stage 3: The Orbital Gallows
-
-Purpose: teach projectile reading, arcs, and rotating hazards.
-
-Layout:
-
-- Open center with three small orbiting platforms.
-- Rotating red saw points on predictable circular paths.
-- Safe floor appears only in short segments.
-
-Bespoke minion: Compass Wasp.
-
-- Shape: small sharp diamond with four unequal points.
-- Behavior: orbits a platform, then dives along tangent line.
-- Danger: low health, high speed, high lethality if ignored.
-
-Mid-boss: Carminal Orbit.
-
-- Silhouette: magenta-red corrupted circle-in-square portrait, in world a diamond/square hybrid with orbiting shard satellites.
-- Math signature: polar coordinates.
-- Attacks:
-  - Aphelion Ring: slow bullets expand from boss, leaving one angular gap.
-  - Perihelion Dive: boss accelerates inward toward player after circling.
-  - Satellite Tax: orbiting shards become temporary minions.
-
-Ring gap formula:
-
-```ts
-const count = 24;
-const targetAngle = atan2(player.y - boss.y, player.x - boss.x);
-const gapWidth = 0.34; // radians
-for (let i = 0; i < count; i++) {
-  const a = i * TAU / count + phaseOffset;
-  if (angularDistance(a, targetAngle) < gapWidth) continue;
-  spawnProjectile(a);
-}
-```
-
-Post-boss spawn mutation:
-
-- Compass Wasps should prefer outer anchors when boss is central.
-- Turrets are banned; too much projectile overlap.
-
-### Stage 4: The Dissolving Choir
-
-Purpose: Path of Pain combat hybrid.
-
-Layout:
-
-- Dissolving platforms, pogo posts, spike corridors, short combat pockets.
-- Player must use downward strikes to reset dash/jump while minions interfere.
-
-Bespoke minion: Hymn Nail.
-
-- Shape: vertical needle with two small crossbar fins.
-- Behavior: hovers as a pogo target, then turns hostile if overused.
-- Counterplay: can be bounced on safely during blue/cyan state; becomes red-rimmed before attacking.
-
-Mid-boss: Vermilion Needle.
-
-- Silhouette: tiny sharp boss with high speed, many red inward teeth in portrait.
-- Math signature: splines and acceleration curves.
-- Attacks:
-  - Needle Rain: narrow spikes descend along sine-offset columns.
-  - Dash Thread: boss draws a red line telegraph, then travels it.
-  - Pogo Tax: boss targets recently used pogo platforms.
-
-Dissolving platform formula:
-
-```ts
-interface DissolvePlatform {
-  rect: Rectangle;
-  stableTime: number;     // e.g. 0.45s after player contact
-  dissolveTime: number;   // e.g. 0.35s fade/shrink
-  respawnTime: number;    // e.g. 1.6s
-  state: "idle" | "cracking" | "gone" | "respawning";
+function lerpRect(a: Rectangle, b: Rectangle, t: number): Rectangle {
+  return {
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+    width: a.width + (b.width - a.width) * t,
+    height: a.height + (b.height - a.height) * t
+  };
 }
 
-const alpha = state === "cracking" ? 1 - crackTimer / dissolveTime : 1;
-const inset = (1 - alpha) * Math.min(rect.width, rect.height) * 0.35;
-```
+At the moment the platform movement locks in, the physics world clears its
+spatial hashing grid buckets, indexes the new AABB shapes, and calls
+staticMap.resetCache() to redraw the neon borders.
 
-Pogo post rule:
+Spawn Budgets & Tactical Placement
 
-- Shape: cyan/violet diamond post with red core only when unsafe.
-- On downward slash contact, publish `PLAYER_POGOED`.
-- Damage player if touched from side or if unsafe state is active.
+Threat-Based Spawning
 
-### Stage 5: The Marrow Rot
+To prevent visual clutter, spawning is governed by a strict tactical budget.
+Minions carry specific threat values:
 
-Purpose: organic stage and heavy enemy variety.
+  - Turret Seed / Flyer / Hymn Nail: 2 Threat
+  - Pit Lancer / Shielder: 3 Threat
+  - Clampjaw / Bell Hammer: 4 Threat
+  - Blister Ox: 5 Threat
 
-Layout:
+Active threat on-screen is capped based on the boss's presence:
 
-- Round organic platforms, pulsing background growth, moving soft-looking but dangerous masses.
-- Uses contamination/illness/possession through geometric drift.
+  - Boss Inactive: Max 8 Threat (or 4 on narrow morph layouts)
+  - Boss Active: Max 4 Threat (or 2 on narrow morph layouts)
 
-Bespoke minion: Blister Ox.
+Safe Anchor Scoring
 
-- Shape: large round lumpy blob; high weight, low danger axis, still dangerous by mass.
-- Behavior: slow jumps that deform platforms and create shockwaves.
-- Counterplay: predictable, must route around weight.
+Instead of selecting the first available spawn anchor, the director evaluates
+safety scores:
+Score(A) = D_{player} \cdot 1.0 + D_{boss} \cdot 0.45 - Penalties(A)
 
-Mid-boss: Marrow King.
+function anchorSafety(anchor: SpawnAnchor, player: Player, boss: Boss | null): number {
+  const dp = Math.sqrt(Math.pow(player.position.x - anchor.x, 2) + Math.pow(player.position.y - anchor.y, 2));
+  const db = boss ? Math.sqrt(Math.pow(boss.position.x - anchor.x, 2) + Math.pow(boss.position.y - anchor.y, 2)) : 500;
+  
+  let safetyScore = dp * 1.0 + db * 0.45;
+  
+  if (dp < 160) safetyScore -= 300; // Penalize closeness to player
+  if (db < 80) safetyScore -= 150;  // Penalize closeness to boss
+  
+  return safetyScore;
+}
 
-- Silhouette: large rounded red mass with blisters, not sharp but oppressive.
-- Math signature: low-frequency waves and mass displacement.
-- Attacks:
-  - Belly Tide: expanding ground shockwave.
-  - Blister Spawn: creates organic minions from wall growths.
-  - Sickness Lean: arena tilts/morphs slightly, changing platform routes.
+Unified Minion Combat Roster V2
 
-Organic drift formula:
+The roster consists of 10 highly distinct geometric archetypes, each with unique
+attack vectors, tracking mathematics, and movement profiles.
 
-```ts
-const drift = contamination * Math.sin(time * 1.2 + platform.seed) * 6;
-const radiusScale = 1 + contamination * 0.04 * Math.sin(time * 2.1 + platform.seed);
-```
-
-### Stage 6: The Rust Cathedral
-
-Purpose: heavy boss and platform crush patterns.
-
-Layout:
-
-- Broad arena with massive moving slabs, crush lanes, and high perches.
-- Platform surfaces are thick, rounded, desaturated, with rust-red infection seams.
-
-Bespoke minion: Bell Hammer.
-
-- Shape: large hex/hammer silhouette.
-- Behavior: jumps to marked tile, slams, creates local shockwave.
-
-Mid-boss: Rust Cathedral.
-
-- Silhouette: heavy orange-red block with thick internal rectangles.
-- Math signature: weight, delay, and compression.
-- Attacks:
-  - Cathedral Toll: huge slow shockwaves at beat intervals.
-  - Falling Nave: ceiling blocks descend after yellow outline.
-  - Weight Transfer: boss landing temporarily disables one-way platforms.
-
-Beat formula:
-
-```ts
-const beat = Math.floor(stageTime / beatInterval);
-const anticipation = stageTime % beatInterval;
-if (anticipation > beatInterval - telegraphWindow) telegraphNextLane(beat);
-if (anticipation < dt) commitLane(beat);
-```
-
-### Stage 7: The Pantheon Box
-
-Purpose: final synthesis.
-
-Layout:
-
-- Starts as the old pit, then morphs through narrow, orbital, dissolving, organic, and cathedral motifs.
-- Each defeated boss leaves a red mathematical scar in the arena.
-
-Boss: The False Square.
-
-- Silhouette: tries to imitate the player's perfect square but cannot hold it.
-- Color: unstable red shifting through all boss reds.
-- Story: the corruption wants the player's purity.
-- Mechanics: borrows one signature attack from each previous boss.
-- Rule: whenever it becomes too square, it must glitch/deform visibly; the player remains the only stable square.
-
-Final phase:
-
-- Boss portrait becomes a full red square that fractures into all previous boss patterns.
-- Arena reduces to greyscale except green player and red danger.
-- Determination swirls become the only violet accent, orbiting the player when healing charges are full.
-
-## Minion Roster
-
-Minions should be dangerous enough that one ignored enemy can ruin a run.
-
-```ts
 export interface MinionArchetypeV2 {
   type: string;
   silhouette: ShapeFamily;
   size: { w: number; h: number };
   hp: number;
   threat: number;
-  preferredLayouts: string[];
-  movement: MovementSpec;
-  attacks: AttackSpec[];
-  counters: string[];
   visualProfile: VisualProfile;
 }
-```
 
-Recommended roster:
+1. Turret Seed (Hexagonal Prism)
 
-1. Turret Seed: migrated turret. Hex or squat prism. Fires line-of-sight bursts. Low movement, medium threat.
-2. Pit Lancer: kite/needle. Pushes horizontally. Strong near hazards.
-3. Compass Wasp: small asymmetric diamond. Orbits then tangent-dives. Fast lethal threat.
-4. Clampjaw: rounded heavy with concave mouth. Slow corridor sweeper.
-5. Hymn Nail: pogo target/temporary enemy. Enables traversal but punishes greed.
-6. Blister Ox: big organic blob. Slow high-mass jumps and shockwaves.
-7. Bell Hammer: heavy hex/hammer. Marks slam lane, then drops.
-8. Shard Choir: group of tiny triangular shards. Individually weak, dangerous as a pattern.
-9. Mirror Shielder: migrated shielder. Shield face is a thick chamfered plate; vulnerable from rear or charged shot.
-10. Needle Scribe: small stationary hazard writer. Draws temporary red line segments in the arena.
+  - Behavior: Anchors to catwalks or walls. Fires predictive cyan tracking
+    rounds in bursts.
+  - Visuals: Hexagonal silhouette rotating at a stable 0.2 rad/sec.
 
-Movement formulas:
+2. Pit Lancer (Spiked Kite)
 
-Pursuit with anticipation:
+  - Behavior: Patrols solid platforms and attempts to push the player into
+    hazard spikes using horizontal thrusts.
+  - Visuals: Bright red trim indicating high contact danger.
 
-```ts
-const lead = clamp(distanceToPlayer / projectileSpeed, 0.12, 0.55);
-const target = {
-  x: player.position.x + player.velocity.x * lead,
-  y: player.position.y + player.velocity.y * lead * 0.55
-};
-```
+3. Compass Wasp (Asymmetric Diamond)
 
-Orbit then dive:
+  - Behavior: Orbits a specific point before diving along tangent lines toward
+    the player.
+  - Formula:
+    \text{position} = \text{anchor} + \begin{pmatrix} R \cdot \cos(\theta) \\ 0.6 \cdot R \cdot \sin(\theta) \end{pmatrix}
+  - Visuals: Rapid, agitated spin (3.5 rad/sec) indicating high momentum.
 
-```ts
-angle += orbitDir * orbitSpeed * dt;
-position.x = anchor.x + Math.cos(angle) * radius;
-position.y = anchor.y + Math.sin(angle) * radius * yScale;
-if (shouldDive) {
-  const tangent = angle + orbitDir * Math.PI / 2;
-  velocity.x = Math.cos(tangent) * diveSpeed;
-  velocity.y = Math.sin(tangent) * diveSpeed;
-}
-```
+4. Clampjaw (Concave Corrupted Box)
 
-Heavy jump:
+  - Behavior: Slow, heavy block sweeping across the floor with a massive contact
+    footprint.
+  - Visuals: A high-weight organic look with a chunk sheared out of its biting
+    face.
 
-```ts
-const flightTime = clamp(distance / 360, 0.55, 1.05);
-velocity.x = dx / flightTime;
-velocity.y = (dy - 0.5 * gravity * flightTime * flightTime) / flightTime;
-```
+5. Hymn Nail (Vertical Needle)
 
-## Boss Architecture
+  - Behavior: Hovers as a stable, violet-rimmed pogo target. If bounced on more
+    than three times, it turns red-rimmed and aggressively pursues the player.
+  - Visuals: Needle silhouette that snaps to 90 degrees when resting.
 
-Current `Boss` should become either:
+6. Blister Ox (Rounded Lumpy Blob)
 
-1. A base class plus specific boss subclasses, or
-2. A single `Boss` driven by `BossConfig` and `BossBehaviorModule`.
+  - Behavior: Executes heavy parabolic jumps that deform under momentum. On
+    landing, it triggers ground-hugging shockwaves.
+  - Formula:
+    v_x = \frac{dx}{T_{flight}}, \quad v_y = \frac{dy - 0.5 \cdot g \cdot T_{flight}^2}{T_{flight}}
+  - Visuals: Organic lumpy lurching mass.
 
-Prefer option 2 for speed and data-driven staging.
+7. Bell Hammer (Heavy Hexagon)
 
-```ts
-export interface BossConfig {
-  id: BossId;
-  displayName: string;
-  maxHp: number;
-  size: { width: number; height: number };
-  visualProfile: VisualProfile;
-  identity: BossIdentity;
-  phases: BossPhaseConfig[];
-  attacks: BossAttackPatternV2[];
-  contactDamage: number;
-  mass: number;
-}
+  - Behavior: Marks a target tile with a vertical yellow telegraph column, then
+    leaps and slams down, creating local shrapnel.
+  - Visuals: Heavy hexagonal silhouette with an offset rotation.
 
-export interface BossPhaseConfig {
-  hpPct: number;
-  speedMultiplier: number;
-  attackCooldown: [number, number];
-  enabledAttackIds: string[];
-  dialogueEvent?: string;
-}
-```
+8. Shielder (Chamfered Hex)
 
-Extend scoring:
+  - Behavior: Walks slowly towards the player. Completely blocks standard
+    projectile and melee attacks from the front; must be bypassed or hit with a
+    charged shot.
+  - Visuals: Thick front-facing defensive plate.
 
-```ts
-score =
-  basePriority
-  + distanceBonus
-  + airborneBonus
-  + arenaLaneBonus
-  + minionSynergyBonus
-  - recentRepeatPenalty
-  - unfairOverlapPenalty;
-```
+9. Flyer (Double Needle)
 
-Unfair overlap penalty:
+  - Behavior: Hovers and glides vertically, launching 3-shot bursts, or
+    executing descending dives.
+  - Visuals: Lightweight dual-needle form.
 
-```ts
-if (activeRedHazardCoverageNearPlayer > 0.42) score -= 999;
-if (playerHasNoExitRouteFor(0.7)) score -= 999;
-```
+10. Shard Choir (Triangular Shards)
 
-The game can be brutal, but it should not be illegible.
+  - Behavior: Weak on their own, but spawn in groups of three to block escape
+    routes.
+  - Visuals: Sharp triangular shards moving in unison.
 
-## Projectiles And Trails
+Prime Wound Unified Attack Pool
 
-All projectiles/weapons should be points, spikes, shards, saw petals, or needles. Remove circular boss bullets except for non-damaging telegraphs.
+Prime Wound is the sole master of the crucible. It incorporates all special
+moves originally distributed across other stage bosses, shifting attack
+selection based on health phases.
 
-Projectile visual data:
-
-```ts
-export interface ProjectileVisualSpec {
-  shape: "needle" | "shard" | "saw" | "thorn" | "comet" | "ring-gap";
-  points: number;
-  length: number;
-  width: number;
-  spinRate: number;
-  trail: TrailSpec;
-  colorRole: ColorRole;
+export interface BossAttackContext {
+  phase: number;
+  distanceToPlayer: number;
+  playerIsAirborne: boolean;
+  playerHP: number;
+  activeMinionsCount: number;
+  recentAttackIds: string[];
 }
 
-export interface TrailSpec {
-  type: "ribbon" | "afterimage-points" | "segmented-spine" | "swirl" | "smoke";
-  length: number;
-  widthStart: number;
-  widthEnd: number;
-  alphaStart: number;
-  turbulence: number;
-}
-```
+1. Aphelion Ring (Concentric Orbital Shards)
 
-Segmented spine trail formula:
+  - Description: Launches a circle of 20 needles that expand outward, leaving
+    exactly one angular gap centered on the player's anticipated position.
+  - Formula: \text{gapAngle} = \text{atan2}(P_y - B_y, P_x - B_x)
+    \text{Skip if } |\theta - \text{gapAngle}| < 0.45\text{ rad}
 
-```ts
+2. Lockstep Volley (Modulo Lanes)
+
+  - Description: Drops descending red bars in repeating column lanes, forcing
+    the player to dash laterally.
+  - Formula:
+    \text{targetX} = X_{origin} + \left((\text{volleyIndex} + \text{phase}) \bmod \text{laneCount}\right) \cdot \text{laneWidth}
+
+3. Belly Tide (Expanding Shockwave)
+
+  - Description: Slams the ground, releasing twin serrated, ground-hugging
+    shockwave projectiles that travel outward.
+  - Visuals: Red ground-hugging waves paired with camera tremors.
+
+4. Gate Drop (Columnar Bars)
+
+  - Description: Spawns yellow telegraph lines on random columns before dropping
+    heavy vertical bars from the ceiling.
+  - Visuals: Deep red vertical prison bars.
+
+5. Weight Transfer (Platform Collapser)
+
+  - Description: Executes a high vertical leap and slams down. The kinetic
+    impact temporarily disables player oneway platform collisions for 1.5
+    seconds.
+  - Sound: Heavy low-frequency thud with a long decay.
+
+Projectiles & Segmented Trails
+
+To maintain high visual performance and clarity, projectile movement is drawn
+using procedurally constructed paths and advanced trail rendering.
+
+1. Segmented Spine Trail (Modulo Lanes)
+
+Draws a decay path of diamond-shaped segments along the projectile’s history
+ring:
+
 for (let i = 0; i < trailCount; i++) {
   const p = i / (trailCount - 1);
   const idx = (trailHead - 1 - i + ringSize) % ringSize;
-  const width = lerp(widthStart, widthEnd, p);
-  const alpha = alphaStart * Math.pow(1 - p, 1.7);
-  drawDiamondAt(trail[idx], width, alpha);
+  const width = projWidth * (1.15 - p * 0.85);
+  const alpha = 0.82 * Math.pow(1 - p, 1.7);
+  
+  ctx.fillStyle = `hsla(${h}, ${s}%, ${l}%, ${alpha})`;
+  drawDiamond(ctx, trail[idx], width);
 }
-```
 
-Swirl trail formula:
+2. Swirl Trail (Sinuous Shockwaves)
 
-```ts
-const normal = { x: -dir.y, y: dir.x };
-const swirl = Math.sin(p * Math.PI * 4 + time * 12 + projectile.seed) * turbulence * (1 - p);
+Applies a lateral sine-wave offset perpendicular to the projectile's movement
+vector:
+\text{offset} = \sin(p \cdot 4\pi + t \cdot 12 + \phi) \cdot 16.0 \cdot (1 - p)
+
+const speed = Math.sqrt(vx * vx + vy * vy) || 1;
+const normal = { x: -vy / speed, y: vx / speed };
+const swirl = Math.sin(p * Math.PI * 4 + time * 12 + seed) * 16.0 * (1 - p);
+
 trailPoint.x += normal.x * swirl;
 trailPoint.y += normal.y * swirl;
-```
-
-Player basic projectile can stay green, but make it a compact square-shard to echo the player. Charged player projectile can be a green/yellow square comet: square core, four pointed energy corners.
 
-Boss projectiles:
+3. Shape-Specific Spawn Cages
 
-- Bolt: red needle, no spin, fast.
-- Fan shard: red triangular shard, slight spin.
-- Ring thorn: red saw petal, radial orientation.
-- Homing: cyan logic core with red rim once armed.
-- Shockwave: red ground-hugging serrated line.
-
-## Spawn Cages
-
-Spawn cages should preview the incoming silhouette and faction.
-
-Current cage is a rotating cylindrical ring. Replace with shape-specific cages:
-
-- Turret Seed: hexagonal wireframe unfolding.
-- Pit Lancer: long triangular clamp that opens horizontally.
-- Compass Wasp: four-point compass cage spinning once, then snapping open.
-- Clampjaw: rounded bracket cage compressing from sides.
-- Hymn Nail: vertical tuning fork cage.
-- Blister Ox: organic membrane bubble that ruptures.
-- Bosses: red square seal with unique portrait pattern, then world silhouette emerges.
-
-Spawn timing:
-
-```txt
-0.00-0.25s: cage appears, non-collidable silhouette ghost visible.
-0.25-0.85s: cage animates according to shape family.
-0.85-1.05s: yellow danger flicker if hostile on spawn.
-1.05-1.20s: cage breaks, enemy becomes active.
-```
-
-Never spawn an active damaging entity without at least 0.85s of readable warning.
-
-## Stage Morphs Without GSAP/Anime
-
-Do this natively. No external animation dependency is needed.
+Entities reveal their faction and silhouette before they become active,
+providing the player with 1.20\text{ seconds} of reading time:
 
-Represent all stage geometry as morphable shapes, not only rectangles:
+  - Turret Seed: Hexagonal wireframe unfolding.
+  - Pit Lancer / Wasp: Four-point diamond cage spinning, then snapping open.
+  - Clampjaw: Rounded bracket cage compressing from the sides.
+  - Hymn Nail: Vertical tuning fork wireframe.
+  - Blister Ox: Organic membrane bubble that ruptures.
+  - Prime Wound: Red square seal with its signature diagonal crack pattern,
+    which dissolves as the boss emerges.
 
-```ts
-export interface MorphPlatform {
-  id: string;
-  from: PlatformShape;
-  to: PlatformShape;
-  duration: number;
-  easing: EasingId;
-  t: number;
-  collisionMode: "snap-at-end" | "interpolate-aabb" | "sampled-polygon";
-}
+Path Of Pain Traversal Mechanics
 
-export interface PlatformShape {
-  kind: "rect" | "organic" | "polygon";
-  rect?: Rectangle;
-  points?: Array<{ x: number; y: number }>;
-  radius?: number;
-  seed?: number;
-}
-```
+The unified crucible integrates three specialized precision platforming elements
+directly into its layout:
 
-Easing functions:
+  [Dash Reset Gate]       (Green Outline: Restores double-jump and dash)
+         ◇
+   |  [Pogo Post]  |      (Violet Core: Safe only from downward slashes)
+         ◆
+   [Dissolve Platform]    (Stone Gray: Cracks in yellow on contact, collapses, respawns)
+   ┌───────────────┐
 
-```ts
-const easeInOutCubic = (t: number) =>
-  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+1. Dissolve Platform
 
-const easeOutBack = (t: number) => {
-  const c1 = 1.70158;
-  const c3 = c1 + 1;
-  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-};
-```
+  - Contact: Triggers a 0.45\text{s} warning state where the platform cracks
+    visually in yellow.
+  - Collapse: The platform vanishes for 1.6\text{s}, clearing its solid
+    collision box.
+  - Respawn: Fades in as a desaturated dashed outline for 0.5\text{s} before
+    solidifying.
 
-Rect interpolation:
+2. Pogo Post
 
-```ts
-function lerpRect(a: Rectangle, b: Rectangle, t: number): Rectangle {
-  return {
-    x: lerp(a.x, b.x, t),
-    y: lerp(a.y, b.y, t),
-    width: lerp(a.width, b.width, t),
-    height: lerp(a.height, b.height, t)
-  };
-}
-```
-
-Collision recommendation:
-
-- For combat arena morphs, telegraph for 0.8s, then snap collision at the moment the new geometry locks in. Visuals can interpolate before collision changes.
-- For traversal morph platforms, use `interpolate-aabb` only when movement is slow and predictable.
-- Avoid polygon collision in the first pass unless absolutely necessary. Draw organic shapes visually over AABB platforms.
-
-Implementation note:
-
-- `StaticMapRenderer.buildStaticCache` currently caches once. Add a `levelVersion` or `stageVisualVersion`.
-- Call `staticMap.resetCache()` when layouts change.
-- Dynamic platforms should render separately from the static cache.
-
-## Path Of Pain Mechanics
-
-Add these traversal surface types:
-
-```ts
-export type SurfaceType =
-  | "solid"
-  | "oneway"
-  | "hazard"
-  | "dissolve"
-  | "pogo-post"
-  | "dash-reset"
-  | "spring"
-  | "crumble"
-  | "moving"
-  | "phase";
-```
-
-Dissolve platforms:
-
-- Trigger on player landing.
-- Crack visually in yellow-white hairlines.
-- Collapse quickly.
-- Respawn with desaturated outline before becoming solid.
-
-Pogo posts:
-
-- Safe only from downward melee.
-- On successful downward hit, publish `PLAYER_POGOED`, reset dash/double jump, spawn violet/green swirl.
-- From side/top contact, damage unless in safe cyan state.
-
-Dash reset gates:
-
-- Small green square outline, because they restore player agency.
-- Must never be red or yellow.
+  - Interaction: Safe only from downward melee attacks. Landing a downward hit
+    publishes PLAYER_POGOED, refreshes player double-jump and dash charges, and
+    triggers a vertical rebound.
+  - Danger: Side or standard landing contact damages and knocks the player back.
 
-Spike corridors:
+3. Dash Reset Gate
 
-- Red, sharp, stable.
-- Do not overdecorate spikes; their silhouette must remain clean.
+  - Interaction: A green diamond wireframe that instantly replenishes player
+    dash and double-jump charges upon overlap, entering a 2.0\text{s} cooldown.
 
-## Determination Swirls
+Resolve Geometry (Determination)
 
-The existing healing/charge swirl language is strong. Expand it into a named system: Resolve Geometry.
+Healing and resolve are conveyed through Resolve Geometry, drawn with vibrant
+violet and green spirals:
 
-Use violet for determination, green for player agency, white for completion.
+\text{SpiralPoint}(i) = \begin{pmatrix} \cos(\theta) \cdot R \cdot (0.35 + 0.65 \cdot p) \\ \sin(\theta) \cdot R \cdot (0.35 + 0.65 \cdot p) \cdot 0.72 \end{pmatrix}
 
-Swirl formula:
+  - Healing Charge: When the player holds Down + Jump with an active charge, a
+    violet spiral rises around the player's body.
+  - Full Charge Indicator: Three tiny, low-opacity violet square sparks orbit
+    the player at all times when healing charges are full.
+  - Perfect Pogo: Bouncing on a hazard or pogo post spawns a brief green/violet
+    helix at the contact point.
 
-```ts
-function resolveSpiralPoint(i: number, count: number, time: number, radius: number, phase: number) {
-  const p = i / count;
-  const theta = p * Math.PI * 2 + time * 4.0 + phase;
-  const r = radius * (0.35 + 0.65 * p);
-  return {
-    x: Math.cos(theta) * r,
-    y: Math.sin(theta) * r * 0.72
-  };
-}
-```
+Readability QA Checklist
 
-Uses:
+Every gameplay layout and asset adjustment must pass the following checks:
 
-- Healing: violet spiral rising around player.
-- Full healing charges: three tiny violet square sparks orbit the player at low opacity.
-- Perfect pogo chain: brief green/violet helix at contact point.
-- Boss stagger: red shape briefly unwinds into violet if player earns a recovery window.
-- Stage completion: arena infection lines retract into violet then fade.
-
-## Dialogue Rewrite And Timing
-
-The dialogue needs to be event-scripted, not hardcoded only by boss HP.
-
-```ts
-export interface DialogueLine {
-  id: string;
-  speaker: "player" | BossId | "system";
-  text: string;
-  trigger: DialogueTrigger;
-  delay?: number;
-  hold?: number;
-  typingMsPerChar?: number;
-  portraitOverride?: BossId;
-  priority: number;
-  interrupt?: boolean;
-}
-
-export type DialogueTrigger =
-  | { type: "stage-start" }
-  | { type: "wave-cleared"; waveIndex: number }
-  | { type: "boss-enter" }
-  | { type: "boss-phase"; phase: number }
-  | { type: "player-low-hp" }
-  | { type: "player-perfect-chain"; count: number }
-  | { type: "boss-defeated" }
-  | { type: "trial-start" }
-  | { type: "trial-failed" }
-  | { type: "gauntlet-complete" };
-```
-
-Dialogue console requirements:
-
-- Support more than one boss identity.
-- Boss speaker label should use boss display name, not generic `BOSS`.
-- Portrait should draw from `BossIdentity`.
-- Important lines can interrupt barks; low-priority barks should queue or be dropped.
-- During intense combat, keep lines short: 28-52 characters.
-- During stage transitions, allow longer lines.
-
-Typing timing:
-
-```ts
-const baseMs = speaker === "player" ? 38 : 48;
-const punctuationPause = char === "." || char === "!" || char === "?" ? 180 : char === "," ? 90 : 0;
-const bossModifier = bossIdentity ? bossIdentity.dialogueTempo : 1;
-nextDelay = baseMs * bossModifier + punctuationPause;
-```
-
-Sample staged dialogue:
-
-Stage 1 start:
-
-- Player: "Same pit. Different smell."
-- Prime Wound: "A square returns to be measured."
-
-First pit knockback:
-
-- Prime Wound: "Edges teach faster than mercy."
-
-Boss enter:
-
-- Prime Wound: "Hold your shape, little proof."
-
-Phase 2:
-
-- Prime Wound: "Good. Now the pit gets a vote."
-
-Boss defeated:
-
-- Prime Wound: "No. You were meant to bend."
-- Player: "I did. I came back square."
-
-Narrow Redoubt:
-
-- Scarlet Lock: "Every exit is a rule."
-- Player: "Then I only need one exception."
-
-Dissolving Choir:
-
-- Vermilion Needle: "Jump. Cut. Beg the floor to remember you."
-- Player: "I remember enough."
-
-Final boss:
-
-- False Square: "I can be you."
-- Player: "No. You can only copy the outline."
-
-## UI And HUD
-
-Boss HP needs multiple identities:
-
-- Current top boss bar becomes active boss bar.
-- During stages with mid-boss plus waves, show small red boss sigil near bar.
-- Minion threat budget does not need to be visible.
-- Determination/healing UI should use violet/green square motifs.
-
-Dialogue portrait:
-
-- Left player portrait: exact green filled square, with tiny white center point when typing.
-- Right boss portrait: generated red square identity pattern.
-- Multiple bosses in Pantheon finale: portrait can fracture into segments, but still one square frame.
-
-## Audio Notes
-
-Current procedural audio is a strength. Tie new shape grammar to sound:
-
-- Perfect square/player: clean square-ish synth, short stable pitch.
-- Boss red: detuned saw/triangle, low growl.
-- Needle threats: high narrow clicks with fast attack.
-- Heavy round threats: low thuds, longer decay.
-- Dissolving platforms: brittle noise burst followed by filtered drop.
-- Spawn cages: pitch sequence based on shape sides. Hex cage uses 6 ticks, diamond uses 4, saw uses rapid uneven ticks.
-
-Formula:
-
-```ts
-const sideCountPitch = baseFreq * Math.pow(2, sideCount / 24);
-const dangerFilterQ = lerp(0.8, 8.0, danger);
-const massDecay = lerp(0.08, 0.55, weight);
-```
-
-## Implementation Plan
-
-### Phase 1: Foundations
-
-1. Add `src/core/design/ColorRoles.ts`.
-2. Add `src/core/visuals/ShapeRenderer.ts`.
-3. Add `VisualProfile` to `BaseEntity`, `BaseMinion`, `Boss`, and `Projectile`.
-4. Refactor player size to `40x40` and adjust player visuals so the player is the only perfect square.
-5. Replace hardcoded minion/boss colors with color roles.
-6. Expand dialogue state to include `speakerId`, `speakerLabel`, and portrait identity.
-
-### Phase 2: Data-Driven Stages
-
-1. Replace `defaultLevelConfig` singleton usage in `EncounterDirector` with active `StageConfig`.
-2. Add `GauntletDirector` above `EncounterDirector` or evolve `EncounterDirector` into it.
-3. Add stage progression, wave cleared tracking, mid-boss spawn point, post-boss mutators.
-4. Add `levelVersion` to renderer cache invalidation.
-5. Implement stage start/end transitions.
-
-### Phase 3: New Visual Grammar
-
-1. Rebuild boss portraits.
-2. Rebuild spawn cages.
-3. Rebuild projectile bodies and trails.
-4. Add organic platform rendering over AABB collision.
-5. Add greyscale thumbnail dev helper if time allows.
-
-### Phase 4: Combat Roster
-
-1. Migrate current Turret, Lancer, Flyer, Shielder into V2 visual profiles.
-2. Add Pit Lancer, Clampjaw, Compass Wasp, Hymn Nail.
-3. Add Blister Ox and Bell Hammer.
-4. Add threat budget spawning.
-5. Add stage-specific spawn safety scoring.
-
-### Phase 5: Bosses
-
-1. Convert `Boss` to accept `BossConfig`.
-2. Implement Prime Wound from current boss behavior.
-3. Implement Scarlet Lock and Vermilion Needle next because they force narrow/traversal mechanics.
-4. Implement Carminal Orbit, Marrow King, Rust Cathedral.
-5. Implement False Square finale.
-
-### Phase 6: Path Of Pain
-
-1. Add `DissolvePlatform`.
-2. Add `PogoPost`.
-3. Add dash reset gates.
-4. Add traversal trial configs between combat stages.
-5. Add failure/retry policy.
-
-## Balancing Targets
-
-Player:
-
-- Keep player max HP initially unchanged.
-- Keep healing charges at 3.
-- Full gauntlet should be hard but learnable.
-
-Enemy health:
-
-```txt
-Tiny minion: 1-2 HP
-Fast lethal minion: 2-3 HP
-Standard minion: 4-6 HP
-Heavy minion: 8-12 HP
-Mid boss: 60-100 HP depending stage length
-Final boss: 140-180 HP with phase checkpoints only if assist mode exists
-```
-
-Damage:
-
-```txt
-Most minion contact: 1
-Telegraphed elite hit: 2
-Boss contact: 1
-Boss committed attack: 2
-Hazards/spikes: 1 plus reset/knockback, not instant death unless special trial mode
-```
-
-Spawn pressure:
-
-```txt
-Before boss: 2-5 active minions depending stage.
-After boss: 1-3 active minions, but higher synergy.
-Narrow arenas: never more than 2 active minions with boss.
-Open arenas: can allow 4 if most are tiny/low threat.
-```
-
-## Readability QA Checklist
-
-Every new entity must pass:
-
-- Can I identify it at 48x48 greyscale?
-- Does its color role match its gameplay role?
-- Does yellow appear only before commitment?
-- Does red mean damage or lethal pressure?
-- Is the player still the only perfect square at rest?
-- Is there at least 0.35s of reaction time for fast attacks, or is the attack pre-positioned as a route puzzle?
-- Can the player route out of overlapping boss/minion hazards?
-- Does the stage still read with saturation removed?
-- Does the boss portrait remain distinct as a filled square?
-- Does the spawn cage preview the enemy's silhouette?
-
-## Implementation Warnings
-
-- Do not make the game visually richer by adding saturation everywhere. The whole system depends on restraint.
-- Do not make platforms fully organic in collision on the first pass. Draw organic, collide simple.
-- Do not let minion complexity become random behavior. Every enemy needs one clear read, one clear sin, and one clear punishment.
-- Do not reuse violet for arbitrary enemies; it will weaken determination/healing.
-- Do not use perfect square silhouettes for bosses or minions, even if they are called boxes. Corrupt them.
-- Do not make the final boss a stable square. It can imitate the player only as a lie that visibly fails.
-- Do not stack red projectiles, red hazards, red boss body, and red background at equal saturation. Use quantity hierarchy.
-
-## Minimum Vertical Slice Of The Overhaul
-
-If time is limited, implement this first:
-
-1. Player becomes perfect green square.
-2. Current arena becomes Stage 1: The Old Pit.
-3. Current boss becomes Prime Wound with unique portrait and rewritten dialogue.
-4. Add Pit Lancer bespoke minion.
-5. Add threat budget and post-boss spawn mutation.
-6. Rework projectile trails into shard/needle language.
-7. Rework spawn cages to preview silhouette.
-8. Add one short Path of Pain interlude with dissolving platforms and pogo posts.
-
-That slice proves the new grammar without requiring the entire Pantheon.
-
+  - Can I identify every active entity in 48 \times 48 greyscale?
+  - Does yellow appear only during warning states, and disappear once the attack
+    commits?
+  - Is the player the only perfect square at rest in the simulation world?
+  - Are all fast projectiles pre-positioned or telegraphed for at least
+    0.35\text{s}?
+  - Does the arena background remain desaturated so green, red, and yellow
+    signals stay distinct?
 
 
 ● ./docs/MUSIC_ARCHITECTURE.txt
@@ -3871,9 +3016,6 @@ export function ChromaticAberrationFilter() {
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { DialogueState } from "@/hooks/useGameDialogue";
-import { useSessionStore } from "@/store/useGameStore";
-import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
-
 
 interface DialogueConsoleProps { playerDialogue: DialogueState; bossDialogue: DialogueState; isTouchDevice: boolean; }
 
@@ -3890,15 +3032,9 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
                 ctx.fillStyle = "hsl(142, 72%, 56%)"; ctx.fillRect(0, 0, w, h);
                 if (typing) { ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(w / 2, h / 2, 4 + Math.sin(t * 12) * 2, 0, Math.PI * 2); ctx.fill(); }
             } else {
-                const stageIdx = useSessionStore.getState().currentStageIndex;
-                const colors = ["hsl(350, 82%, 58%)", "hsl(4, 88%, 54%)", "hsl(338, 76%, 55%)", "hsl(356, 94%, 62%)", "hsl(82, 38%, 44%)", "hsl(15, 82%, 48%)", "hsl(345, 58%, 46%)"];
-                const baseColor = colors[stageIdx] || colors[0];
-                
-                // Totally fill the boss dialogue square with the stage's core color
+                const baseColor = "hsl(350, 82%, 58%)";
                 ctx.fillStyle = baseColor;
                 ctx.fillRect(0, 0, w, h);
-
-                
             }
             frameId = requestAnimationFrame(render);
         };
@@ -3912,9 +3048,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
     const mobileClass = isTouchDevice ? "is-mobile" : "";
     const leftState = playerDialogue.active ? "active" : bossDialogue.active ? "inactive" : "idle";
     const rightState = bossDialogue.active ? "active" : playerDialogue.active ? "inactive" : "idle";
-    const currentStageIndex = useSessionStore((state) => state.currentStageIndex);
-    const activeStage = GAUNTLET_STAGES[currentStageIndex];
-    const bossName = activeStage ? activeStage.midBossDisplayName : "BOSS";
+    const bossName = "PRIME APHELION";
 
     const getVariants = (speaker: "player" | "boss") => ({
         active: { scale: 1.02, opacity: 1, borderColor: speaker === "player" ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)", boxShadow: speaker === "player" ? "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(34, 197, 94, 0.15)" : "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(239, 68, 68, 0.15)" },
@@ -4790,72 +3924,6 @@ interface HudPanelProps {
   isPlayingScreen: boolean;
 }
 
-// Subcomponent: Custom Svg Boss Sigil based on Mathematical stage identity [4]
-function SvgBossSigil({ stageIndex }: { stageIndex: number }) {
-  switch (stageIndex) {
-    case 0: // Prime Wound: Red square with a diagonal crack [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="var(--signal-red)" />
-          <line x1="1" y1="15" x2="15" y2="1" stroke="#000000" strokeWidth="2" />
-        </svg>
-      );
-    case 1: // Scarlet Lock: Red square with vertical prison bars [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="var(--signal-red)" />
-          <line x1="4" y1="1" x2="4" y2="15" stroke="#000000" strokeWidth="1.5" />
-          <line x1="8" y1="1" x2="8" y2="15" stroke="#000000" strokeWidth="1.5" />
-          <line x1="12" y1="1" x2="12" y2="15" stroke="#000000" strokeWidth="1.5" />
-        </svg>
-      );
-    case 2: // Carminal Orbit: Concentric polar circular cuts [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(338, 76%, 55%)" />
-          <circle cx="8" cy="8" r="5.5" fill="none" stroke="#000000" strokeWidth="1.5" />
-          <circle cx="8" cy="8" r="2.5" fill="none" stroke="#000000" strokeWidth="1" />
-        </svg>
-      );
-    case 3: // Vermilion Needle: Spiky needle-sharp teeth edges [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(356, 94%, 62%)" />
-          <polygon points="1,8 4,5 4,11" fill="#000000" />
-          <polygon points="15,8 12,5 12,11" fill="#000000" />
-          <polygon points="8,1 5,4 11,4" fill="#000000" />
-          <polygon points="8,15 5,12 11,12" fill="#000000" />
-        </svg>
-      );
-    case 4: // Marrow King: Bruised organic blister spots [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(82, 38%, 44%)" />
-          <circle cx="5" cy="5" r="2" fill="#000000" />
-          <circle cx="11" cy="6" r="2.5" fill="#000000" />
-          <circle cx="6" cy="11" r="1.5" fill="#000000" />
-        </svg>
-      );
-    case 5: // Rust Cathedral: Heavy columnar block structure [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(15, 82%, 48%)" />
-          <rect x="4" y="4" width="8" height="8" fill="#000000" />
-        </svg>
-      );
-    case 6: // False Square: Glitching, shifting block segments [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0 animate-pulse" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(330, 82%, 64%)" />
-          <rect x="3" y="3" width="5" height="5" fill="none" stroke="#000000" strokeWidth="1" />
-          <rect x="8" y="8" width="5" height="5" fill="none" stroke="#000000" strokeWidth="1" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
-
 // Subcomponent: Player HP Display (LED Dots)
 function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
   const playerHP = useGameplayStore((state) => state.playerHP);
@@ -5130,7 +4198,7 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
   const gameResult = useSessionStore((state) => state.gameResult);
   const isGameOver = gameResult !== "PLAYING";
   const activeBHP = isGameOver ? 0 : bossHP;
-  const currentStageIndex = useSessionStore((state) => state.currentStageIndex);
+  // Removed unused currentStageIndex
 
   const bossWidth = (activeBHP / UNITS.BOSS_MAX_HP) * 100 + "%";
 
@@ -5138,7 +4206,7 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-          <SvgBossSigil stageIndex={currentStageIndex} /> BOSS
+          BOSS
         </span>
         <div
           id="hud-m-boss-container"
@@ -5171,7 +4239,7 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
     <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
       <span className="hud-panel-title hud-panel-title-red" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <Skull size={14} style={{ color: "var(--signal-red)", flexShrink: 0 }} />
-        <SvgBossSigil stageIndex={currentStageIndex} />
+        
         BOSS HP
       </span>
       <div
@@ -8297,7 +7365,11 @@ import type { IEventBus, IAudioManager } from "@/core/Interfaces";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { UNITS } from "@/core/Units";
 import { CinematicSystem } from "@/core/CinematicSystem";
-import { useSessionStore } from "@/store/useGameStore";
+
+interface DialogueLine {
+    speaker: "player" | "boss";
+    text: string;
+}
 
 export class BattleDirector {
     private events: IEventBus;
@@ -8308,6 +7380,9 @@ export class BattleDirector {
     private cinematic: CinematicSystem;
     private onBattleEnd: () => void;
 
+    private dialogueQueue: DialogueLine[] = [];
+    private dialogueTimer = 0;
+
     constructor(events: IEventBus, audio: IAudioManager, onBattleEnd: () => void) {
         this.events = events; this.audio = audio; this.onBattleEnd = onBattleEnd;
         this.cinematic = new CinematicSystem(events, audio);
@@ -8315,88 +7390,94 @@ export class BattleDirector {
     public isCinematicActive(): boolean { return this.cinematic.isActive(); }
     public getDeathVisuals() { return { timer: this.cinematic.getDeathTimer(), pos: this.cinematic.getDeathPos() }; }
 
+    private queueDialogues(lines: DialogueLine[]) {
+        this.dialogueQueue.push(...lines);
+        if (this.dialogueTimer <= 0) {
+            this.triggerNextDialogue();
+        }
+    }
+
+    private triggerNextDialogue() {
+        if (this.dialogueQueue.length === 0) return;
+        const line = this.dialogueQueue.shift()!;
+        this.events.publish("DIALOGUE_TRIGGERED", { speaker: line.speaker, text: line.text });
+        this.dialogueTimer = 5.5;
+    }
+
     public update(dt: number, player: Player, boss: Boss) {
         this.cinematic.update(dt);
+        if (this.dialogueTimer > 0) {
+            this.dialogueTimer -= dt;
+            if (this.dialogueTimer <= 0) {
+                this.triggerNextDialogue();
+            }
+        }
+
         if (this.cinematic.isActive()) return;
         const bHealth = boss.getComponent(HealthComponent);
         if (bHealth) {
             const maxHp = bHealth.maxHealth;
             const phase2Threshold = Math.floor(maxHp * UNITS.BOSS_PHASE_2_HP_PCT);
             const phase3Threshold = Math.floor(maxHp * UNITS.BOSS_PHASE_3_HP_PCT);
-            const stageIdx = useSessionStore.getState().currentStageIndex;
 
             if (bHealth.currentHealth < maxHp && !this.hasTriggeredFirstHit) {
                 this.hasTriggeredFirstHit = true;
-                const intros = [
-                    "A perfect square returns to the crucible. Let us see if your edges still hold.",
-                    "The Redoubt is sealed. Your chaotic movement ends here, anomaly.",
-                    "Your trajectory is predictable. My orbital math is absolute.",
-                    "Jump. Cut. Bleed. The floor will not remember you.",
-                    "Feel the weight of the infection. The marrow deforms all it touches.",
-                    "The Cathedral tolls for the square. Bow beneath the falling nave.",
-                    "I can be you. I can be perfect. Give me your outline."
-                ];
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: intros[stageIdx] || intros[0] });
+                this.queueDialogues([
+                    { speaker: "boss", text: "A perfect square returns to the Sovereign Crucible. Let us see if your edges still hold." },
+                    { speaker: "player", text: "They're sharp enough to slice right through your equations." }
+                ]);
             }
             if (bHealth.currentHealth <= phase2Threshold && !this.hasTriggeredPhase2) {
                 this.hasTriggeredPhase2 = true;
-                const p2s = [
-                    "You cling to your shape, but the virus demands fluidity! Bend or break!",
-                    "Modulo columns engage! There is no escape from the grid!",
-                    "Aphelion ring contracting. You cannot outrun the event horizon.",
-                    "Sine-wave splines activated! I will thread you through the needle's eye!",
-                    "Pulsing blister cells! Mutate and consume the pure!",
-                    "Compression march! The architecture demands your sacrifice!",
-                    "Glitches fracture! I will replicate your previous forms!"
-                ];
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: p2s[stageIdx] || p2s[0] });
+                this.queueDialogues([
+                    { speaker: "boss", text: "You cling to your rigid symmetry, but the Aphelion demands fluidity! Bend or break!" },
+                    { speaker: "player", text: "Fluidity is just another word for lacking a foundation." }
+                ]);
                 this.events.publish("BOSS_PHASE_SHIFT", undefined);
             }
             if (bHealth.currentHealth <= phase3Threshold && !this.hasTriggeredPhase3) {
                 this.hasTriggeredPhase3 = true;
-                const p3s = [
-                    "My geometry... fractures... the purity... burns!",
-                    "The locks... are broken...",
-                    "My orbit... decays...",
-                    "The thread... snaps...",
-                    "The rot... recedes...",
-                    "The pillars... crumble...",
-                    "I only... copy... the truth..."
-                ];
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: p3s[stageIdx] || p3s[0] });
+                this.queueDialogues([
+                    { speaker: "boss", text: "My geometry... fractures! The purity of the constant... burns!" },
+                    { speaker: "player", text: "Your variables are collapsing. I am the absolute value." }
+                ]);
                 this.events.publish("BOSS_PHASE_SHIFT", undefined);
             }
         }
 
         if (player.isDead && !this.cinematic.isActive()) {
+            this.dialogueQueue = [];
+            this.dialogueTimer = 0;
             this.cinematic.startSequence(player.position, () => { this.audio.playPlayerExplosion(); }, [
                 { triggerTime: 2.0, action: () => { this.events.publish("RECORD_LOSS", undefined); } },
                 { triggerTime: 2.5, action: () => { this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "My shape... is breaking..." }); } },
-                { triggerTime: 3.8, action: () => { this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "The virus reclaims its geometry. Purity is a myth." }); } },
+                { triggerTime: 3.8, action: () => { this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Purity is a myth. The Crucible remains sovereign." }); } },
                 { triggerTime: 7.2, action: () => { this.events.publish("CLEAR_DIALOGUES", undefined); this.events.publish("GAME_OVER", undefined); this.onBattleEnd(); } },
             ]);
         } else if (boss.isDead && !this.cinematic.isActive()) {
-            const stageIdx = useSessionStore.getState().currentStageIndex;
+            this.dialogueQueue = [];
+            this.dialogueTimer = 0;
             this.cinematic.startSequence(boss.position, () => { this.audio.playBossExplosion(); }, [
                 { triggerTime: 2.0, action: () => { this.events.publish("RECORD_WIN", undefined); } },
                 { triggerTime: 2.5, action: () => { 
-                    const defeats = ["Impossible... my geometry...", "The locks... shatter...", "My orbit... decays...", "The thread... snaps...", "The rot... recedes...", "The pillars... crumble...", "I only... copy... the truth..."];
-                    this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: defeats[stageIdx] || defeats[0] }); 
+                    this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Impossible... my chancel architecture..." }); 
                 } },
                 { triggerTime: 4.8, action: () => { 
-                    const wins = ["Your corruption is just a flawed equation. I am the constant.", "A cage is just a shape waiting to be shattered.", "Your math forgot one variable: my will.", "I am the eye of the storm. You are just the wind.", "Sickness is just a temporary state. Purity is eternal.", "Your cathedral is built on rust. Mine is built on resolve.", "You can copy the shape, but you'll never hold the soul."];
-                    this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: wins[stageIdx] || wins[0] }); 
+                    this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "Your corruption is just a flawed equation. I am the constant." }); 
                 } },
                 { triggerTime: 7.2, action: () => { 
                     this.events.publish("CLEAR_DIALOGUES", undefined);
-                    const currentStageIdx = useSessionStore.getState().currentStageIndex;
-                    if (currentStageIdx === 6) { this.events.publish("VICTORY", undefined); this.onBattleEnd(); } 
-                    else { useSessionStore.getState().setCurrentStageIndex(currentStageIdx + 1); this.events.publish("LOAD_STAGE", { stageIndex: currentStageIdx + 1 }); }
+                    this.events.publish("VICTORY", undefined);
+                    this.onBattleEnd();
                 } },
             ]);
         }
     }
-    public cleanup() { this.cinematic.cleanup(); }
+    public cleanup() { 
+        this.cinematic.cleanup(); 
+        this.dialogueQueue = [];
+        this.dialogueTimer = 0;
+    }
 }
 
 
@@ -8582,7 +7663,7 @@ import { SpawnAnchor, MinionType } from "./levelData";
 import { MinionFactory } from "@/entities/MinionFactory";
 import { TrigLUT } from "./TrigLUT";
 import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
-import { useSessionStore } from "@/store/useGameStore";
+// Removed unused useSessionStore
 
 export class EncounterDirector {
   private world: IWorld;
@@ -8661,6 +7742,7 @@ export class EncounterDirector {
       case "HYMN_NAIL": return 2;
       case "BLISTER_OX": return 5;
       case "BELL_HAMMER": return 4;
+      case "SHARD_CHOIR": return 1;
       default: return 2;
     }
   }
@@ -8675,8 +7757,8 @@ export class EncounterDirector {
 
     // Calculate maximum threat based on active boss footprint and narrow map constraints
     const bossActive = this.world.boss && !this.world.boss.isDead;
-    const stageIdx = useSessionStore.getState().currentStageIndex;
-    const isNarrowMap = stageIdx === 1; // Narrow Redoubt
+    // Removed unused stageIdx
+    const isNarrowMap = false; // Narrow Redoubt
 
     let maxThreatBudget = bossActive ? 4 : 8;
     if (isNarrowMap) {
@@ -8759,9 +7841,22 @@ export class EncounterDirector {
   }
 
   private spawnMinion(type: MinionType, anchor: SpawnAnchor) {
-    const minionId = `minion-${type}-${Date.now()}-${Math.floor(TrigLUT.randomGameplay() * 1000000)}`;
-    const minion = MinionFactory.createMinion(type, minionId, { x: anchor.x, y: anchor.y }, this.world);
-    this.world.minions.push(minion);
+    if (type === "SHARD_CHOIR") {
+      const offsets = [
+        { dx: 0, dy: -30 },
+        { dx: -35, dy: 15 },
+        { dx: 35, dy: 15 }
+      ];
+      offsets.forEach((offset, idx) => {
+        const minionId = `minion-SHARD_CHOIR-${Date.now()}-${idx}-${Math.floor(TrigLUT.randomGameplay() * 1000000)}`;
+        const minion = MinionFactory.createMinion("SHARD_CHOIR", minionId, { x: anchor.x + offset.dx, y: anchor.y + offset.dy }, this.world);
+        this.world.minions.push(minion);
+      });
+    } else {
+      const minionId = `minion-${type}-${Date.now()}-${Math.floor(TrigLUT.randomGameplay() * 1000000)}`;
+      const minion = MinionFactory.createMinion(type, minionId, { x: anchor.x, y: anchor.y }, this.world);
+      this.world.minions.push(minion);
+    }
   }
 
   private despawnAllMinions() {
@@ -9471,16 +8566,7 @@ export class GauntletDirector {
     GauntletDirector.initialized = true;
 
     if (typeof window !== "undefined") {
-      window.addEventListener("keydown", (e) => {
-        const code = e.code;
-        if (code.startsWith("Digit")) {
-          const num = parseInt(code.replace("Digit", ""));
-          if (num >= 1 && num <= 7) {
-            e.preventDefault();
-            GauntletDirector.warpToStage(num - 1);
-          }
-        }
-      });
+      // Removed stage warping hotkeys for streamlined production single-stage chancel
     }
   }
 
@@ -11597,7 +10683,7 @@ export class StateProjectionSystem {
 ────────────────────────────────────────────────────
 import { Rectangle } from "./Interfaces";
 import { UNITS } from "@/core/Units";
-import { useSessionStore } from "@/store/useGameStore";
+// Removed unused useSessionStore
 import { GAUNTLET_STAGES } from "./design/GauntletStages";
 
 export class StaticMapRenderer {
@@ -11617,11 +10703,11 @@ export class StaticMapRenderer {
     public buildStaticCache(solids: Rectangle[], hazards: Rectangle[]): void {
         if (this.staticCacheBuilt) return;
         const sctx = this.staticCtx;
-        const stageIdx = useSessionStore.getState().currentStageIndex;
+        const stageIdx = 0;
         const stageConfig = GAUNTLET_STAGES[stageIdx];
         const bg = sctx.createLinearGradient(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
         bg.addColorStop(0, "hsl(230, 12%, 5%)");
-        bg.addColorStop(0.45, stageIdx === 4 ? "hsl(82, 18%, 8%)" : "hsl(220, 10%, 8%)");
+        bg.addColorStop(0.45, "hsl(220, 10%, 8%)");
         bg.addColorStop(1, "hsl(322, 30%, 9%)");
         sctx.fillStyle = bg;
         sctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
@@ -11708,14 +10794,13 @@ export class StaticMapRenderer {
         this.staticCacheBuilt = true;
     }
 
-    private drawBackgroundArchitecture(ctx: CanvasRenderingContext2D, stageIdx: number) {
+    private drawBackgroundArchitecture(ctx: CanvasRenderingContext2D, _stageIdx: number) {
         ctx.save();
         ctx.globalAlpha = 0.45;
         ctx.strokeStyle = "hsla(215, 12%, 22%, 0.55)";
         ctx.lineWidth = 2;
-        const offset = (stageIdx * 73) % 180;
         for (let i = 0; i < 8; i++) {
-            const x = 80 + i * 130 - offset;
+            const x = 80 + i * 130 - 73;
             ctx.beginPath();
             ctx.moveTo(x, 80);
             ctx.lineTo(x + 70, 220);
@@ -11726,12 +10811,12 @@ export class StaticMapRenderer {
         }
 
         ctx.globalAlpha = 0.36;
-        ctx.fillStyle = stageIdx === 2 ? "hsla(338, 76%, 25%, 0.18)" : "hsla(330, 28%, 25%, 0.22)";
+        ctx.fillStyle = "hsla(330, 28%, 25%, 0.22)";
         for (let i = 0; i < 5; i++) {
-            const cx = 160 + ((i * 221 + stageIdx * 89) % 720);
-            const cy = 150 + ((i * 157 + stageIdx * 51) % 650);
+            const cx = 160 + ((i * 221 + 89) % 720);
+            const cy = 150 + ((i * 157 + 51) % 650);
             ctx.beginPath();
-            ctx.ellipse(cx, cy, 46 + i * 9, 18 + (i % 3) * 10, (i + stageIdx) * 0.7, 0, Math.PI * 2);
+            ctx.ellipse(cx, cy, 46 + i * 9, 18 + (i % 3) * 10, i * 0.7, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.restore();
@@ -11745,43 +10830,16 @@ export class StaticMapRenderer {
         ctx.lineTo(x, y + rad); ctx.quadraticCurveTo(x, y, x + rad, y);
     }
 
-    private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number, stageIdx: number) {
-        if (stageIdx === 1) { 
-            ctx.moveTo(220 - inset, 40 - inset); 
-            ctx.lineTo(780 + inset, 40 - inset);
-            ctx.lineTo(780 + inset, 920 + inset); 
-            ctx.lineTo(220 - inset, 920 + inset); 
-            ctx.closePath();
-        } else { 
-            ctx.moveTo(40 - inset, 40 - inset); 
-            ctx.lineTo(960 + inset, 40 - inset);
-            
-            if (stageIdx === 5) {
-                ctx.lineTo(960 + inset, 900 + inset);
-            } else {
-                ctx.lineTo(960 + inset, 920 + inset);
-            }
-            
-            if (stageIdx === 0 || stageIdx === 6) {
-                ctx.lineTo(680 + inset, 920 + inset);
-                ctx.lineTo(680 + inset, 960 + inset);
-                ctx.lineTo(320 - inset, 960 + inset);
-                ctx.lineTo(320 - inset, 920 + inset);
-            } else if (stageIdx === 3) {
-                ctx.lineTo(740 + inset, 920 + inset);
-                ctx.lineTo(740 + inset, 960 + inset);
-                ctx.lineTo(260 - inset, 960 + inset);
-                ctx.lineTo(260 - inset, 920 + inset);
-            } else if (stageIdx === 4) {
-                ctx.lineTo(660 + inset, 920 + inset);
-                ctx.lineTo(660 + inset, 960 + inset);
-                ctx.lineTo(340 - inset, 960 + inset);
-                ctx.lineTo(340 - inset, 920 + inset);
-            }
-            
-            ctx.lineTo(40 - inset, stageIdx === 5 ? 900 + inset : 920 + inset);
-            ctx.closePath();
-        }
+    private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number, _stageIdx: number) {
+        ctx.moveTo(40 - inset, 40 - inset); 
+        ctx.lineTo(960 + inset, 40 - inset);
+        ctx.lineTo(960 + inset, 920 + inset);
+        ctx.lineTo(680 + inset, 920 + inset);
+        ctx.lineTo(680 + inset, 960 + inset);
+        ctx.lineTo(320 - inset, 960 + inset);
+        ctx.lineTo(320 - inset, 920 + inset);
+        ctx.lineTo(40 - inset, 920 + inset);
+        ctx.closePath();
     }
 
     public renderBackground(): void { this.ctx.drawImage(this.staticCanvas, 0, 0); }
@@ -14011,11 +13069,11 @@ export interface StageConfig extends LevelConfig {
 export const GAUNTLET_STAGES: StageConfig[] = [
   {
     id: "stage-1",
-    title: "THE OLD PIT",
-    subtitle: "STAGE 1 - TRADITIONAL COMBAT",
-    midBossId: "prime-wound",
-    midBossDisplayName: "PRIME WOUND",
-    midBossMaxHp: 38,
+    title: "THE SOVEREIGN CRUCIBLE",
+    subtitle: "THE APHELION CHANCEL",
+    midBossId: "prime-aphelion",
+    midBossDisplayName: "PRIME APHELION",
+    midBossMaxHp: 80,
     solids: [
       { x: 0, y: 920, width: 320, height: 80 },
       { x: 680, y: 920, width: 320, height: 80 },
@@ -14047,518 +13105,64 @@ export const GAUNTLET_STAGES: StageConfig[] = [
       {
         id: "s1-w1",
         phase: 1,
-        earliestTime: 2,
-        cooldownRange: [6, 9],
-        maxActiveMinions: 2,
+        earliestTime: 1,
+        cooldownRange: [3, 5],
+        maxActiveMinions: 4,
         entries: [
-          { type: "TURRET", anchorIds: ["left-catwalk", "right-catwalk"], weight: 70 },
-          { type: "LANCER", anchorIds: ["center-bridge"], weight: 30 }
+          { type: "TURRET", anchorIds: ["left-catwalk", "right-catwalk"], weight: 20 },
+          { type: "LANCER", anchorIds: ["center-bridge"], weight: 20 },
+          { type: "FLYER", anchorTags: ["air"], weight: 20 },
+          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 40 }
         ]
       },
       {
         id: "s1-w2",
         phase: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 3,
+        cooldownRange: [3, 5],
+        maxActiveMinions: 6,
         entries: [
-          { type: "TURRET", anchorTags: ["perch"], weight: 40 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 40 },
-          { type: "SHIELDER", anchorIds: ["center-bridge"], weight: 20 }
+          { type: "SHIELDER", anchorTags: ["ground"], weight: 20 },
+          { type: "PIT_LANCER", anchorTags: ["ground"], weight: 20 },
+          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 20 },
+          { type: "SHARD_CHOIR", anchorTags: ["air", "perch"], weight: 40 }
         ]
       },
       {
         id: "s1-w3",
         phase: 3,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 4,
+        cooldownRange: [2, 4],
+        maxActiveMinions: 8,
         entries: [
-          { type: "FLYER", anchorTags: ["air"], weight: 30 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
-          { type: "TURRET", anchorTags: ["perch"], weight: 20 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 20 }
+          { type: "HYMN_NAIL", anchorTags: ["perch"], weight: 25 },
+          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 25 },
+          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 25 },
+          { type: "SHARD_CHOIR", anchorTags: ["air"], weight: 25 }
         ]
       }
     ],
     playerStart: { x: 120, y: 800 },
     bossStart: { x: 840, y: 800 },
-  },
-  {
-    id: "stage-2",
-    title: "THE NARROW REDOUBT",
-    subtitle: "STAGE 2 - VERTICAL COMPRESSION",
-    midBossId: "scarlet-lock",
-    midBossDisplayName: "SCARLET LOCK",
-    midBossMaxHp: 70,
-    solids: [
-      { x: 0, y: 0, width: 280, height: 1000 },
-      { x: 720, y: 0, width: 280, height: 1000 },
-      { x: 280, y: 920, width: 440, height: 80 },
-      { x: 280, y: 0, width: 440, height: 280 },
-      { x: 280, y: 700, width: 120, height: 32 },
-      { x: 600, y: 700, width: 120, height: 32 },
-      { x: 280, y: 540, width: 120, height: 32 },
-      { x: 600, y: 540, width: 120, height: 32 },
-      { x: 280, y: 380, width: 120, height: 32 },
-      { x: 600, y: 380, width: 120, height: 32 },
-    ],
-    onewayPlatforms: [
-      { x: 420, y: 620, width: 160, height: 16 },
-      { x: 420, y: 460, width: 160, height: 16 },
-      { x: 420, y: 300, width: 160, height: 16 },
-    ],
-    hazards: [
-      { x: 280, y: 880, width: 440, height: 40 },
-      { x: 260, y: 400, width: 20, height: 200 },
-      { x: 720, y: 400, width: 20, height: 200 },
-    ],
-    spawners: [],
-    spawnAnchors: [
-      { id: "redoubt-floor", x: 500, y: 840, tags: ["low", "ground"] },
-      { id: "redoubt-ledge-l1", x: 340, y: 660, tags: ["mid", "left", "perch"] },
-      { id: "redoubt-ledge-r1", x: 660, y: 660, tags: ["mid", "right", "perch"] },
-      { id: "redoubt-ledge-l2", x: 340, y: 500, tags: ["mid", "left", "perch"] },
-      { id: "redoubt-ledge-r2", x: 660, y: 500, tags: ["mid", "right", "perch"] },
-      { id: "redoubt-ledge-l3", x: 340, y: 340, tags: ["high", "left", "perch"] },
-      { id: "redoubt-ledge-r3", x: 660, y: 340, tags: ["high", "right", "perch"] },
-      { id: "redoubt-air-center", x: 500, y: 260, tags: ["air", "center"] },
-    ],
-    encounterWaves: [
-      {
-        id: "s2-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "CLAMPJAW", anchorIds: ["redoubt-floor"], weight: 80 },
-          { type: "TURRET", anchorIds: ["redoubt-ledge-l1"], weight: 20 }
-        ]
-      },
-      {
-        id: "s2-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 60 },
-          { type: "CLAMPJAW", anchorTags: ["mid"], weight: 40 }
-        ]
-      },
-      {
-        id: "s2-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 50 },
-          { type: "CLAMPJAW", anchorTags: ["mid"], weight: 30 },
-          { type: "TURRET", anchorTags: ["high"], weight: 20 }
-        ]
-      }
-    ],
-    playerStart: { x: 360, y: 840 },
-    visualShapes: [
-      { type: "polygon", points: [{x:280,y:200},{x:320,y:240},{x:290,y:300},{x:280,y:280}], colorRole: "arena-infection", infectionSeams: true },
-      { type: "polygon", points: [{x:720,y:600},{x:680,y:640},{x:710,y:700},{x:720,y:680}], colorRole: "arena-infection", infectionSeams: true }
-    ],
-    bossStart: { x: 640, y: 840 },
-  },
-  {
-    id: "stage-3",
-    title: "THE ORBITAL GALLOWS",
-    subtitle: "STAGE 3 - FLOORLESS HAZARDS",
-    midBossId: "carminal-orbit",
-    midBossDisplayName: "CARMINAL ORBIT",
-    midBossMaxHp: 85,
-    solids: [
-      { x: 0, y: 0, width: 1000, height: 40 },
-      { x: 0, y: 0, width: 40, height: 1000 },
-      { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 420, y: 480, width: 160, height: 32 },
-    ],
-    onewayPlatforms: [
-      { x: 120, y: 700, width: 100, height: 16 },
-      { x: 780, y: 700, width: 100, height: 16 },
-      { x: 120, y: 400, width: 100, height: 16 },
-      { x: 780, y: 400, width: 100, height: 16 },
-      { x: 120, y: 200, width: 100, height: 16 },
-      { x: 780, y: 200, width: 100, height: 16 },
-    ],
-    hazards: [
-      { x: 40, y: 920, width: 920, height: 80 },
-    ],
-    spawners: [],
-    spawnAnchors: [
-      { id: "orbit-center-plat", x: 500, y: 440, tags: ["mid", "center", "ground"] },
-      { id: "orbit-left-low", x: 170, y: 660, tags: ["low", "left", "perch"] },
-      { id: "orbit-right-low", x: 830, y: 660, tags: ["low", "right", "perch"] },
-      { id: "orbit-left-mid", x: 170, y: 360, tags: ["mid", "left", "perch"] },
-      { id: "orbit-right-mid", x: 830, y: 360, tags: ["mid", "right", "perch"] },
-      { id: "orbit-left-high", x: 170, y: 160, tags: ["high", "left", "perch"] },
-      { id: "orbit-right-high", x: 830, y: 160, tags: ["high", "right", "perch"] },
-      { id: "orbit-air-center", x: 500, y: 120, tags: ["air", "center"] },
-    ],
-    encounterWaves: [
-      {
-        id: "s3-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 85 },
-          { type: "COMPASS_WASP", anchorTags: ["perch"], weight: 15 }
-        ]
-      },
-      {
-        id: "s3-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 60 },
-          { type: "COMPASS_WASP", anchorTags: ["perch"], weight: 40 }
-        ]
-      },
-      {
-        id: "s3-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 55 },
-          { type: "COMPASS_WASP", anchorTags: ["perch"], weight: 30 },
-          { type: "FLYER", anchorTags: ["air"], weight: 15 }
-        ]
-      }
-    ],
-    playerStart: { x: 500, y: 440 },
-    bossStart: { x: 500, y: 120 },
-  },
-  {
-    id: "stage-4",
-    title: "THE DISSOLVING CHOIR",
-    subtitle: "STAGE 4 - PATH OF PAIN MATRIX",
-    midBossId: "vermilion-needle",
-    midBossDisplayName: "VERMILION NEEDLE",
-    midBossMaxHp: 90,
-    solids: [
-      { x: 0, y: 920, width: 180, height: 80 },
-      { x: 820, y: 920, width: 180, height: 80 },
-      { x: 0, y: 0, width: 1000, height: 40 },
-      { x: 0, y: 0, width: 40, height: 1000 },
-      { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 40, y: 720, width: 120, height: 32 },
-      { x: 840, y: 720, width: 120, height: 32 },
-      { x: 40, y: 360, width: 120, height: 32 },
-      { x: 840, y: 360, width: 120, height: 32 },
-    ],
-    onewayPlatforms: [],
-    hazards: [
-      { x: 180, y: 920, width: 640, height: 80 },
-      { x: 160, y: 520, width: 40, height: 200 },
-      { x: 800, y: 520, width: 40, height: 200 },
-    ],
-    spawners: [],
-    spawnAnchors: [
-      { id: "choir-high-left", x: 100, y: 680, tags: ["high", "left", "perch"] },
-      { id: "choir-high-right", x: 900, y: 680, tags: ["high", "right", "perch"] },
-      { id: "choir-mid-left", x: 100, y: 320, tags: ["mid", "left", "perch"] },
-      { id: "choir-mid-right", x: 900, y: 320, tags: ["mid", "right", "perch"] },
-      { id: "choir-air-center", x: 500, y: 280, tags: ["air", "center"] },
-    ],
-    encounterWaves: [
-      {
-        id: "s4-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "HYMN_NAIL", anchorTags: ["mid"], weight: 80 },
-          { type: "FLYER", anchorTags: ["air"], weight: 20 }
-        ]
-      },
-      {
-        id: "s4-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "HYMN_NAIL", anchorTags: ["mid"], weight: 60 },
-          { type: "HYMN_NAIL", anchorTags: ["high"], weight: 40 }
-        ]
-      },
-      {
-        id: "s4-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "HYMN_NAIL", anchorTags: ["mid"], weight: 50 },
-          { type: "HYMN_NAIL", anchorTags: ["high"], weight: 30 },
-          { type: "FLYER", anchorTags: ["air"], weight: 20 }
-        ]
-      }
-    ],
-    playerStart: { x: 100, y: 840 },
-    bossStart: { x: 900, y: 840 },
     dissolvePlatforms: [
-      { x: 280, y: 640, width: 120, height: 16 },
-      { x: 600, y: 640, width: 120, height: 16 },
-      { x: 280, y: 440, width: 120, height: 16 },
-      { x: 600, y: 440, width: 120, height: 16 },
+      { x: 380, y: 440, width: 240, height: 16 }
     ],
     pogoPosts: [
-      { x: 470, y: 720, width: 60, height: 32 },
-      { x: 470, y: 520, width: 60, height: 32 },
+      { x: 470, y: 720, width: 60, height: 32 }
     ],
     dashResetGates: [
-      { x: 480, y: 280, width: 40, height: 40 },
-    ]
-  },
-  {
-    id: "stage-5",
-    title: "THE MARROW ROT",
-    subtitle: "STAGE 5 - ORGANIC CYSTS",
-    midBossId: "marrow-king",
-    midBossDisplayName: "MARROW KING",
-    midBossMaxHp: 95,
-    solids: [
-      { x: 0, y: 920, width: 200, height: 80 },
-      { x: 800, y: 920, width: 200, height: 80 },
-      { x: 0, y: 0, width: 1000, height: 40 },
-      { x: 0, y: 0, width: 40, height: 1000 },
-      { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 200, y: 700, width: 160, height: 32 },
-      { x: 640, y: 700, width: 160, height: 32 },
-      { x: 200, y: 500, width: 160, height: 32 },
-      { x: 640, y: 500, width: 160, height: 32 },
-      { x: 200, y: 300, width: 160, height: 32 },
-      { x: 640, y: 300, width: 160, height: 32 },
-    ],
-    onewayPlatforms: [
-      { x: 360, y: 600, width: 280, height: 16 },
-      { x: 360, y: 400, width: 280, height: 16 },
-    ],
-    hazards: [{ x: 200, y: 920, width: 600, height: 80 }],
-    spawners: [],
-    spawnAnchors: [
-      { id: "marrow-high-left", x: 280, y: 260, tags: ["high", "left", "perch"] },
-      { id: "marrow-high-right", x: 720, y: 260, tags: ["high", "right", "perch"] },
-      { id: "marrow-mid-left", x: 280, y: 460, tags: ["mid", "left", "perch"] },
-      { id: "marrow-mid-right", x: 720, y: 460, tags: ["mid", "right", "perch"] },
-      { id: "marrow-low-left", x: 280, y: 660, tags: ["low", "left", "ground"] },
-      { id: "marrow-low-right", x: 720, y: 660, tags: ["low", "right", "ground"] },
-      { id: "marrow-air", x: 500, y: 180, tags: ["air", "center"] },
-    ],
-    encounterWaves: [
-      {
-        id: "s5-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 75 },
-          { type: "BLISTER_OX", anchorTags: ["mid"], weight: 25 }
-        ]
-      },
-      {
-        id: "s5-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 50 },
-          { type: "BLISTER_OX", anchorTags: ["mid"], weight: 30 },
-          { type: "BLISTER_OX", anchorTags: ["high"], weight: 20 }
-        ]
-      },
-      {
-        id: "s5-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 45 },
-          { type: "BLISTER_OX", anchorTags: ["mid"], weight: 30 },
-          { type: "FLYER", anchorTags: ["air"], weight: 25 }
-        ]
-      }
-    ],
-    playerStart: { x: 280, y: 840 },
-    visualShapes: [
-      { type: "circle", center: {x: 150, y: 460}, radius: 100, colorRole: "arena-infection", infectionSeams: true },
-      { type: "circle", center: {x: 850, y: 460}, radius: 100, colorRole: "arena-infection", infectionSeams: true },
-      { type: "circle", center: {x: 500, y: 800}, radius: 120, colorRole: "arena-stone", infectionSeams: false },
-      { type: "circle", center: {x: 500, y: 550}, radius: 80, colorRole: "arena-infection", infectionSeams: true }
-    ],
-    bossStart: { x: 720, y: 840 },
-  },
-  {
-    id: "stage-6",
-    title: "THE RUST CATHEDRAL",
-    subtitle: "STAGE 6 - SLAB COMPRESSORS",
-    midBossId: "rust-cathedral",
-    midBossDisplayName: "RUST CATHEDRAL",
-    midBossMaxHp: 100,
-    solids: [
-      { x: 0, y: 920, width: 1000, height: 80 },
-      { x: 0, y: 0, width: 1000, height: 40 },
-      { x: 0, y: 0, width: 40, height: 1000 },
-      { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 80, y: 700, width: 200, height: 32 },
-      { x: 720, y: 700, width: 200, height: 32 },
-      { x: 80, y: 500, width: 200, height: 32 },
-      { x: 720, y: 500, width: 200, height: 32 },
-      { x: 80, y: 300, width: 200, height: 32 },
-      { x: 720, y: 300, width: 200, height: 32 },
-    ],
-    onewayPlatforms: [
-      { x: 280, y: 600, width: 440, height: 16 },
-      { x: 280, y: 400, width: 440, height: 16 },
-    ],
-    hazards: [],
-    spawners: [],
-    spawnAnchors: [
-      { id: "cath-high-left", x: 180, y: 260, tags: ["high", "left", "perch"] },
-      { id: "cath-high-right", x: 820, y: 260, tags: ["high", "right", "perch"] },
-      { id: "cath-mid-left", x: 180, y: 460, tags: ["mid", "left", "perch"] },
-      { id: "cath-mid-right", x: 820, y: 460, tags: ["mid", "right", "perch"] },
-      { id: "cath-low-left", x: 180, y: 660, tags: ["low", "left", "ground"] },
-      { id: "cath-low-right", x: 820, y: 660, tags: ["low", "right", "ground"] },
-      { id: "cath-center", x: 500, y: 360, tags: ["mid", "center", "ground"] },
-    ],
-    encounterWaves: [
-      {
-        id: "s6-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 80 },
-          { type: "TURRET", anchorTags: ["high"], weight: 20 }
-        ]
-      },
-      {
-        id: "s6-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 55 },
-          { type: "BELL_HAMMER", anchorTags: ["mid"], weight: 30 },
-          { type: "TURRET", anchorTags: ["high"], weight: 15 }
-        ]
-      },
-      {
-        id: "s6-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 45 },
-          { type: "BELL_HAMMER", anchorTags: ["mid"], weight: 35 },
-          { type: "FLYER", anchorTags: ["high"], weight: 20 }
-        ]
-      }
-    ],
-    playerStart: { x: 180, y: 840 },
-    bossStart: { x: 820, y: 840 },
-  },
-  {
-    id: "stage-7",
-    title: "THE PANTHEON BOX",
-    subtitle: "STAGE 7 - THE FINAL CRUCIBLE",
-    midBossId: "false-square",
-    midBossDisplayName: "THE FALSE SQUARE",
-    midBossMaxHp: 120,
-    solids: [
-      { x: 0, y: 920, width: 320, height: 80 },
-      { x: 680, y: 920, width: 320, height: 80 },
-      { x: 320, y: 960, width: 360, height: 40 },
-      { x: 0, y: 0, width: 1000, height: 40 },
-      { x: 0, y: 0, width: 40, height: 1000 },
-      { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 340, y: 640, width: 320, height: 32 },
-      { x: 280, y: 480, width: 120, height: 32 },
-      { x: 600, y: 480, width: 120, height: 32 },
-      { x: 420, y: 320, width: 160, height: 32 },
-    ],
-    onewayPlatforms: [
-      { x: 40, y: 440, width: 240, height: 16 },
-      { x: 720, y: 440, width: 240, height: 16 },
-      { x: 120, y: 700, width: 100, height: 16 },
-      { x: 780, y: 700, width: 100, height: 16 },
-    ],
-    hazards: [{ x: 320, y: 920, width: 360, height: 80 }],
-    spawners: [],
-    spawnAnchors: [
-      { id: "pantheon-cat-l", x: 140, y: 390, tags: ["high", "left", "perch"] },
-      { id: "pantheon-cat-r", x: 860, y: 390, tags: ["high", "right", "perch"] },
-      { id: "pantheon-center-bridge", x: 500, y: 590, tags: ["mid", "center", "ground"] },
-      { id: "pantheon-low-l", x: 180, y: 860, tags: ["low", "left", "ground"] },
-      { id: "pantheon-low-r", x: 820, y: 860, tags: ["low", "right", "ground"] },
-      { id: "pantheon-mid-l", x: 340, y: 440, tags: ["mid", "left"] },
-      { id: "pantheon-mid-r", x: 660, y: 440, tags: ["mid", "right"] },
-      { id: "pantheon-air", x: 500, y: 280, tags: ["air", "center"] },
-    ],
-    encounterWaves: [
-      {
-        id: "s7-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "COMPASS_WASP", anchorTags: ["high"], weight: 30 },
-          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 30 },
-          { type: "HYMN_NAIL", anchorTags: ["mid"], weight: 25 },
-          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 15 }
-        ]
-      },
-      {
-        id: "s7-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 4,
-        entries: [
-          { type: "COMPASS_WASP", anchorTags: ["high"], weight: 25 },
-          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 25 },
-          { type: "HYMN_NAIL", anchorTags: ["mid"], weight: 25 },
-          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 15 },
-          { type: "BELL_HAMMER", anchorTags: ["perch"], weight: 10 }
-        ]
-      },
-      {
-        id: "s7-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 5,
-        entries: [
-          { type: "COMPASS_WASP", anchorTags: ["high"], weight: 20 },
-          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 20 },
-          { type: "HYMN_NAIL", anchorTags: ["mid"], weight: 20 },
-          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 20 },
-          { type: "BELL_HAMMER", anchorTags: ["perch"], weight: 20 }
-        ]
-      }
-    ],
-    playerStart: { x: 120, y: 800 },
-    bossStart: { x: 840, y: 800 },
-    dissolvePlatforms: [
-      { x: 280, y: 560, width: 120, height: 16 },
-      { x: 600, y: 560, width: 120, height: 16 },
-    ],
-    pogoPosts: [
-      { x: 470, y: 720, width: 60, height: 32 },
+      { x: 480, y: 280, width: 40, height: 40 }
     ],
     visualShapes: [
-      { type: "circle", center: {x: 500, y: 550}, radius: 60, colorRole: "arena-infection", infectionSeams: true },
-      { type: "polygon", points: [{x:280,y:200},{x:320,y:240},{x:290,y:300},{x:280,y:280}], colorRole: "arena-infection", infectionSeams: true },
-      { type: "polygon", points: [{x:720,y:200},{x:680,y:240},{x:710,y:300},{x:720,y:280}], colorRole: "arena-infection", infectionSeams: true }
+      {
+        type: "organic",
+        colorRole: "arena-infection",
+        infectionSeams: true,
+        points: [
+          { x: 340, y: 640 },
+          { x: 660, y: 640 },
+          { x: 660, y: 672 },
+          { x: 340, y: 672 }
+        ]
+      }
     ]
   }
 ];
@@ -15157,7 +13761,8 @@ export type MinionType =
   | "CLAMPJAW"
   | "HYMN_NAIL"
   | "BLISTER_OX"
-  | "BELL_HAMMER";
+  | "BELL_HAMMER"
+  | "SHARD_CHOIR";
 
 export interface SpawnerConfig {
   type: MinionType;
@@ -15983,18 +14588,6 @@ export class DashResetGate {
 ────────────────────────────────────────────────────
 import { Boss } from "@/entities/Boss";
 import { Software3DRenderer } from "./Software3DRenderer";
-import { useSessionStore } from "@/store/useGameStore";
-
-const getBossColor = (stageIdx: number, activeState: string, flashing: boolean): string => {
-  if (flashing) return "hsl(0, 0%, 100%)";
-  if (activeState === "TELEGRAPH") return "hsl(45, 100%, 60%)";
-  if (stageIdx === 2) return "hsl(338, 76%, 55%)";
-  if (stageIdx === 3) return "hsl(356, 94%, 62%)";
-  if (stageIdx === 4) return "hsl(82, 38%, 44%)";
-  if (stageIdx === 5) return "hsl(14, 76%, 48%)";
-  if (stageIdx === 6) return "hsl(330, 82%, 64%)";
-  return "hsl(350, 82%, 58%)";
-};
 
 export class BossVisuals {
   static draw(ctx: CanvasRenderingContext2D, boss: Boss, alpha: number): void {
@@ -16005,11 +14598,16 @@ export class BossVisuals {
     const drawY = boss.previousPosition.y + (boss.position.y - boss.previousPosition.y) * alphaVal;
 
     const activeState = boss.activeStateName;
-    const stageIdx = useSessionStore.getState().currentStageIndex;
 
     ctx.save();
 
-    const baseColor = getBossColor(stageIdx, activeState, boss.health.isFlashing());
+    let baseColor = "hsl(350, 82%, 58%)";
+    if (boss.health.isFlashing()) {
+      baseColor = "hsl(0, 0%, 100%)";
+    } else if (activeState === "TELEGRAPH") {
+      baseColor = "hsl(45, 100%, 60%)";
+    }
+
     const feetY = drawY + boss.size.height / 2;
 
     ctx.translate(drawX, feetY);
@@ -16018,9 +14616,7 @@ export class BossVisuals {
     const nowTime = performance.now();
     const time = nowTime / 1000;
 
-
-
-    const geometry = Software3DRenderer.getTransformedBossGeometry(stageIdx, boss.currentPhase, time);
+    const geometry = Software3DRenderer.getTransformedBossGeometry(boss.currentPhase, time);
 
     const yaw = 0.15 * boss.facingDirection + (boss.velocity.x / boss.lungeSpeed) * 0.45;
     const pitch = 0.08 + (boss.velocity.y / 1200) * 0.25;
@@ -16040,7 +14636,7 @@ export class BossVisuals {
       baseColor,
       1.0,
       "feet",
-      stageIdx
+      0
     );
 
     ctx.save();
@@ -16071,6 +14667,7 @@ const frontCageScratch: CageSegment[] = [];
 
 const getShapePoints = (family: ShapeFamily): {x: number, y: number}[] => {
     switch(family) {
+        case "triangle": return [{x: 0, y: -0.58}, {x: 0.5, y: 0.28}, {x: -0.5, y: 0.28}];
         case "diamond": return [{x:0,y:-0.5},{x:0.5,y:0},{x:0,y:0.5},{x:-0.5,y:0}];
         case "kite": return [{x:0,y:-0.5},{x:0.4,y:-0.1},{x:0,y:0.5},{x:-0.4,y:-0.1}];
         case "needle": return [{x:0,y:-0.5},{x:0.15,y:0},{x:0,y:0.5},{x:-0.15,y:0}];
@@ -16236,7 +14833,8 @@ export type ShapeFamily =
   | "orb"
   | "blister"
   | "cage"
-  | "organic-platform";
+  | "organic-platform"
+  | "triangle";
 
 export interface VisualProfile {
   shapeFamily: ShapeFamily;
@@ -16489,6 +15087,17 @@ export function drawVisualProfile(
       ctx.stroke();
       break;
     }
+
+    case "triangle": {
+      ctx.beginPath();
+      ctx.moveTo(0, -halfH * 1.16);
+      ctx.lineTo(halfW, halfH * 0.56);
+      ctx.lineTo(-halfW, halfH * 0.56);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
   }
 
   ctx.restore();
@@ -16599,7 +15208,7 @@ export class Software3DRenderer {
         return geom;
     }
 
-    public static getTransformedBossGeometry(stageIdx: number, _phase: number, time: number): Geometry {
+    public static getTransformedBossGeometry(_phase: number, time: number): Geometry {
         const baseBox = [
             { x: -0.5, y: -0.5, z: -0.5 }, { x: 0.5, y: -0.5, z: -0.5 },
             { x: 0.5, y: 0.5, z: -0.5 }, { x: -0.5, y: 0.5, z: -0.5 },
@@ -16607,72 +15216,17 @@ export class Software3DRenderer {
             { x: 0.5, y: 0.5, z: 0.5 }, { x: -0.5, y: 0.5, z: 0.5 },
         ];
 
-        let w = 1.0;
-        let h = 1.0;
-        let d = 1.0;
+        const w = 1.0;
+        const h = 1.0;
+        const d = 0.9;
 
-        if (stageIdx === 0) {
-            w = 1.0; h = 1.0; d = 0.9;
-        } else if (stageIdx === 1) {
-            w = 0.58; h = 1.5; d = 0.5;
-        } else if (stageIdx === 2) {
-            w = 1.33; h = 0.38; d = 1.2;
-        } else if (stageIdx === 3) {
-            w = 0.75; h = 1.25; d = 0.6;
-        } else if (stageIdx === 4) {
-            w = 1.25; h = 0.75; d = 1.5;
-        } else if (stageIdx === 5) {
-            w = 1.33; h = 1.33; d = 1.4;
-        } else if (stageIdx === 6) {
-            const isGlitched = Math.sin(time * 12) > 0.7;
-            w = isGlitched ? 1.4 : 1.0;
-            h = isGlitched ? 0.7 : 1.0;
-            d = 1.0;
-        }
-
-        const vertices = baseBox.map((v, idx) => {
+        const vertices = baseBox.map((v) => {
             let x = v.x * w;
-            let y = v.y * h;
-            let z = v.z * d;
+            const y = v.y * h;
+            const z = v.z * d;
 
-            if (stageIdx === 0) {
-                const offset = Math.sin(time * 8 + y * 2) * 0.12 * Math.sign(y);
-                x += offset;
-            } else if (stageIdx === 1) {
-                const scaleY = 1.0 + 0.15 * Math.sin(time * 12);
-                y *= scaleY;
-            } else if (stageIdx === 2) {
-                const angle = y * 0.5 * Math.sin(time * 6);
-                const cosA = Math.cos(angle);
-                const sinA = Math.sin(angle);
-                const rx = x * cosA - z * sinA;
-                const rz = x * sinA + z * cosA;
-                x = rx;
-                z = rz;
-            } else if (stageIdx === 3) {
-                const expansion = 1.0 + 0.18 * Math.pow(Math.abs(Math.sin(time * 18 + idx)), 4);
-                x *= expansion;
-                y *= expansion;
-                z *= expansion;
-            } else if (stageIdx === 4) {
-                const theta = Math.atan2(z, x);
-                const r = Math.sqrt(x * x + z * z);
-                const wave = 1.0 + 0.14 * Math.sin(theta * 4 + time * 4);
-                x = Math.cos(theta) * r * wave;
-                z = Math.sin(theta) * r * wave;
-                y += Math.sin(time * 3 + x * 2) * 0.08;
-            } else if (stageIdx === 5) {
-                const step = Math.floor(time * 2.25) % 2 === 0 ? 0.95 : 1.05;
-                x *= step;
-                y *= step;
-                z *= step;
-            } else if (stageIdx === 6) {
-                const glitch = Math.sin(time * 24) > 0.8;
-                if (glitch) {
-                    x += Math.sin(y * 10) * 0.15;
-                    y += Math.cos(x * 10) * 0.1;
-                }
-            }
+            const offset = Math.sin(time * 8 + y * 2) * 0.12 * Math.sign(y);
+            x += offset;
 
             return { x, y, z };
         });
@@ -16685,7 +15239,7 @@ export class Software3DRenderer {
 
     public static drawSacredGeometry(
         ctx: CanvasRenderingContext2D,
-        stageIdx: number,
+        _stageIdx: number,
         time: number,
         glowColor: string,
         project: (u: number, v: number) => { x: number; y: number }
@@ -16708,249 +15262,46 @@ export class Software3DRenderer {
             ctx.stroke();
         };
 
-        if (stageIdx === 0) {
-            // Prime Wound: Scrolling zigzag diagonal wave grid
-            const spacing = 0.22;
-            const scroll = (time * 0.4) % spacing;
+        const spacing = 0.22;
+        const scroll = (time * 0.4) % spacing;
 
-            for (let offset = -1.2; offset < 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let u = -0.6; u <= 0.6; u += 0.05) {
-                    const v = offset + scroll + u;
-                    if (v >= -0.6 && v <= 0.6) {
-                        const p = project(u, v);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-
-            const zigCount = 16;
-            for (let offset = -1.2; offset < 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let i = 0; i <= zigCount; i++) {
-                    const t = i / zigCount;
-                    const u = -0.6 + 1.2 * t;
-                    const baseV = offset - scroll + u;
-                    if (baseV >= -0.6 && baseV <= 0.6) {
-                        const amp = 0.045;
-                        const zigzag = (i % 2 === 0 ? 1 : -1) * amp;
-                        const p = project(u + zigzag, baseV - zigzag);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-        } else if (stageIdx === 1) {
-            // Scarlet Lock: Interlocking horizontal and vertical scrolling grids
-            const spacing = 0.22;
-            const scrollH = (time * 0.35) % spacing;
-            const scrollV = (time * 0.22) % spacing;
-
-            for (let v = -0.8; v <= 0.8; v += spacing) {
-                ctx.beginPath();
-                const p1 = project(-0.6, v + scrollH);
-                const p2 = project(0.6, v + scrollH);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            for (let u = -0.8; u <= 0.8; u += spacing) {
-                ctx.beginPath();
-                const p1 = project(u + scrollV, -0.6);
-                const p2 = project(u + scrollV, 0.6);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            drawCircle(0.16);
-            drawCircle(0.36);
-        } else if (stageIdx === 2) {
-            // Carminal Orbit: Rippling Concentric Circles & Radial Zigzag Rays
-            const spacing = 0.18;
-            const scroll = (time * 0.3) % spacing;
-
-            for (let r = scroll; r < 0.9; r += spacing) {
-                if (r <= 0.01) continue;
+        for (let r = scroll; r < 0.9; r += spacing) {
+            if (r > 0.01) {
                 drawCircle(r);
             }
+        }
 
-            const rays = 8;
-            const baseAngle = time * 1.5;
-            const segments = 10;
-            for (let i = 0; i < rays; i++) {
-                const angle = baseAngle + (i * Math.PI * 2) / rays;
-                ctx.beginPath();
-                let started = false;
-                for (let j = 0; j <= segments; j++) {
-                    const r = 0.8 * (j / segments);
-                    const theta = angle + 0.15 * Math.sin(j * 1.8 + time * 8) * (j % 2 === 0 ? 1 : -1);
-                    const p = project(r * Math.cos(theta), r * Math.sin(theta));
+        for (let offset = -1.2; offset < 1.2; offset += spacing) {
+            ctx.beginPath();
+            let started = false;
+            for (let u = -0.6; u <= 0.6; u += 0.05) {
+                const v = offset + scroll + u;
+                if (v >= -0.6 && v <= 0.6) {
+                    const p = project(u, v);
                     if (!started) { ctx.moveTo(p.x, p.y); started = true; }
                     else ctx.lineTo(p.x, p.y);
                 }
-                ctx.stroke();
             }
-        } else if (stageIdx === 3) {
-            // Vermilion Needle: Columns of nested sharp chevron patterns
-            const spacingX = 0.18;
-            const spacingY = 0.22;
-            const scrollY = (time * 0.5) % spacingY;
+            ctx.stroke();
+        }
 
-            for (let x = -0.8; x <= 0.8; x += spacingX) {
-                ctx.beginPath();
-                const p1 = project(x, -0.6);
-                const p2 = project(x, 0.6);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            const colCount = 6;
-            for (let col = -colCount; col <= colCount; col++) {
-                const lx = col * spacingX;
-                for (let y = -0.8; y <= 0.8; y += spacingY) {
-                    const curY = y + scrollY;
-                    if (curY >= -0.6 && curY <= 0.6) {
-                        ctx.beginPath();
-                        const pLeft = project(lx - spacingX * 0.5, curY - spacingY * 0.3);
-                        const pMid = project(lx, curY + spacingY * 0.3);
-                        const pRight = project(lx + spacingX * 0.5, curY - spacingY * 0.3);
-                        ctx.moveTo(pLeft.x, pLeft.y);
-                        ctx.lineTo(pMid.x, pMid.y);
-                        ctx.lineTo(pRight.x, pRight.y);
-                        ctx.stroke();
-                    }
-                }
-            }
-        } else if (stageIdx === 4) {
-            // Marrow Rot: Organic Sinuous Ribbon Waves Scrolling Across
-            const waveCount = 3;
-            const stepX = 0.05;
-            for (let w = 0; w < waveCount; w++) {
-                const phase = (w * Math.PI) / waveCount;
-                const scrollX = time * 4.0;
-                const amp = 0.14;
-
-                ctx.beginPath();
-                let first = true;
-                for (let lu = -0.6; lu <= 0.6; lu += stepX) {
-                    const lv = amp * Math.sin(lu * 7.0 + scrollX + phase) * Math.cos(lu * 2.4);
-                    const p = project(lu, lv);
-                    if (first) { ctx.moveTo(p.x, p.y); first = false; }
+        const zigCount = 16;
+        for (let offset = -1.2; offset < 1.2; offset += spacing) {
+            ctx.beginPath();
+            let started = false;
+            for (let i = 0; i <= zigCount; i++) {
+                const t = i / zigCount;
+                const u = -0.6 + 1.2 * t;
+                const baseV = offset - scroll + u;
+                if (baseV >= -0.6 && baseV <= 0.6) {
+                    const amp = 0.045;
+                    const zigzag = (i % 2 === 0 ? 1 : -1) * amp;
+                    const p = project(u + zigzag, baseV - zigzag);
+                    if (!started) { ctx.moveTo(p.x, p.y); started = true; }
                     else ctx.lineTo(p.x, p.y);
                 }
-                ctx.stroke();
             }
-
-            for (let w = 0; w < waveCount; w++) {
-                const phase = (w * Math.PI) / waveCount + Math.PI / 2;
-                const scrollY = time * 3.0;
-                const amp = 0.12;
-
-                ctx.beginPath();
-                let first = true;
-                for (let lv = -0.6; lv <= 0.6; lv += stepX) {
-                    const lu = amp * Math.cos(lv * 7.0 + scrollY + phase) * Math.sin(lv * 2.4);
-                    const p = project(lu, lv);
-                    if (first) { ctx.moveTo(p.x, p.y); first = false; }
-                    else ctx.lineTo(p.x, p.y);
-                }
-                ctx.stroke();
-            }
-        } else if (stageIdx === 5) {
-            // Rust Cathedral: Isometric Columnar Wireframe Grid
-            const spacing = 0.25;
-            const scroll = (time * 0.3) % spacing;
-
-            for (let u = -0.8; u <= 0.8; u += spacing) {
-                ctx.beginPath();
-                const p1 = project(u + scroll, -0.6);
-                const p2 = project(u + scroll, 0.6);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            for (let offset = -1.2; offset <= 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let u = -0.6; u <= 0.6; u += 0.1) {
-                    const v = offset + scroll * 0.866 + u * 0.577;
-                    if (v >= -0.6 && v <= 0.6) {
-                        const p = project(u, v);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-
-            for (let offset = -1.2; offset <= 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let u = -0.6; u <= 0.6; u += 0.1) {
-                    const v = offset - scroll * 0.866 - u * 0.577;
-                    if (v >= -0.6 && v <= 0.6) {
-                        const p = project(u, v);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-        } else {
-            // The False Square: Glitchy, morphing seamless square grid
-            const spacing = 0.22;
-            const scroll = (time * 0.4) % spacing;
-
-            const isGlitchActive = Math.sin(time * 18) > 0.8;
-            const glitchX = isGlitchActive ? Math.sin(time * 50) * 0.05 : 0;
-            const glitchY = isGlitchActive ? Math.cos(time * 40) * 0.03 : 0;
-
-            ctx.save();
-
-            for (let v = -0.8; v <= 0.8; v += spacing) {
-                ctx.beginPath();
-                const p1 = project(-0.6 + glitchX, v + scroll + glitchY);
-                const p2 = project(0.6 + glitchX, v + scroll + glitchY);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            for (let u = -0.8; u <= 0.8; u += spacing) {
-                ctx.beginPath();
-                const p1 = project(u + scroll + glitchX, -0.6 + glitchY);
-                const p2 = project(u + scroll + glitchX, 0.6 + glitchY);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            const sqSpacing = 0.16;
-            const sqScroll = (time * 0.25) % sqSpacing;
-            for (let r = sqScroll; r < 0.8; r += sqSpacing) {
-                if (r <= 0.01) continue;
-                ctx.beginPath();
-                const p1 = project(-r + glitchX, -r + glitchY);
-                const p2 = project(r + glitchX, -r + glitchY);
-                const p3 = project(r + glitchX, r + glitchY);
-                const p4 = project(-r + glitchX, r + glitchY);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.lineTo(p3.x, p3.y);
-                ctx.lineTo(p4.x, p4.y);
-                ctx.closePath();
-                ctx.stroke();
-            }
-            ctx.restore();
+            ctx.stroke();
         }
 
         ctx.restore();
@@ -17216,7 +15567,8 @@ export type MinionType =
   | "CLAMPJAW"
   | "HYMN_NAIL"
   | "BLISTER_OX"
-  | "BELL_HAMMER";
+  | "BELL_HAMMER"
+  | "SHARD_CHOIR";
 
 export abstract class BaseMinion extends BaseEntity {
   private unsubHurt!: () => void;
@@ -17687,7 +16039,7 @@ export class Boss extends BaseEntity {
 ● ./src/entities/BossAttackPatterns.ts
 ────────────────────────────────────────────────────
 import { Boss } from "./Boss";
-import { useSessionStore } from "@/store/useGameStore";
+// Removed unused useSessionStore
 
 export type AttackTag = "projectile-heavy" | "melee" | "arena-denial" | "reposition";
 
@@ -18122,26 +16474,8 @@ export const ALL_PATTERNS: AttackPattern[] = [
 ];
 
 export function selectBestAttack(ctx: BossAttackContext): AttackPattern {
-  const stageIdx = useSessionStore.getState().currentStageIndex;
-
-  // Filter patterns by what is valid for the stage to express the chromatic/geometric narrative
-  let candidates = ALL_PATTERNS;
-
-  if (stageIdx === 0) {
-    candidates = ALL_PATTERNS.filter(p => ["OMNI_BURST", "VOLLEY", "PREDICTIVE_SHOT"].includes(p.id));
-  } else if (stageIdx === 1) {
-    candidates = ALL_PATTERNS.filter(p => ["GATE_DROP", "LOCKSTEP_VOLLEY", "COMPRESSION_MARCH"].includes(p.id));
-  } else if (stageIdx === 2) {
-    candidates = ALL_PATTERNS.filter(p => ["APHELION_RING", "PERIHELION_DIVE", "SATELLITE_TAX"].includes(p.id));
-  } else if (stageIdx === 3) {
-    candidates = ALL_PATTERNS.filter(p => ["NEEDLE_RAIN", "DASH_THREAD", "POGO_TAX"].includes(p.id));
-  } else if (stageIdx === 4) {
-    candidates = ALL_PATTERNS.filter(p => ["BELLY_TIDE", "BLISTER_SPAWN", "SICKNESS_LEAN"].includes(p.id));
-  } else if (stageIdx === 5) {
-    candidates = ALL_PATTERNS.filter(p => ["CATHEDRAL_TOLL", "FALLING_NAVE", "WEIGHT_TRANSFER"].includes(p.id));
-  } else if (stageIdx === 6) {
-    candidates = ALL_PATTERNS.filter(p => !["BLISTER_SPAWN"].includes(p.id));
-  }
+  // Allow our unified single boss to access all attack patterns
+  const candidates = ALL_PATTERNS;
 
   let bestPattern = candidates[0] || ALL_PATTERNS[0];
   let highestScore = -1;
@@ -19159,7 +17493,8 @@ import {
   ClampjawMinion,
   HymnNailMinion,
   BlisterOxMinion,
-  BellHammerMinion
+  BellHammerMinion,
+  ShardChoirMinion
 } from "./NewGauntletMinions";
 
 export class MinionFactory {
@@ -19185,6 +17520,8 @@ export class MinionFactory {
         return new BlisterOxMinion(id, position, world);
       case "BELL_HAMMER":
         return new BellHammerMinion(id, position, world);
+      case "SHARD_CHOIR":
+        return new ShardChoirMinion(id, position, world);
       default:
         throw new Error(`Unknown minion type: ${type}`);
     }
@@ -19767,8 +18104,8 @@ export class CompassWaspMinion extends BaseMinion {
       this.angle += 1.8 * dt;
       const targetX = this.pointA.x + Math.cos(this.angle) * this.orbitRadius;
       const targetY = this.pointA.y + Math.sin(this.angle) * this.orbitRadius * 0.6;
-      this.position.x += (targetX - this.position.x) * 4.0 * dt;
-      this.position.y += (targetY - this.position.y) * 4.0 * dt;
+      this.velocity.x = (targetX - this.position.x) * 4.0;
+      this.velocity.y = (targetY - this.position.y) * 4.0;
 
       const player = this.world.player;
       if (player && !player.isDead) {
@@ -19785,9 +18122,10 @@ export class CompassWaspMinion extends BaseMinion {
       }
     } else {
       this.diveTimer -= dt;
-      this.position.x += this.velocity.x * dt;
-      this.position.y += this.velocity.y * dt;
-      if (this.diveTimer <= 0) {
+      const physics = this.physics;
+      const hitWall = physics ? physics.isOnWallLeft || physics.isOnWallRight || physics.isGrounded : false;
+      
+      if (this.diveTimer <= 0 || hitWall) {
         this.state = "orbit";
         this.pointA = { x: this.position.x, y: this.position.y };
         zeroVec(this.velocity);
@@ -19795,6 +18133,9 @@ export class CompassWaspMinion extends BaseMinion {
     }
 
     super.update(dt);
+
+    this.position.x = Math.max(50, Math.min(950, this.position.x));
+    this.position.y = Math.max(50, Math.min(910, this.position.y));
   }
 
   protected updateExhaust(): void {
@@ -20138,6 +18479,86 @@ export class BellHammerMinion extends BaseMinion {
         2
       );
     }
+  }
+}
+
+
+export class ShardChoirMinion extends BaseMinion {
+  private hoverTimer = 0;
+
+  constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
+    super(id, startPos, world);
+    this.size = { width: 22, height: 22 };
+    this.physics.gravity = 0;
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 2,
+      invincibilityDuration: 0.1,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
+    });
+    this.squashPivot = "center";
+    this.bodyColorValue = "hsl(194, 62%, 52%)";
+    this.dissolveColorValue = "hsl(194, 70%, 40%)";
+    this.hoverTimer = TrigLUT.random() * Math.PI * 2;
+  }
+
+  get minionColor(): string { return "hsl(194, 62%, 52%)"; }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "triangle",
+      danger: 0.7,
+      weight: 0.2,
+      corruption: 0.1,
+      hueRole: "minion-logic",
+      strokePx: 2,
+      spinRate: 1.8,
+      wobbleAmp: 0.2,
+      cornerRadius: 0,
+      phaseOffset: this.hoverTimer
+    };
+  }
+
+  public update(dt: number) {
+    if (this.isSpawning || this.isDying || this.isDead) {
+      super.update(dt);
+      return;
+    }
+
+    this.hoverTimer += dt * 3.5;
+    
+    const player = this.world.player;
+    if (player && !player.isDead) {
+      const dx = player.position.x - this.position.x;
+      const dy = player.position.y - this.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist > 0) {
+        const driftSpeed = 90;
+        const targetVelX = (dx / dist) * driftSpeed;
+        const targetVelY = (dy / dist) * driftSpeed + Math.sin(this.hoverTimer) * 35;
+        this.velocity.x += (targetVelX - this.velocity.x) * 3.0 * dt;
+        this.velocity.y += (targetVelY - this.velocity.y) * 3.0 * dt;
+      }
+    }
+
+    super.update(dt);
+    
+    this.position.x = Math.max(50, Math.min(950, this.position.x));
+    this.position.y = Math.max(50, Math.min(910, this.position.y));
+  }
+
+  protected updateExhaust(): void {
+    this.exhaustTimer = 0.14;
+    this.world.events.publishSpark(
+      this.position.x,
+      this.position.y,
+      Math.PI / 2,
+      "hsl(194, 62%, 52%)",
+      false,
+      1
+    );
   }
 }
 
@@ -22941,6 +21362,22 @@ export class PlayerVisuals {
       1.0,
       "feet"
     );
+
+    if (this.player.healingCharges === this.player.maxHealingCharges) {
+      ctx.save();
+      const orbitTime = nowTime * 0.0028;
+      ctx.fillStyle = "hsla(280, 100%, 75%, 0.45)";
+      const numSparks = 3;
+      const radius = 28;
+      const centerLocalY = -this.player.size.height / 2;
+      for (let i = 0; i < numSparks; i++) {
+        const angle = orbitTime + (i * Math.PI * 2) / numSparks;
+        const rx = Math.cos(angle) * radius;
+        const ry = centerLocalY + Math.sin(angle) * radius * 0.35;
+        ctx.fillRect(rx - 2.5, ry - 2.5, 5, 5);
+      }
+      ctx.restore();
+    }
 
     const localCenterX = 0;
     const localCenterY = -this.player.size.height / 2;

@@ -159,6 +159,22 @@ export class PlayerVisuals {
       "feet"
     );
 
+    if (this.player.healingCharges === this.player.maxHealingCharges) {
+      ctx.save();
+      const orbitTime = nowTime * 0.0028;
+      ctx.fillStyle = "hsla(280, 100%, 75%, 0.45)";
+      const numSparks = 3;
+      const radius = 28;
+      const centerLocalY = -this.player.size.height / 2;
+      for (let i = 0; i < numSparks; i++) {
+        const angle = orbitTime + (i * Math.PI * 2) / numSparks;
+        const rx = Math.cos(angle) * radius;
+        const ry = centerLocalY + Math.sin(angle) * radius * 0.35;
+        ctx.fillRect(rx - 2.5, ry - 2.5, 5, 5);
+      }
+      ctx.restore();
+    }
+
     const localCenterX = 0;
     const localCenterY = -this.player.size.height / 2;
 

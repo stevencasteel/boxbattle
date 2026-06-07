@@ -3,7 +3,7 @@ import { SpawnAnchor, MinionType } from "./levelData";
 import { MinionFactory } from "@/entities/MinionFactory";
 import { TrigLUT } from "./TrigLUT";
 import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
-import { useSessionStore } from "@/store/useGameStore";
+// Removed unused useSessionStore
 
 export class EncounterDirector {
   private world: IWorld;
@@ -82,6 +82,7 @@ export class EncounterDirector {
       case "HYMN_NAIL": return 2;
       case "BLISTER_OX": return 5;
       case "BELL_HAMMER": return 4;
+      case "SHARD_CHOIR": return 1;
       default: return 2;
     }
   }
@@ -96,8 +97,8 @@ export class EncounterDirector {
 
     // Calculate maximum threat based on active boss footprint and narrow map constraints
     const bossActive = this.world.boss && !this.world.boss.isDead;
-    const stageIdx = 0;
-    const isNarrowMap = stageIdx === 1; // Narrow Redoubt
+    // Removed unused stageIdx
+    const isNarrowMap = false; // Narrow Redoubt
 
     let maxThreatBudget = bossActive ? 4 : 8;
     if (isNarrowMap) {
@@ -180,9 +181,22 @@ export class EncounterDirector {
   }
 
   private spawnMinion(type: MinionType, anchor: SpawnAnchor) {
-    const minionId = `minion-${type}-${Date.now()}-${Math.floor(TrigLUT.randomGameplay() * 1000000)}`;
-    const minion = MinionFactory.createMinion(type, minionId, { x: anchor.x, y: anchor.y }, this.world);
-    this.world.minions.push(minion);
+    if (type === "SHARD_CHOIR") {
+      const offsets = [
+        { dx: 0, dy: -30 },
+        { dx: -35, dy: 15 },
+        { dx: 35, dy: 15 }
+      ];
+      offsets.forEach((offset, idx) => {
+        const minionId = `minion-SHARD_CHOIR-${Date.now()}-${idx}-${Math.floor(TrigLUT.randomGameplay() * 1000000)}`;
+        const minion = MinionFactory.createMinion("SHARD_CHOIR", minionId, { x: anchor.x + offset.dx, y: anchor.y + offset.dy }, this.world);
+        this.world.minions.push(minion);
+      });
+    } else {
+      const minionId = `minion-${type}-${Date.now()}-${Math.floor(TrigLUT.randomGameplay() * 1000000)}`;
+      const minion = MinionFactory.createMinion(type, minionId, { x: anchor.x, y: anchor.y }, this.world);
+      this.world.minions.push(minion);
+    }
   }
 
   private despawnAllMinions() {

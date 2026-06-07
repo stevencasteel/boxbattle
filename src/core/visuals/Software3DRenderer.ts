@@ -107,14 +107,14 @@ export class Software3DRenderer {
             { x: 0.5, y: 0.5, z: 0.5 }, { x: -0.5, y: 0.5, z: 0.5 },
         ];
 
-        let w = 1.0;
-        let h = 1.0;
-        let d = 0.9;
+        const w = 1.0;
+        const h = 1.0;
+        const d = 0.9;
 
         const vertices = baseBox.map((v) => {
             let x = v.x * w;
-            let y = v.y * h;
-            let z = v.z * d;
+            const y = v.y * h;
+            const z = v.z * d;
 
             const offset = Math.sin(time * 8 + y * 2) * 0.12 * Math.sign(y);
             x += offset;
@@ -130,7 +130,7 @@ export class Software3DRenderer {
 
     public static drawSacredGeometry(
         ctx: CanvasRenderingContext2D,
-        stageIdx: number,
+        _stageIdx: number,
         time: number,
         glowColor: string,
         project: (u: number, v: number) => { x: number; y: number }
@@ -153,249 +153,46 @@ export class Software3DRenderer {
             ctx.stroke();
         };
 
-        if (stageIdx === 0) {
-            // Prime Wound: Scrolling zigzag diagonal wave grid
-            const spacing = 0.22;
-            const scroll = (time * 0.4) % spacing;
+        const spacing = 0.22;
+        const scroll = (time * 0.4) % spacing;
 
-            for (let offset = -1.2; offset < 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let u = -0.6; u <= 0.6; u += 0.05) {
-                    const v = offset + scroll + u;
-                    if (v >= -0.6 && v <= 0.6) {
-                        const p = project(u, v);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-
-            const zigCount = 16;
-            for (let offset = -1.2; offset < 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let i = 0; i <= zigCount; i++) {
-                    const t = i / zigCount;
-                    const u = -0.6 + 1.2 * t;
-                    const baseV = offset - scroll + u;
-                    if (baseV >= -0.6 && baseV <= 0.6) {
-                        const amp = 0.045;
-                        const zigzag = (i % 2 === 0 ? 1 : -1) * amp;
-                        const p = project(u + zigzag, baseV - zigzag);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-        } else if (stageIdx === 1) {
-            // Scarlet Lock: Interlocking horizontal and vertical scrolling grids
-            const spacing = 0.22;
-            const scrollH = (time * 0.35) % spacing;
-            const scrollV = (time * 0.22) % spacing;
-
-            for (let v = -0.8; v <= 0.8; v += spacing) {
-                ctx.beginPath();
-                const p1 = project(-0.6, v + scrollH);
-                const p2 = project(0.6, v + scrollH);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            for (let u = -0.8; u <= 0.8; u += spacing) {
-                ctx.beginPath();
-                const p1 = project(u + scrollV, -0.6);
-                const p2 = project(u + scrollV, 0.6);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            drawCircle(0.16);
-            drawCircle(0.36);
-        } else if (stageIdx === 2) {
-            // Carminal Orbit: Rippling Concentric Circles & Radial Zigzag Rays
-            const spacing = 0.18;
-            const scroll = (time * 0.3) % spacing;
-
-            for (let r = scroll; r < 0.9; r += spacing) {
-                if (r <= 0.01) continue;
+        for (let r = scroll; r < 0.9; r += spacing) {
+            if (r > 0.01) {
                 drawCircle(r);
             }
+        }
 
-            const rays = 8;
-            const baseAngle = time * 1.5;
-            const segments = 10;
-            for (let i = 0; i < rays; i++) {
-                const angle = baseAngle + (i * Math.PI * 2) / rays;
-                ctx.beginPath();
-                let started = false;
-                for (let j = 0; j <= segments; j++) {
-                    const r = 0.8 * (j / segments);
-                    const theta = angle + 0.15 * Math.sin(j * 1.8 + time * 8) * (j % 2 === 0 ? 1 : -1);
-                    const p = project(r * Math.cos(theta), r * Math.sin(theta));
+        for (let offset = -1.2; offset < 1.2; offset += spacing) {
+            ctx.beginPath();
+            let started = false;
+            for (let u = -0.6; u <= 0.6; u += 0.05) {
+                const v = offset + scroll + u;
+                if (v >= -0.6 && v <= 0.6) {
+                    const p = project(u, v);
                     if (!started) { ctx.moveTo(p.x, p.y); started = true; }
                     else ctx.lineTo(p.x, p.y);
                 }
-                ctx.stroke();
             }
-        } else if (stageIdx === 3) {
-            // Vermilion Needle: Columns of nested sharp chevron patterns
-            const spacingX = 0.18;
-            const spacingY = 0.22;
-            const scrollY = (time * 0.5) % spacingY;
+            ctx.stroke();
+        }
 
-            for (let x = -0.8; x <= 0.8; x += spacingX) {
-                ctx.beginPath();
-                const p1 = project(x, -0.6);
-                const p2 = project(x, 0.6);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            const colCount = 6;
-            for (let col = -colCount; col <= colCount; col++) {
-                const lx = col * spacingX;
-                for (let y = -0.8; y <= 0.8; y += spacingY) {
-                    const curY = y + scrollY;
-                    if (curY >= -0.6 && curY <= 0.6) {
-                        ctx.beginPath();
-                        const pLeft = project(lx - spacingX * 0.5, curY - spacingY * 0.3);
-                        const pMid = project(lx, curY + spacingY * 0.3);
-                        const pRight = project(lx + spacingX * 0.5, curY - spacingY * 0.3);
-                        ctx.moveTo(pLeft.x, pLeft.y);
-                        ctx.lineTo(pMid.x, pMid.y);
-                        ctx.lineTo(pRight.x, pRight.y);
-                        ctx.stroke();
-                    }
-                }
-            }
-        } else if (stageIdx === 4) {
-            // Marrow Rot: Organic Sinuous Ribbon Waves Scrolling Across
-            const waveCount = 3;
-            const stepX = 0.05;
-            for (let w = 0; w < waveCount; w++) {
-                const phase = (w * Math.PI) / waveCount;
-                const scrollX = time * 4.0;
-                const amp = 0.14;
-
-                ctx.beginPath();
-                let first = true;
-                for (let lu = -0.6; lu <= 0.6; lu += stepX) {
-                    const lv = amp * Math.sin(lu * 7.0 + scrollX + phase) * Math.cos(lu * 2.4);
-                    const p = project(lu, lv);
-                    if (first) { ctx.moveTo(p.x, p.y); first = false; }
+        const zigCount = 16;
+        for (let offset = -1.2; offset < 1.2; offset += spacing) {
+            ctx.beginPath();
+            let started = false;
+            for (let i = 0; i <= zigCount; i++) {
+                const t = i / zigCount;
+                const u = -0.6 + 1.2 * t;
+                const baseV = offset - scroll + u;
+                if (baseV >= -0.6 && baseV <= 0.6) {
+                    const amp = 0.045;
+                    const zigzag = (i % 2 === 0 ? 1 : -1) * amp;
+                    const p = project(u + zigzag, baseV - zigzag);
+                    if (!started) { ctx.moveTo(p.x, p.y); started = true; }
                     else ctx.lineTo(p.x, p.y);
                 }
-                ctx.stroke();
             }
-
-            for (let w = 0; w < waveCount; w++) {
-                const phase = (w * Math.PI) / waveCount + Math.PI / 2;
-                const scrollY = time * 3.0;
-                const amp = 0.12;
-
-                ctx.beginPath();
-                let first = true;
-                for (let lv = -0.6; lv <= 0.6; lv += stepX) {
-                    const lu = amp * Math.cos(lv * 7.0 + scrollY + phase) * Math.sin(lv * 2.4);
-                    const p = project(lu, lv);
-                    if (first) { ctx.moveTo(p.x, p.y); first = false; }
-                    else ctx.lineTo(p.x, p.y);
-                }
-                ctx.stroke();
-            }
-        } else if (stageIdx === 5) {
-            // Rust Cathedral: Isometric Columnar Wireframe Grid
-            const spacing = 0.25;
-            const scroll = (time * 0.3) % spacing;
-
-            for (let u = -0.8; u <= 0.8; u += spacing) {
-                ctx.beginPath();
-                const p1 = project(u + scroll, -0.6);
-                const p2 = project(u + scroll, 0.6);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            for (let offset = -1.2; offset <= 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let u = -0.6; u <= 0.6; u += 0.1) {
-                    const v = offset + scroll * 0.866 + u * 0.577;
-                    if (v >= -0.6 && v <= 0.6) {
-                        const p = project(u, v);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-
-            for (let offset = -1.2; offset <= 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let u = -0.6; u <= 0.6; u += 0.1) {
-                    const v = offset - scroll * 0.866 - u * 0.577;
-                    if (v >= -0.6 && v <= 0.6) {
-                        const p = project(u, v);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-        } else {
-            // The False Square: Glitchy, morphing seamless square grid
-            const spacing = 0.22;
-            const scroll = (time * 0.4) % spacing;
-
-            const isGlitchActive = Math.sin(time * 18) > 0.8;
-            const glitchX = isGlitchActive ? Math.sin(time * 50) * 0.05 : 0;
-            const glitchY = isGlitchActive ? Math.cos(time * 40) * 0.03 : 0;
-
-            ctx.save();
-
-            for (let v = -0.8; v <= 0.8; v += spacing) {
-                ctx.beginPath();
-                const p1 = project(-0.6 + glitchX, v + scroll + glitchY);
-                const p2 = project(0.6 + glitchX, v + scroll + glitchY);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            for (let u = -0.8; u <= 0.8; u += spacing) {
-                ctx.beginPath();
-                const p1 = project(u + scroll + glitchX, -0.6 + glitchY);
-                const p2 = project(u + scroll + glitchX, 0.6 + glitchY);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            const sqSpacing = 0.16;
-            const sqScroll = (time * 0.25) % sqSpacing;
-            for (let r = sqScroll; r < 0.8; r += sqSpacing) {
-                if (r <= 0.01) continue;
-                ctx.beginPath();
-                const p1 = project(-r + glitchX, -r + glitchY);
-                const p2 = project(r + glitchX, -r + glitchY);
-                const p3 = project(r + glitchX, r + glitchY);
-                const p4 = project(-r + glitchX, r + glitchY);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.lineTo(p3.x, p3.y);
-                ctx.lineTo(p4.x, p4.y);
-                ctx.closePath();
-                ctx.stroke();
-            }
-            ctx.restore();
+            ctx.stroke();
         }
 
         ctx.restore();

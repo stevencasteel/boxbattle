@@ -10,16 +10,7 @@ export class GauntletDirector {
     GauntletDirector.initialized = true;
 
     if (typeof window !== "undefined") {
-      window.addEventListener("keydown", (e) => {
-        const code = e.code;
-        if (code.startsWith("Digit")) {
-          const num = parseInt(code.replace("Digit", ""));
-          if (num >= 1 && num <= 7) {
-            e.preventDefault();
-            GauntletDirector.warpToStage(num - 1);
-          }
-        }
-      });
+      // Removed stage warping hotkeys for streamlined production single-stage chancel
     }
   }
 

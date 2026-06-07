@@ -26,10 +26,10 @@ export interface StageConfig extends LevelConfig {
 export const GAUNTLET_STAGES: StageConfig[] = [
   {
     id: "stage-1",
-    title: "THE OLD PIT",
-    subtitle: "THE UNIFIED CRUCIBLE",
-    midBossId: "prime-wound",
-    midBossDisplayName: "PRIME WOUND",
+    title: "THE SOVEREIGN CRUCIBLE",
+    subtitle: "THE APHELION CHANCEL",
+    midBossId: "prime-aphelion",
+    midBossDisplayName: "PRIME APHELION",
     midBossMaxHp: 80,
     solids: [
       { x: 0, y: 920, width: 320, height: 80 },
@@ -62,36 +62,38 @@ export const GAUNTLET_STAGES: StageConfig[] = [
       {
         id: "s1-w1",
         phase: 1,
-        earliestTime: 2,
-        cooldownRange: [6, 9],
-        maxActiveMinions: 3,
+        earliestTime: 1,
+        cooldownRange: [3, 5],
+        maxActiveMinions: 4,
         entries: [
-          { type: "TURRET", anchorIds: ["left-catwalk", "right-catwalk"], weight: 40 },
-          { type: "LANCER", anchorIds: ["center-bridge"], weight: 30 },
-          { type: "FLYER", anchorTags: ["air"], weight: 30 }
+          { type: "TURRET", anchorIds: ["left-catwalk", "right-catwalk"], weight: 20 },
+          { type: "LANCER", anchorIds: ["center-bridge"], weight: 20 },
+          { type: "FLYER", anchorTags: ["air"], weight: 20 },
+          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 40 }
         ]
       },
       {
         id: "s1-w2",
         phase: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 4,
+        cooldownRange: [3, 5],
+        maxActiveMinions: 6,
         entries: [
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 25 },
-          { type: "PIT_LANCER", anchorTags: ["ground"], weight: 25 },
-          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 25 },
-          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 25 }
+          { type: "SHIELDER", anchorTags: ["ground"], weight: 20 },
+          { type: "PIT_LANCER", anchorTags: ["ground"], weight: 20 },
+          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 20 },
+          { type: "SHARD_CHOIR", anchorTags: ["air", "perch"], weight: 40 }
         ]
       },
       {
         id: "s1-w3",
         phase: 3,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 5,
+        cooldownRange: [2, 4],
+        maxActiveMinions: 8,
         entries: [
-          { type: "HYMN_NAIL", anchorTags: ["perch"], weight: 30 },
-          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 30 },
-          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 40 }
+          { type: "HYMN_NAIL", anchorTags: ["perch"], weight: 25 },
+          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 25 },
+          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 25 },
+          { type: "SHARD_CHOIR", anchorTags: ["air"], weight: 25 }
         ]
       }
     ],
@@ -105,6 +107,19 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     ],
     dashResetGates: [
       { x: 480, y: 280, width: 40, height: 40 }
+    ],
+    visualShapes: [
+      {
+        type: "organic",
+        colorRole: "arena-infection",
+        infectionSeams: true,
+        points: [
+          { x: 340, y: 640 },
+          { x: 660, y: 640 },
+          { x: 660, y: 672 },
+          { x: 340, y: 672 }
+        ]
+      }
     ]
   }
 ];

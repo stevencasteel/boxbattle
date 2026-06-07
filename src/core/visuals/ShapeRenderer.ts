@@ -11,7 +11,8 @@ export type ShapeFamily =
   | "orb"
   | "blister"
   | "cage"
-  | "organic-platform";
+  | "organic-platform"
+  | "triangle";
 
 export interface VisualProfile {
   shapeFamily: ShapeFamily;
@@ -259,6 +260,17 @@ export function drawVisualProfile(
         if (i === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+
+    case "triangle": {
+      ctx.beginPath();
+      ctx.moveTo(0, -halfH * 1.16);
+      ctx.lineTo(halfW, halfH * 0.56);
+      ctx.lineTo(-halfW, halfH * 0.56);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();

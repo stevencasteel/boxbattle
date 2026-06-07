@@ -10,7 +10,8 @@ export type MinionType =
   | "CLAMPJAW"
   | "HYMN_NAIL"
   | "BLISTER_OX"
-  | "BELL_HAMMER";
+  | "BELL_HAMMER"
+  | "SHARD_CHOIR";
 
 export interface SpawnerConfig {
   type: MinionType;

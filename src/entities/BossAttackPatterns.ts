@@ -1,5 +1,5 @@
 import { Boss } from "./Boss";
-import { useSessionStore } from "@/store/useGameStore";
+// Removed unused useSessionStore
 
 export type AttackTag = "projectile-heavy" | "melee" | "arena-denial" | "reposition";
 

@@ -19,7 +19,8 @@ export type MinionType =
   | "CLAMPJAW"
   | "HYMN_NAIL"
   | "BLISTER_OX"
-  | "BELL_HAMMER";
+  | "BELL_HAMMER"
+  | "SHARD_CHOIR";
 
 export abstract class BaseMinion extends BaseEntity {
   private unsubHurt!: () => void;

@@ -289,7 +289,7 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
   const gameResult = useSessionStore((state) => state.gameResult);
   const isGameOver = gameResult !== "PLAYING";
   const activeBHP = isGameOver ? 0 : bossHP;
-  const currentStageIndex = useSessionStore((state) => state.currentStageIndex);
+  // Removed unused currentStageIndex
 
   const bossWidth = (activeBHP / UNITS.BOSS_MAX_HP) * 100 + "%";
 

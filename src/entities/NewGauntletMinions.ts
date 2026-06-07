@@ -125,8 +125,8 @@ export class CompassWaspMinion extends BaseMinion {
       this.angle += 1.8 * dt;
       const targetX = this.pointA.x + Math.cos(this.angle) * this.orbitRadius;
       const targetY = this.pointA.y + Math.sin(this.angle) * this.orbitRadius * 0.6;
-      this.position.x += (targetX - this.position.x) * 4.0 * dt;
-      this.position.y += (targetY - this.position.y) * 4.0 * dt;
+      this.velocity.x = (targetX - this.position.x) * 4.0;
+      this.velocity.y = (targetY - this.position.y) * 4.0;
 
       const player = this.world.player;
       if (player && !player.isDead) {
@@ -143,9 +143,10 @@ export class CompassWaspMinion extends BaseMinion {
       }
     } else {
       this.diveTimer -= dt;
-      this.position.x += this.velocity.x * dt;
-      this.position.y += this.velocity.y * dt;
-      if (this.diveTimer <= 0) {
+      const physics = this.physics;
+      const hitWall = physics ? physics.isOnWallLeft || physics.isOnWallRight || physics.isGrounded : false;
+      
+      if (this.diveTimer <= 0 || hitWall) {
         this.state = "orbit";
         this.pointA = { x: this.position.x, y: this.position.y };
         zeroVec(this.velocity);
@@ -153,6 +154,9 @@ export class CompassWaspMinion extends BaseMinion {
     }
 
     super.update(dt);
+
+    this.position.x = Math.max(50, Math.min(950, this.position.x));
+    this.position.y = Math.max(50, Math.min(910, this.position.y));
   }
 
   protected updateExhaust(): void {
@@ -496,5 +500,85 @@ export class BellHammerMinion extends BaseMinion {
         2
       );
     }
+  }
+}
+
+
+export class ShardChoirMinion extends BaseMinion {
+  private hoverTimer = 0;
+
+  constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
+    super(id, startPos, world);
+    this.size = { width: 22, height: 22 };
+    this.physics.gravity = 0;
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 2,
+      invincibilityDuration: 0.1,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
+    });
+    this.squashPivot = "center";
+    this.bodyColorValue = "hsl(194, 62%, 52%)";
+    this.dissolveColorValue = "hsl(194, 70%, 40%)";
+    this.hoverTimer = TrigLUT.random() * Math.PI * 2;
+  }
+
+  get minionColor(): string { return "hsl(194, 62%, 52%)"; }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "triangle",
+      danger: 0.7,
+      weight: 0.2,
+      corruption: 0.1,
+      hueRole: "minion-logic",
+      strokePx: 2,
+      spinRate: 1.8,
+      wobbleAmp: 0.2,
+      cornerRadius: 0,
+      phaseOffset: this.hoverTimer
+    };
+  }
+
+  public update(dt: number) {
+    if (this.isSpawning || this.isDying || this.isDead) {
+      super.update(dt);
+      return;
+    }
+
+    this.hoverTimer += dt * 3.5;
+    
+    const player = this.world.player;
+    if (player && !player.isDead) {
+      const dx = player.position.x - this.position.x;
+      const dy = player.position.y - this.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist > 0) {
+        const driftSpeed = 90;
+        const targetVelX = (dx / dist) * driftSpeed;
+        const targetVelY = (dy / dist) * driftSpeed + Math.sin(this.hoverTimer) * 35;
+        this.velocity.x += (targetVelX - this.velocity.x) * 3.0 * dt;
+        this.velocity.y += (targetVelY - this.velocity.y) * 3.0 * dt;
+      }
+    }
+
+    super.update(dt);
+    
+    this.position.x = Math.max(50, Math.min(950, this.position.x));
+    this.position.y = Math.max(50, Math.min(910, this.position.y));
+  }
+
+  protected updateExhaust(): void {
+    this.exhaustTimer = 0.14;
+    this.world.events.publishSpark(
+      this.position.x,
+      this.position.y,
+      Math.PI / 2,
+      "hsl(194, 62%, 52%)",
+      false,
+      1
+    );
   }
 }

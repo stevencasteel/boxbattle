@@ -1,6 +1,6 @@
 import { Rectangle } from "./Interfaces";
 import { UNITS } from "@/core/Units";
-import { useSessionStore } from "@/store/useGameStore";
+// Removed unused useSessionStore
 import { GAUNTLET_STAGES } from "./design/GauntletStages";
 
 export class StaticMapRenderer {
@@ -24,7 +24,7 @@ export class StaticMapRenderer {
         const stageConfig = GAUNTLET_STAGES[stageIdx];
         const bg = sctx.createLinearGradient(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
         bg.addColorStop(0, "hsl(230, 12%, 5%)");
-        bg.addColorStop(0.45, stageIdx === 4 ? "hsl(82, 18%, 8%)" : "hsl(220, 10%, 8%)");
+        bg.addColorStop(0.45, "hsl(220, 10%, 8%)");
         bg.addColorStop(1, "hsl(322, 30%, 9%)");
         sctx.fillStyle = bg;
         sctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
@@ -111,14 +111,13 @@ export class StaticMapRenderer {
         this.staticCacheBuilt = true;
     }
 
-    private drawBackgroundArchitecture(ctx: CanvasRenderingContext2D, stageIdx: number) {
+    private drawBackgroundArchitecture(ctx: CanvasRenderingContext2D, _stageIdx: number) {
         ctx.save();
         ctx.globalAlpha = 0.45;
         ctx.strokeStyle = "hsla(215, 12%, 22%, 0.55)";
         ctx.lineWidth = 2;
-        const offset = (stageIdx * 73) % 180;
         for (let i = 0; i < 8; i++) {
-            const x = 80 + i * 130 - offset;
+            const x = 80 + i * 130 - 73;
             ctx.beginPath();
             ctx.moveTo(x, 80);
             ctx.lineTo(x + 70, 220);
@@ -129,12 +128,12 @@ export class StaticMapRenderer {
         }
 
         ctx.globalAlpha = 0.36;
-        ctx.fillStyle = stageIdx === 2 ? "hsla(338, 76%, 25%, 0.18)" : "hsla(330, 28%, 25%, 0.22)";
+        ctx.fillStyle = "hsla(330, 28%, 25%, 0.22)";
         for (let i = 0; i < 5; i++) {
-            const cx = 160 + ((i * 221 + stageIdx * 89) % 720);
-            const cy = 150 + ((i * 157 + stageIdx * 51) % 650);
+            const cx = 160 + ((i * 221 + 89) % 720);
+            const cy = 150 + ((i * 157 + 51) % 650);
             ctx.beginPath();
-            ctx.ellipse(cx, cy, 46 + i * 9, 18 + (i % 3) * 10, (i + stageIdx) * 0.7, 0, Math.PI * 2);
+            ctx.ellipse(cx, cy, 46 + i * 9, 18 + (i % 3) * 10, i * 0.7, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.restore();
@@ -148,43 +147,16 @@ export class StaticMapRenderer {
         ctx.lineTo(x, y + rad); ctx.quadraticCurveTo(x, y, x + rad, y);
     }
 
-    private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number, stageIdx: number) {
-        if (stageIdx === 1) { 
-            ctx.moveTo(220 - inset, 40 - inset); 
-            ctx.lineTo(780 + inset, 40 - inset);
-            ctx.lineTo(780 + inset, 920 + inset); 
-            ctx.lineTo(220 - inset, 920 + inset); 
-            ctx.closePath();
-        } else { 
-            ctx.moveTo(40 - inset, 40 - inset); 
-            ctx.lineTo(960 + inset, 40 - inset);
-            
-            if (stageIdx === 5) {
-                ctx.lineTo(960 + inset, 900 + inset);
-            } else {
-                ctx.lineTo(960 + inset, 920 + inset);
-            }
-            
-            if (stageIdx === 0 || stageIdx === 6) {
-                ctx.lineTo(680 + inset, 920 + inset);
-                ctx.lineTo(680 + inset, 960 + inset);
-                ctx.lineTo(320 - inset, 960 + inset);
-                ctx.lineTo(320 - inset, 920 + inset);
-            } else if (stageIdx === 3) {
-                ctx.lineTo(740 + inset, 920 + inset);
-                ctx.lineTo(740 + inset, 960 + inset);
-                ctx.lineTo(260 - inset, 960 + inset);
-                ctx.lineTo(260 - inset, 920 + inset);
-            } else if (stageIdx === 4) {
-                ctx.lineTo(660 + inset, 920 + inset);
-                ctx.lineTo(660 + inset, 960 + inset);
-                ctx.lineTo(340 - inset, 960 + inset);
-                ctx.lineTo(340 - inset, 920 + inset);
-            }
-            
-            ctx.lineTo(40 - inset, stageIdx === 5 ? 900 + inset : 920 + inset);
-            ctx.closePath();
-        }
+    private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number, _stageIdx: number) {
+        ctx.moveTo(40 - inset, 40 - inset); 
+        ctx.lineTo(960 + inset, 40 - inset);
+        ctx.lineTo(960 + inset, 920 + inset);
+        ctx.lineTo(680 + inset, 920 + inset);
+        ctx.lineTo(680 + inset, 960 + inset);
+        ctx.lineTo(320 - inset, 960 + inset);
+        ctx.lineTo(320 - inset, 920 + inset);
+        ctx.lineTo(40 - inset, 920 + inset);
+        ctx.closePath();
     }
 
     public renderBackground(): void { this.ctx.drawImage(this.staticCanvas, 0, 0); }
