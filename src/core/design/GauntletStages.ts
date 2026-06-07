@@ -384,7 +384,7 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     playerStart: { x: 120, y: 800 },
     visualShapes: [
         { type: "circle", center: {x: 150, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeams: true },
-        { type: "circle", center: {x: 850, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeems: true },
+        { type: "circle", center: {x: 850, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeams: true },
         { type: "circle", center: {x: 500, y: 800}, radius: 120, colorRole: "arena-stone", infectionSeams: false }
     ],
 

@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/6/2026, 7:43:16 PM
+ [SYSTEM] Generated: 6/6/2026, 7:58:36 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -3873,6 +3873,7 @@ import { motion } from "framer-motion";
 import { DialogueState } from "@/hooks/useGameDialogue";
 import { useSessionStore } from "@/store/useGameStore";
 import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
+import { Software3DRenderer } from "@/core/visuals/Software3DRenderer";
 
 interface DialogueConsoleProps { playerDialogue: DialogueState; bossDialogue: DialogueState; isTouchDevice: boolean; }
 
@@ -3891,28 +3892,31 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
             } else {
                 const stageIdx = useSessionStore.getState().currentStageIndex;
                 const colors = ["hsl(350, 82%, 58%)", "hsl(4, 88%, 54%)", "hsl(338, 76%, 55%)", "hsl(356, 94%, 62%)", "hsl(82, 38%, 44%)", "hsl(15, 82%, 48%)", "hsl(345, 58%, 46%)"];
-                ctx.fillStyle = colors[stageIdx] || colors[0];
-                ctx.fillRect(0, 0, w, h);
-                ctx.strokeStyle = "rgba(0, 0, 0, 0.8)"; ctx.fillStyle = "rgba(0, 0, 0, 0.8)"; ctx.lineWidth = 3;
+                const baseColor = colors[stageIdx] || colors[0];
                 
-                if (stageIdx === 0) { // Prime Wound: Diagonal fault line
-                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w, h); ctx.stroke();
-                } else if (stageIdx === 1) { // Scarlet Lock: Prison bars
-                    ctx.fillRect(8, 0, 6, h); ctx.fillRect(17, 0, 6, h); ctx.fillRect(26, 0, 6, h);
-                } else if (stageIdx === 2) { // Carminal Orbit: Concentric circles
-                    ctx.beginPath(); ctx.arc(w/2, h/2, 10, 0, Math.PI*2); ctx.arc(w/2, h/2, 16, 0, Math.PI*2); ctx.stroke();
-                } else if (stageIdx === 3) { // Vermilion Needle: Inward teeth
-                    ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2+10, 14); ctx.lineTo(w/2-10, 14); ctx.closePath(); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(w/2, h); ctx.lineTo(w/2+10, h-14); ctx.lineTo(w/2-10, h-14); ctx.closePath(); ctx.fill();
-                } else if (stageIdx === 4) { // Marrow King: Blisters
-                    ctx.beginPath(); ctx.arc(14, 14, 6 + Math.sin(t*4)*1.5, 0, Math.PI*2); ctx.arc(34, 34, 8 + Math.cos(t*3.5)*2, 0, Math.PI*2); ctx.fill();
-                } else if (stageIdx === 5) { // Rust Cathedral: Block insets
-                    ctx.fillRect(8, 8, 12, 12); ctx.fillRect(28, 24, 12, 12);
-                } else if (stageIdx === 6) { // False Square: Fractures
-                    const split = (t * 8) % 4 === 0;
-                    if (split) { ctx.fillRect(w/2 - 8, 0, 16, h); } 
-                    else { ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.lineWidth = 1.5; ctx.strokeRect(6, 6, w-12, h-12); }
-                }
+                ctx.fillStyle = "hsl(220, 12%, 10%)";
+                ctx.fillRect(0, 0, w, h);
+
+                ctx.save();
+                ctx.fillStyle = baseColor;
+                ctx.translate(w / 2, h / 2);
+                
+                const scale = 1.0 + Math.sin(t * 4) * 0.05;
+                ctx.scale(scale, scale);
+                
+                let boxW = w * 0.7;
+                let boxH = h * 0.7;
+                if (stageIdx === 1) { boxW = w * 0.42; boxH = h * 0.85; }
+                else if (stageIdx === 2) { boxW = w * 0.85; boxH = h * 0.35; }
+                else if (stageIdx === 3) { boxW = w * 0.55; boxH = h * 0.80; }
+                else if (stageIdx === 4) { boxW = w * 0.80; boxH = h * 0.55; }
+                
+                ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
+                ctx.restore();
+
+                const strokeColor = "#ffffff";
+                const patternRadius = Math.min(boxW, boxH) * 0.52;
+                Software3DRenderer.drawSacredGeometry(ctx, stageIdx, w / 2, h / 2, patternRadius, t, strokeColor);
             }
             frameId = requestAnimationFrame(render);
         };
@@ -11616,11 +11620,40 @@ export class StaticMapRenderer {
 
     private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number, stageIdx: number) {
         if (stageIdx === 1) { 
-            ctx.moveTo(220 - inset, 40 - inset); ctx.lineTo(780 + inset, 40 - inset);
-            ctx.lineTo(780 + inset, 920 + inset); ctx.lineTo(220 - inset, 920 + inset); ctx.closePath();
+            ctx.moveTo(220 - inset, 40 - inset); 
+            ctx.lineTo(780 + inset, 40 - inset);
+            ctx.lineTo(780 + inset, 920 + inset); 
+            ctx.lineTo(220 - inset, 920 + inset); 
+            ctx.closePath();
         } else { 
-            ctx.moveTo(40 - inset, 40 - inset); ctx.lineTo(960 + inset, 40 - inset);
-            ctx.lineTo(960 + inset, 920 + inset); ctx.lineTo(40 - inset, 920 + inset); ctx.closePath();
+            ctx.moveTo(40 - inset, 40 - inset); 
+            ctx.lineTo(960 + inset, 40 - inset);
+            
+            if (stageIdx === 5) {
+                ctx.lineTo(960 + inset, 900 + inset);
+            } else {
+                ctx.lineTo(960 + inset, 920 + inset);
+            }
+            
+            if (stageIdx === 0 || stageIdx === 6) {
+                ctx.lineTo(680 + inset, 920 + inset);
+                ctx.lineTo(680 + inset, 960 + inset);
+                ctx.lineTo(320 - inset, 960 + inset);
+                ctx.lineTo(320 - inset, 920 + inset);
+            } else if (stageIdx === 3) {
+                ctx.lineTo(740 + inset, 920 + inset);
+                ctx.lineTo(740 + inset, 960 + inset);
+                ctx.lineTo(260 - inset, 960 + inset);
+                ctx.lineTo(260 - inset, 920 + inset);
+            } else if (stageIdx === 4) {
+                ctx.lineTo(660 + inset, 920 + inset);
+                ctx.lineTo(660 + inset, 960 + inset);
+                ctx.lineTo(340 - inset, 960 + inset);
+                ctx.lineTo(340 - inset, 920 + inset);
+            }
+            
+            ctx.lineTo(40 - inset, stageIdx === 5 ? 900 + inset : 920 + inset);
+            ctx.closePath();
         }
     }
 
@@ -14155,7 +14188,7 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     playerStart: { x: 120, y: 800 },
     visualShapes: [
         { type: "circle", center: {x: 150, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeams: true },
-        { type: "circle", center: {x: 850, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeems: true },
+        { type: "circle", center: {x: 850, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeams: true },
         { type: "circle", center: {x: 500, y: 800}, radius: 120, colorRole: "arena-stone", infectionSeams: false }
     ],
 
@@ -15720,46 +15753,7 @@ export class DashResetGate {
 ────────────────────────────────────────────────────
 import { Boss } from "@/entities/Boss";
 import { Software3DRenderer } from "./Software3DRenderer";
-import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
 import { useSessionStore } from "@/store/useGameStore";
-
-const getBossGeometry = (stageIdx: number, phase: number) => {
-  const stage = GAUNTLET_STAGES[stageIdx] || GAUNTLET_STAGES[0];
-  const seed = stageIdx * 1.37 + phase * 0.41;
-  const corruption = 0.42 + stageIdx * 0.055 + phase * 0.08;
-
-  if (stage.midBossId === "scarlet-lock") {
-    return Software3DRenderer.getPrismGeometry("boss-scarlet-lock", [
-      { x: -0.42, y: -0.5 }, { x: 0.42, y: -0.5 }, { x: 0.5, y: -0.08 },
-      { x: 0.30, y: 0.5 }, { x: -0.30, y: 0.5 }, { x: -0.5, y: -0.08 }
-    ], 0.68);
-  }
-  if (stage.midBossId === "carminal-orbit") {
-    return Software3DRenderer.getRadialGeometry("boss-carminal-orbit", 8, 0.72 - phase * 0.05, Math.PI / 8, 0.7);
-  }
-  if (stage.midBossId === "vermilion-needle") {
-    return Software3DRenderer.getPrismGeometry("boss-vermilion-needle", [
-      { x: 0, y: -0.62 }, { x: 0.46, y: -0.16 }, { x: 0.18, y: 0.04 },
-      { x: 0.36, y: 0.54 }, { x: 0, y: 0.36 }, { x: -0.36, y: 0.54 },
-      { x: -0.18, y: 0.04 }, { x: -0.46, y: -0.16 }
-    ], 0.62);
-  }
-  if (stage.midBossId === "marrow-king") {
-    return Software3DRenderer.getRadialGeometry("boss-marrow-king", 10, 0.82, seed, 0.86);
-  }
-  if (stage.midBossId === "rust-cathedral") {
-    return Software3DRenderer.getPrismGeometry("boss-rust-cathedral", [
-      { x: -0.5, y: -0.44 }, { x: -0.12, y: -0.58 }, { x: 0.12, y: -0.58 },
-      { x: 0.5, y: -0.44 }, { x: 0.42, y: 0.5 }, { x: 0.08, y: 0.34 },
-      { x: -0.08, y: 0.34 }, { x: -0.42, y: 0.5 }
-    ], 0.82);
-  }
-  if (stage.midBossId === "false-square") {
-    return Software3DRenderer.getCorruptedBoxGeometry("boss-false-square", 0.95, performance.now() * 0.0006, 2);
-  }
-
-  return Software3DRenderer.getCorruptedBoxGeometry(stage.midBossId, corruption, seed, phase);
-};
 
 const getBossColor = (stageIdx: number, activeState: string, flashing: boolean): string => {
   if (flashing) return "hsl(0, 0%, 100%)";
@@ -15782,32 +15776,35 @@ export class BossVisuals {
 
     const activeState = boss.activeStateName;
     const stageIdx = useSessionStore.getState().currentStageIndex;
-    const stage = GAUNTLET_STAGES[stageIdx] || GAUNTLET_STAGES[0];
 
     ctx.save();
 
     const baseColor = getBossColor(stageIdx, activeState, boss.health.isFlashing());
-
     const feetY = drawY + boss.size.height / 2;
 
     ctx.translate(drawX, feetY);
     ctx.rotate(boss.rotation);
 
-    const yaw = 0.15 * boss.facingDirection + (boss.velocity.x / boss.lungeSpeed) * 0.45;
-    const pitch = 0.08 + (boss.velocity.y / 1200) * 0.25;
+    const nowTime = performance.now();
+    const time = nowTime / 1000;
 
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
     ctx.strokeStyle = activeState === "TELEGRAPH" ? "hsla(45, 100%, 70%, 0.65)" : "hsla(350, 80%, 60%, 0.28)";
     ctx.lineWidth = activeState === "TELEGRAPH" ? 3.5 : 1.4;
     ctx.beginPath();
-    ctx.ellipse(0, -boss.size.height / 2, boss.size.width * (0.74 + boss.currentPhase * 0.08), boss.size.height * 0.72, performance.now() * 0.0015, 0, Math.PI * 2);
+    ctx.ellipse(0, -boss.size.height / 2, boss.size.width * (0.74 + boss.currentPhase * 0.08), boss.size.height * 0.72, time * 1.5, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
 
+    const geometry = Software3DRenderer.getTransformedBossGeometry(stageIdx, boss.currentPhase, time);
+
+    const yaw = 0.15 * boss.facingDirection + (boss.velocity.x / boss.lungeSpeed) * 0.45;
+    const pitch = 0.08 + (boss.velocity.y / 1200) * 0.25;
+
     Software3DRenderer.drawGeometry(
       ctx,
-      getBossGeometry(stageIdx, boss.currentPhase),
+      geometry,
       0,
       0,
       boss.size.width,
@@ -15819,27 +15816,16 @@ export class BossVisuals {
       0,
       baseColor,
       1.0,
-      "feet"
+      "feet",
+      stageIdx
     );
 
     ctx.save();
     const localY = -boss.size.height / 2;
     ctx.globalAlpha = boss.health.isFlashing() ? 0.25 : 0.9;
     ctx.fillStyle = "rgba(4, 5, 8, 0.82)";
-    if (stage.midBossId === "carminal-orbit") {
-      ctx.beginPath();
-      ctx.arc(0, localY, 8, 0, Math.PI * 2);
-      ctx.arc(0, localY, 15, 0, Math.PI * 2);
-      ctx.fill("evenodd");
-    } else if (stage.midBossId === "false-square") {
-      ctx.fillRect(-17, localY - 12, 10, 24);
-      ctx.fillRect(7, localY - 12, 10, 24);
-      ctx.fillStyle = "rgba(255,255,255,0.72)";
-      ctx.fillRect(-3, localY - 3, 6, 6);
-    } else {
-      ctx.fillRect(boss.facingDirection * 7 - 3, localY - 7, 6, 5);
-      ctx.fillRect(-boss.facingDirection * 8 - 2, localY - 5, 4, 4);
-    }
+    ctx.fillRect(boss.facingDirection * 7 - 3, localY - 7, 6, 5);
+    ctx.fillRect(-boss.facingDirection * 8 - 2, localY - 5, 4, 4);
     ctx.restore();
 
     ctx.restore();
@@ -16390,11 +16376,268 @@ export class Software3DRenderer {
         return geom;
     }
 
+    public static getTransformedBossGeometry(stageIdx: number, _phase: number, time: number): Geometry {
+        const baseBox = [
+            { x: -0.5, y: -0.5, z: -0.5 }, { x: 0.5, y: -0.5, z: -0.5 },
+            { x: 0.5, y: 0.5, z: -0.5 }, { x: -0.5, y: 0.5, z: -0.5 },
+            { x: -0.5, y: -0.5, z: 0.5 }, { x: 0.5, y: -0.5, z: 0.5 },
+            { x: 0.5, y: 0.5, z: 0.5 }, { x: -0.5, y: 0.5, z: 0.5 },
+        ];
+
+        let w = 1.0;
+        let h = 1.0;
+        let d = 1.0;
+
+        if (stageIdx === 0) {
+            w = 1.0; h = 1.0; d = 0.9;
+        } else if (stageIdx === 1) {
+            w = 0.58; h = 1.5; d = 0.5;
+        } else if (stageIdx === 2) {
+            w = 1.33; h = 0.38; d = 1.2;
+        } else if (stageIdx === 3) {
+            w = 0.75; h = 1.25; d = 0.6;
+        } else if (stageIdx === 4) {
+            w = 1.25; h = 0.75; d = 1.5;
+        } else if (stageIdx === 5) {
+            w = 1.33; h = 1.33; d = 1.4;
+        } else if (stageIdx === 6) {
+            const isGlitched = Math.sin(time * 12) > 0.7;
+            w = isGlitched ? 1.4 : 1.0;
+            h = isGlitched ? 0.7 : 1.0;
+            d = 1.0;
+        }
+
+        const vertices = baseBox.map((v, idx) => {
+            let x = v.x * w;
+            let y = v.y * h;
+            let z = v.z * d;
+
+            if (stageIdx === 0) {
+                const offset = Math.sin(time * 8 + y * 2) * 0.12 * Math.sign(y);
+                x += offset;
+            } else if (stageIdx === 1) {
+                const scaleY = 1.0 + 0.15 * Math.sin(time * 12);
+                y *= scaleY;
+            } else if (stageIdx === 2) {
+                const angle = y * 0.5 * Math.sin(time * 6);
+                const cosA = Math.cos(angle);
+                const sinA = Math.sin(angle);
+                const rx = x * cosA - z * sinA;
+                const rz = x * sinA + z * cosA;
+                x = rx;
+                z = rz;
+            } else if (stageIdx === 3) {
+                const expansion = 1.0 + 0.18 * Math.pow(Math.abs(Math.sin(time * 18 + idx)), 4);
+                x *= expansion;
+                y *= expansion;
+                z *= expansion;
+            } else if (stageIdx === 4) {
+                const theta = Math.atan2(z, x);
+                const r = Math.sqrt(x * x + z * z);
+                const wave = 1.0 + 0.14 * Math.sin(theta * 4 + time * 4);
+                x = Math.cos(theta) * r * wave;
+                z = Math.sin(theta) * r * wave;
+                y += Math.sin(time * 3 + x * 2) * 0.08;
+            } else if (stageIdx === 5) {
+                const step = Math.floor(time * 2.25) % 2 === 0 ? 0.95 : 1.05;
+                x *= step;
+                y *= step;
+                z *= step;
+            } else if (stageIdx === 6) {
+                const glitch = Math.sin(time * 24) > 0.8;
+                if (glitch) {
+                    x += Math.sin(y * 10) * 0.15;
+                    y += Math.cos(x * 10) * 0.1;
+                }
+            }
+
+            return { x, y, z };
+        });
+
+        return {
+            vertices,
+            faces: Software3DRenderer.BOX_GEOMETRY.faces
+        };
+    }
+
+    public static drawSacredGeometry(
+        ctx: CanvasRenderingContext2D,
+        stageIdx: number,
+        cx: number,
+        cy: number,
+        radius: number,
+        time: number,
+        glowColor: string
+    ) {
+        ctx.save();
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = Math.max(1.5, radius * 0.06);
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = radius * 0.45;
+
+        if (stageIdx === 0) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            
+            const offset = Math.sin(time * 6) * (radius * 0.1);
+            ctx.beginPath();
+            ctx.moveTo(-radius + offset, -radius);
+            ctx.lineTo(radius + offset, radius);
+            ctx.stroke();
+
+            const squares = 3;
+            for (let i = 1; i <= squares; i++) {
+                ctx.save();
+                const r = radius * (i / squares);
+                ctx.rotate(time * 0.8 * (i % 2 === 0 ? 1 : -1));
+                ctx.strokeRect(-r, -r, r * 2, r * 2);
+                ctx.restore();
+            }
+            ctx.restore();
+        } else if (stageIdx === 1) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            const gridCount = 3;
+            const wave = Math.sin(time * 4) * 0.5 + 0.5;
+            for (let i = 0; i < gridCount; i++) {
+                const offset = (i - 1) * (radius * 0.45) * (0.8 + wave * 0.4);
+                ctx.beginPath();
+                ctx.moveTo(offset, -radius);
+                ctx.lineTo(offset, radius);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(-radius, offset);
+                ctx.lineTo(radius, offset);
+                ctx.stroke();
+            }
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.3 * (1 + wave * 0.2), 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        } else if (stageIdx === 2) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            const orbits = 4;
+            const rot = time * 0.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            for (let i = 1; i <= orbits; i++) {
+                const r = radius * (i / orbits);
+                ctx.beginPath();
+                ctx.arc(0, 0, r, 0, Math.PI * 2);
+                ctx.stroke();
+
+                const nodeAngle = rot + (i * Math.PI / 2);
+                const nx = Math.cos(nodeAngle) * r;
+                const ny = Math.sin(nodeAngle) * r;
+                ctx.beginPath();
+                ctx.arc(nx, ny, Math.max(2.5, radius * 0.08), 0, Math.PI * 2);
+                ctx.fillStyle = glowColor;
+                ctx.fill();
+                ctx.stroke();
+            }
+            ctx.restore();
+        } else if (stageIdx === 3) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            const spikes = 12;
+            const wave = Math.sin(time * 10) * 0.15;
+            ctx.beginPath();
+            for (let i = 0; i < spikes * 2; i++) {
+                const theta = (i * Math.PI) / spikes;
+                const r = radius * (i % 2 === 0 ? 0.9 : 0.4 - wave);
+                const px = Math.cos(theta) * r;
+                const py = Math.sin(theta) * r;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+        } else if (stageIdx === 4) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.beginPath();
+            let theta = time * 1.5;
+            const goldenAngle = 137.5 * (Math.PI / 180);
+            for (let i = 0; i < 35; i++) {
+                const r = radius * 0.16 * Math.sqrt(i);
+                theta += goldenAngle;
+                const px = Math.cos(theta) * r;
+                const py = Math.sin(theta) * r;
+                
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+                
+                if (i % 5 === 0) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(px, py, Math.max(1.5, radius * 0.05 * (1 + Math.sin(time * 5 + i) * 0.3)), 0, Math.PI * 2);
+                    ctx.fillStyle = glowColor;
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+            ctx.stroke();
+            ctx.restore();
+        } else if (stageIdx === 5) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            const slabs = 3;
+            const step = Math.sin(time * 3) * (radius * 0.15);
+            for (let i = 1; i <= slabs; i++) {
+                const r = radius * (i / slabs) - step;
+                if (r > 0) {
+                    ctx.strokeRect(-r, -r, r * 2, r * 2);
+                    ctx.beginPath();
+                    ctx.moveTo(-r, -r); ctx.lineTo(-r + 6, -r + 6);
+                    ctx.moveTo(r, -r); ctx.lineTo(r - 6, -r + 6);
+                    ctx.moveTo(-r, r); ctx.lineTo(-r + 6, r - 6);
+                    ctx.moveTo(r, r); ctx.lineTo(r - 6, r - 6);
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
+        } else if (stageIdx === 6) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            
+            const isGlitched = Math.sin(time * 15) > 0.6;
+            const glitchShearX = isGlitched ? (Math.random() - 0.5) * (radius * 0.4) : 0;
+            const glitchShearY = isGlitched ? (Math.random() - 0.5) * (radius * 0.4) : 0;
+            
+            ctx.translate(glitchShearX, glitchShearY);
+            
+            const frames = 3;
+            for (let i = 1; i <= frames; i++) {
+                const r = radius * (i / frames);
+                ctx.save();
+                if (isGlitched) {
+                    ctx.rotate((Math.random() - 0.5) * 0.2);
+                } else {
+                    ctx.rotate(time * 0.1 * i);
+                }
+                ctx.strokeRect(-r, -r, r * 2, r * 2);
+                ctx.restore();
+            }
+            ctx.restore();
+        }
+        
+        ctx.restore();
+    }
+
     public static drawGeometry(
         ctx: CanvasRenderingContext2D, geometry: Geometry, posX: number, posY: number,
         sizeW: number, sizeH: number, scaleX: number, scaleY: number,
         yaw: number, pitch: number, roll: number, baseHslColor: string,
-        alpha: number = 1.0, pivotY: "center" | "feet" = "center"
+        alpha: number = 1.0, pivotY: "center" | "feet" = "center",
+        bossStageIdx: number = -1
     ) {
         const projected: { x: number; y: number; z: number }[] = [];
         const hslMatch = baseHslColor.match(/hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
@@ -16469,6 +16712,31 @@ export class Software3DRenderer {
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
+
+            if (bossStageIdx >= 0 && face.color === "FRONT") {
+                let sumX = 0, sumY = 0;
+                for (const idx of face.indices) {
+                    sumX += projected[idx].x;
+                    sumY += projected[idx].y;
+                }
+                const fcx = sumX / face.indices.length;
+                const fcy = sumY / face.indices.length;
+                const radius = Math.min(sizeW * scaleX, sizeH * scaleY) * 0.38;
+                
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(projected[firstIdx].x, projected[firstIdx].y);
+                for (let i = 1; i < face.indices.length; i++) {
+                    ctx.lineTo(projected[face.indices[i]].x, projected[face.indices[i]].y);
+                }
+                ctx.closePath();
+                ctx.clip();
+                
+                const time = performance.now() / 1000;
+                const strokeColor = `hsl(${h}, ${s}%, ${Math.min(100, shadedLightness + 35)}%)`;
+                Software3DRenderer.drawSacredGeometry(ctx, bossStageIdx, fcx, fcy, radius, time, strokeColor);
+                ctx.restore();
+            }
         }
         ctx.restore();
     }

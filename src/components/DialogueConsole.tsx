@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { DialogueState } from "@/hooks/useGameDialogue";
 import { useSessionStore } from "@/store/useGameStore";
 import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
+import { Software3DRenderer } from "@/core/visuals/Software3DRenderer";
 
 interface DialogueConsoleProps { playerDialogue: DialogueState; bossDialogue: DialogueState; isTouchDevice: boolean; }
 
@@ -21,28 +22,31 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
             } else {
                 const stageIdx = useSessionStore.getState().currentStageIndex;
                 const colors = ["hsl(350, 82%, 58%)", "hsl(4, 88%, 54%)", "hsl(338, 76%, 55%)", "hsl(356, 94%, 62%)", "hsl(82, 38%, 44%)", "hsl(15, 82%, 48%)", "hsl(345, 58%, 46%)"];
-                ctx.fillStyle = colors[stageIdx] || colors[0];
-                ctx.fillRect(0, 0, w, h);
-                ctx.strokeStyle = "rgba(0, 0, 0, 0.8)"; ctx.fillStyle = "rgba(0, 0, 0, 0.8)"; ctx.lineWidth = 3;
+                const baseColor = colors[stageIdx] || colors[0];
                 
-                if (stageIdx === 0) { // Prime Wound: Diagonal fault line
-                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w, h); ctx.stroke();
-                } else if (stageIdx === 1) { // Scarlet Lock: Prison bars
-                    ctx.fillRect(8, 0, 6, h); ctx.fillRect(17, 0, 6, h); ctx.fillRect(26, 0, 6, h);
-                } else if (stageIdx === 2) { // Carminal Orbit: Concentric circles
-                    ctx.beginPath(); ctx.arc(w/2, h/2, 10, 0, Math.PI*2); ctx.arc(w/2, h/2, 16, 0, Math.PI*2); ctx.stroke();
-                } else if (stageIdx === 3) { // Vermilion Needle: Inward teeth
-                    ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2+10, 14); ctx.lineTo(w/2-10, 14); ctx.closePath(); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(w/2, h); ctx.lineTo(w/2+10, h-14); ctx.lineTo(w/2-10, h-14); ctx.closePath(); ctx.fill();
-                } else if (stageIdx === 4) { // Marrow King: Blisters
-                    ctx.beginPath(); ctx.arc(14, 14, 6 + Math.sin(t*4)*1.5, 0, Math.PI*2); ctx.arc(34, 34, 8 + Math.cos(t*3.5)*2, 0, Math.PI*2); ctx.fill();
-                } else if (stageIdx === 5) { // Rust Cathedral: Block insets
-                    ctx.fillRect(8, 8, 12, 12); ctx.fillRect(28, 24, 12, 12);
-                } else if (stageIdx === 6) { // False Square: Fractures
-                    const split = (t * 8) % 4 === 0;
-                    if (split) { ctx.fillRect(w/2 - 8, 0, 16, h); } 
-                    else { ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.lineWidth = 1.5; ctx.strokeRect(6, 6, w-12, h-12); }
-                }
+                ctx.fillStyle = "hsl(220, 12%, 10%)";
+                ctx.fillRect(0, 0, w, h);
+
+                ctx.save();
+                ctx.fillStyle = baseColor;
+                ctx.translate(w / 2, h / 2);
+                
+                const scale = 1.0 + Math.sin(t * 4) * 0.05;
+                ctx.scale(scale, scale);
+                
+                let boxW = w * 0.7;
+                let boxH = h * 0.7;
+                if (stageIdx === 1) { boxW = w * 0.42; boxH = h * 0.85; }
+                else if (stageIdx === 2) { boxW = w * 0.85; boxH = h * 0.35; }
+                else if (stageIdx === 3) { boxW = w * 0.55; boxH = h * 0.80; }
+                else if (stageIdx === 4) { boxW = w * 0.80; boxH = h * 0.55; }
+                
+                ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
+                ctx.restore();
+
+                const strokeColor = "#ffffff";
+                const patternRadius = Math.min(boxW, boxH) * 0.52;
+                Software3DRenderer.drawSacredGeometry(ctx, stageIdx, w / 2, h / 2, patternRadius, t, strokeColor);
             }
             frameId = requestAnimationFrame(render);
         };
