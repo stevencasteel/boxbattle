@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-Xx9bI0rX.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BRDWc3_c.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -2380,7 +2380,7 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
   const isGameOver = gameResult !== "PLAYING";
   const activeBHP = isGameOver ? 0 : bossHP;
 
-  const bossWidth = (activeBHP / UNITS.BOSS_MAX_HP) * 100 + "%";
+  const bossWidth = Math.max(0, Math.min(100, (activeBHP / UNITS.BOSS_MAX_HP) * 100)) + "%";
 
   if (isTouchDevice) {
     return (
@@ -8922,7 +8922,7 @@ export class StaticMapRenderer {
 `,"src/core/Units.ts":`export const UNITS = {
   // Core Gameplay Balancing Parameters
   PLAYER_MAX_HP: 5,
-  BOSS_MAX_HP: 38,
+  BOSS_MAX_HP: 80,
   BOSS_PHASE_2_HP_PCT: 0.70,
   BOSS_PHASE_3_HP_PCT: 0.40,
 
@@ -12252,7 +12252,19 @@ export class DissolvePlatform {
     } else if (this.state === "respawning") {
       this.timer -= dt;
       if (this.timer <= 0) {
-        this.state = "idle";
+        const pW = player.size.width / 2;
+        const pH = player.size.height / 2;
+        const isOverlapping =
+          player.position.x + pW > this.rect.x &&
+          player.position.x - pW < this.rect.x + this.rect.width &&
+          player.position.y + pH > this.rect.y &&
+          player.position.y - pH < this.rect.y + this.rect.height;
+
+        if (isOverlapping) {
+          this.timer = 0.05; // Delay solidification until player clears the area
+        } else {
+          this.state = "idle";
+        }
       }
     }
   }
@@ -12967,7 +12979,7 @@ export class Software3DRenderer {
         return geom;
     }
 
-    public static getTransformedBossGeometry(_phase: number, time: number): Geometry {
+    public static getTransformedBossGeometry(_phase: number, _time: number): Geometry {
         const baseBox = [
             { x: -0.5, y: -0.5, z: -0.5 }, { x: 0.5, y: -0.5, z: -0.5 },
             { x: 0.5, y: 0.5, z: -0.5 }, { x: -0.5, y: 0.5, z: -0.5 },
@@ -12975,20 +12987,7 @@ export class Software3DRenderer {
             { x: 0.5, y: 0.5, z: 0.5 }, { x: -0.5, y: 0.5, z: 0.5 },
         ];
 
-        const w = 1.0;
-        const h = 1.0;
-        const d = 0.9;
-
-        const vertices = baseBox.map((v) => {
-            let x = v.x * w;
-            const y = v.y * h;
-            const z = v.z * d;
-
-            const offset = Math.sin(time * 8 + y * 2) * 0.12 * Math.sign(y);
-            x += offset;
-
-            return { x, y, z };
-        });
+        const vertices = baseBox.map((v) => ({ x: v.x, y: v.y, z: v.z * 0.9 }));
 
         return {
             vertices,
