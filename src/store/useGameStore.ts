@@ -4,7 +4,7 @@ import { UNITS } from "@/core/Units";
 export type ScreenState =
   | "TITLE"
   | "SAVE_SELECT"
-  | "OPTIONS"
+  | "SETTINGS"
   | "SOUND"
   | "CONTROLS"
   | "CREDITS"
@@ -15,7 +15,7 @@ export type GameResultState = "PLAYING" | "GAMEOVER" | "VICTORY";
 export const SCREEN_DEPTHS: Record<ScreenState, number> = {
   TITLE: 0,
   SAVE_SELECT: 1,
-  OPTIONS: 1,
+  SETTINGS: 1,
   CREDITS: 1,
   SOURCE_VIEW: 1,
   SOUND: 2,

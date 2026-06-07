@@ -131,7 +131,7 @@ export function SaveSelectScreen({
 
       <div
         className="flex-col"
-        style={{ gap: "16px", width: "100%", maxWidth: "64vmin", marginTop: "16px", paddingBottom: "10px" }}
+        style={{ gap: "16px", width: "100%", maxWidth: "580px", marginTop: "16px", paddingBottom: "10px" }}
       >
         <div className="flex-row" style={{ gap: "16px", justifyContent: "center", width: "100%" }}>
           <MenuButton

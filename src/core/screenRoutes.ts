@@ -35,7 +35,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         reloadSaveSlots();
         navTo("SAVE_SELECT");
       } else if (menuIndex === 1) {
-        navTo("OPTIONS");
+        navTo("SETTINGS");
       } else if (menuIndex === 2) {
         navTo("CREDITS");
       } else if (menuIndex === 3) {
@@ -86,7 +86,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       navTo("TITLE");
     },
   },
-  OPTIONS: {
+  SETTINGS: {
     getMaxIndex: () => 2,
     onSelect: ({ menuIndex, navTo, setMenuIndex }) => {
       if (menuIndex === 0) {
@@ -109,7 +109,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       if (menuIndex === 3) {
         resetSettings?.();
       } else if (menuIndex === 4) {
-        navTo("OPTIONS");
+        navTo("SETTINGS");
       }
     },
     onHorizontal: (direction, { menuIndex, audio, handleVolumeChange }) => {
@@ -126,7 +126,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       }
     },
     onBack: ({ navTo }) => {
-      navTo("OPTIONS");
+      navTo("SETTINGS");
     },
   },
   CONTROLS: {
@@ -137,7 +137,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
     onSelect: ({ menuIndex, navTo, setMenuIndex, setRebindTarget, reloadSaveSlots }) => {
       const isTouch = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
       if (isTouch) {
-        navTo("OPTIONS");
+        navTo("SETTINGS");
         setMenuIndex(1);
         return;
       }
@@ -154,7 +154,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
         soundSynth.playHitConfirm();
         reloadSaveSlots();
       } else if (menuIndex === 10) {
-        navTo("OPTIONS");
+        navTo("SETTINGS");
         setMenuIndex(1);
       } else {
         const actionIndex = menuIndex - 3;
@@ -164,7 +164,7 @@ export const screenConfigs: Record<string, ScreenConfig> = {
       }
     },
     onBack: ({ navTo }) => {
-      navTo("OPTIONS");
+      navTo("SETTINGS");
     },
   },
   CREDITS: {

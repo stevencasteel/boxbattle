@@ -22,10 +22,8 @@ export function TitleScreen({
 }: TitleScreenProps) {
   return (
     <MenuContainer hasGridOverlay>
-      <div className="title-screen-header">
-        <div className="system-tag">WELCOME TO THE GAUNTLET</div>
-        <MenuHeader title="BOX BATTLE" subtitle="RETRO ACTION GAME" />
-      </div>
+      <div className="system-tag">WELCOME TO THE GAUNTLET</div>
+      <MenuHeader title="BOX BATTLE" subtitle="RETRO ACTION GAME" />
 
       <div className="title-screen-center">
         <div className="btn-container-overhauled">
@@ -45,7 +43,7 @@ export function TitleScreen({
             playHoverTick={playHoverTick}
             onClick={onSettings}
             leftIcon={<Sliders size={18} strokeWidth={2} />}
-            mainLabel="OPTIONS"
+            mainLabel="SETTINGS"
             subLabel="ADJUST SOUNDS AND CONTROLS"
           />
 
@@ -68,15 +66,6 @@ export function TitleScreen({
             mainLabel="SOURCE CODE"
             subLabel="BROWSE CABINET ENGINE FILE TREE"
           />
-        </div>
-      </div>
-
-      <div className="title-screen-footer">
-        <div className="footer-deco-line" />
-        <div className="footer-status-bar">
-          <span>CONTROL METHOD: KEYBOARD</span>
-          <span className="footer-center-prompt">NAVIGATE: ARROWS / WASD • SELECT: ENTER / SPACE</span>
-          <span>SAVES: 3 AVAILABLE</span>
         </div>
       </div>
     </MenuContainer>

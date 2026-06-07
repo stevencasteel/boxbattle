@@ -15,9 +15,9 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
         className="credits-block neo-pressed flex-col"
         style={{
           width: "100%",
-          maxWidth: "68vmin",
-          padding: "3.2vmin",
-          borderRadius: "2vmin",
+          maxWidth: "580px",
+          padding: "24px",
+          borderRadius: "12px",
           boxSizing: "border-box",
         }}
       >
@@ -25,13 +25,13 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
           style={{
             textAlign: "center",
             borderBottom: "1px solid rgba(255,255,255,0.03)",
-            paddingBottom: "1.2vmin",
-            marginBottom: "1.2vmin",
+            paddingBottom: "12px",
+            marginBottom: "12px",
           }}
         >
           <p
             style={{
-              fontSize: "1.6vmin",
+              fontSize: "15px",
               fontWeight: "bold",
               color: "#22c55e",
               textTransform: "uppercase",
@@ -44,9 +44,9 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
           </p>
           <p
             style={{
-              fontSize: "1.2vmin",
+              fontSize: "12px",
               color: "#4a5568",
-              margin: "0.6vmin 0 0",
+              margin: "6px 0 0",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
               fontWeight: "bold",
@@ -61,9 +61,9 @@ export function CreditsScreen({ onBack }: CreditsScreenProps) {
             rel="noopener noreferrer"
             style={{
               display: "inline-block",
-              fontSize: "1.1vmin",
+              fontSize: "11px",
               color: "#4a5568",
-              margin: "0.6vmin 0 0",
+              margin: "6px 0 0",
               letterSpacing: "0.15em",
               textDecoration: "none",
               transition: "color 0.15s ease",

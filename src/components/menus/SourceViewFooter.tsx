@@ -14,8 +14,8 @@ function GithubIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="18"
-      height="18"
+      width="16"
+      height="16"
       stroke="currentColor"
       strokeWidth="2.5"
       fill="none"
@@ -90,7 +90,7 @@ export function SourceViewFooter({
               justifyContent: "center",
             }}
           >
-            <Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+            <Download size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           </button>
         </div>
 
@@ -108,7 +108,7 @@ export function SourceViewFooter({
               justifyContent: "center",
             }}
           >
-            <ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+            <ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />
           </button>
         </div>
       </div>
@@ -123,42 +123,43 @@ export function SourceViewFooter({
         flexDirection: "row",
         gap: "16px",
         width: "100%",
-        height: "8.5vmin",
+        height: "50px",
         boxSizing: "border-box",
         marginTop: "12px",
         flexShrink: 0,
       }}
     >
       <MenuButton
+        variant="led"
         isFocused={activeIndex === visibleNodesLength}
         onFocused={() => setActiveIndex(visibleNodesLength)}
         onClick={() => window.open("https://github.com/stevencasteel/BOX-BATTLE", "_blank")}
         leftIcon={<GithubIcon />}
         mainLabel="GITHUB"
-        subLabel="OPEN SOURCE"
         showArrow={false}
-        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box", justifyContent: "center" }}
       />
 
       <MenuButton
+        variant="led"
         isFocused={activeIndex === visibleNodesLength + 1}
         onFocused={() => setActiveIndex(visibleNodesLength + 1)}
         onClick={handleDownload}
-        leftIcon={<Download size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
-        mainLabel="DOWNLOAD .TXT"
-        subLabel="SINGLE FILE FOR LLM CHAT"
+        leftIcon={<Download size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+        mainLabel="DOWNLOAD CODE"
         showArrow={false}
-        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box", justifyContent: "center" }}
       />
 
       <MenuButton
+        variant="led"
         isFocused={activeIndex === visibleNodesLength + 2}
         onFocused={() => setActiveIndex(visibleNodesLength + 2)}
         onClick={onBack}
-        leftIcon={<ArrowLeft size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
-        mainLabel="BACK"
+        leftIcon={<ArrowLeft size={16} strokeWidth={2.5} style={{ flexShrink: 0 }} />}
+        mainLabel="BACK TO MENU"
         showArrow={false}
-        style={{ flex: 1, height: "100%", boxSizing: "border-box" }}
+        style={{ flex: 1, height: "100%", boxSizing: "border-box", justifyContent: "center" }}
       />
     </div>
   );

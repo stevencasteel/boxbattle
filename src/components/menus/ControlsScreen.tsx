@@ -156,7 +156,7 @@ export function ControlsScreen({
         </div>
       ) : (
         <>
-          <div className="flex-row" style={{ gap: "16px", width: "100%", maxWidth: "80vmin", marginTop: "auto", marginBottom: "auto" }}>
+          <div className="flex-row" style={{ gap: "16px", width: "100%", maxWidth: "580px", marginTop: "auto", marginBottom: "auto" }}>
             <MenuButton
               variant="led"
               isFocused={menuIndex === 0}
@@ -308,7 +308,7 @@ export function ControlsScreen({
         onFocused={() => setMenuIndex(backBtnIndex)}
         playHoverTick={playHoverTick}
         onBack={onBack}
-        style={{ maxWidth: "80vmin", width: "100%" }}
+        style={{ maxWidth: "580px", width: "100%" }}
       />
     </MenuContainer>
   );

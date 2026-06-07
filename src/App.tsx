@@ -42,7 +42,7 @@ export default function App() {
     const handleResize = () => {
       const isSource = useSessionStore.getState().currentScreen === "SOURCE_VIEW";
       const cabinetWidth = isSource ? 1100 : 740;
-      const cabinetHeight = isSource ? 800 : 862;
+      const cabinetHeight = 862;
       const padding = 32; // Total padding around the cabinet
       
       const availableWidth = window.innerWidth - padding;
@@ -211,7 +211,7 @@ export default function App() {
           transform: `scale(${scale})`,
           transformOrigin: "center center",
           width: isFullHeightScreen ? "1100px" : "740px",
-          height: isFullHeightScreen ? "800px" : "862px",
+          height: "862px",
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
@@ -248,7 +248,7 @@ export default function App() {
                       navTo("SAVE_SELECT");
                     }}
                     onSettings={() => {
-                      navTo("OPTIONS");
+                      navTo("SETTINGS");
                     }}
                     onCredits={() => {
                       navTo("CREDITS");
@@ -280,7 +280,7 @@ export default function App() {
                   />
                 )}
 
-                {currentScreen === "OPTIONS" && (
+                {currentScreen === "SETTINGS" && (
                   <SettingsScreen
                     menuIndex={menuIndex}
                     onAudio={() => {
@@ -305,7 +305,7 @@ export default function App() {
                     handleVolumeChange={handleVolumeChange}
                     resetSettings={resetSettings}
                     onBack={() => {
-                      navTo("OPTIONS");
+                      navTo("SETTINGS");
                     }}
                     playHoverTick={playHoverTick}
                     setMenuIndex={setMenuIndex}
@@ -317,7 +317,7 @@ export default function App() {
                     menuIndex={menuIndex}
                     rebindTarget={rebindTarget}
                     onBack={() => {
-                      navTo("OPTIONS");
+                      navTo("SETTINGS");
                       setMenuIndex(1);
                     }}
                     playHoverTick={playHoverTick}
