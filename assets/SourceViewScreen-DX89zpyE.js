@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BRDWc3_c.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CCUD9DrL.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6231,9 +6231,12 @@ export class Engine {
   }
 
   private cachePreIntegrationPositions() {
+    this.player.previousRotation = this.player.rotation;
     copyVec(this.player.previousPosition, this.player.position);
+    this.boss.previousRotation = this.boss.rotation;
     copyVec(this.boss.previousPosition, this.boss.position);
     for (const minion of this.world.minions) {
+      (minion as BaseEntity).previousRotation = (minion as BaseEntity).rotation;
       copyVec((minion as BaseEntity).previousPosition, minion.position);
     }
     for (const proj of this.pool.getActive()) {
@@ -7168,6 +7171,7 @@ export interface ISpringVisuals {
   rotation: number;
   targetRotation: number;
   rotationVelocity: number;
+  previousRotation: number;
   squashPivot: "center" | "feet";
 }
 
@@ -7398,53 +7402,34 @@ const colorCache = new Map<string, { h: number; s: number; l: number } | null>()
 const lerpCache = new Map<string, string>();
 
 function parseHsl(str: string): { h: number; s: number; l: number } | null {
-  if (colorCache.has(str)) {
-    return colorCache.get(str)!;
-  }
-  const regex = /hsl\\(\\s*([\\d.]+)\\s*,\\s*([\\d.]+)%\\s*,\\s*([\\d.]+)%\\s*\\)/;
-  const match = str.match(regex);
-  if (!match) {
-    colorCache.set(str, null);
-    return null;
-  }
-  const result = {
-    h: parseFloat(match[1]),
-    s: parseFloat(match[2]),
-    l: parseFloat(match[3]),
-  };
+  if (colorCache.has(str)) return colorCache.get(str)!;
+  const match = str.match(/hsl\\(\\s*([\\d.]+)\\s*,\\s*([\\d.]+)%\\s*,\\s*([\\d.]+)%\\s*\\)/);
+  if (!match) { colorCache.set(str, null); return null; }
+  const result = { h: parseFloat(match[1]), s: parseFloat(match[2]), l: parseFloat(match[3]) };
   colorCache.set(str, result);
   return result;
 }
 
 function lerpHsl(startStr: string, endStr: string, pct: number): string {
   if (!startStr || !endStr) return startStr;
-
   const step = Math.round(pct * 20);
   const cacheKey = \`\${startStr}_\${endStr}_\${step}\`;
-
   const cached = lerpCache.get(cacheKey);
   if (cached) return cached;
-
-  const c1 = parseHsl(startStr);
-  const c2 = parseHsl(endStr);
+  const c1 = parseHsl(startStr); const c2 = parseHsl(endStr);
   if (!c1 || !c2) return startStr;
-
   const factor = 1 - step / 20;
   const h = c1.h + (c2.h - c1.h) * factor;
   const s = c1.s + (c2.s - c1.s) * factor;
   const l = c1.l + (c2.l - c1.l) * factor;
-
   const result = \`hsl(\${h}, \${s}%, \${l}%)\`;
-  lerpCache.set(cacheKey, result);
-  colorCache.set(result, { h, s, l });
+  lerpCache.set(cacheKey, result); colorCache.set(result, { h, s, l });
   return result;
 }
 
 function getHslaColor(colorStr: string, alpha: number): string {
   const parsed = parseHsl(colorStr);
-  if (parsed) {
-    return \`hsla(\${parsed.h}, \${parsed.s}%, \${parsed.l}%, \${alpha})\`;
-  }
+  if (parsed) return \`hsla(\${parsed.h}, \${parsed.s}%, \${parsed.l}%, \${alpha})\`;
   return colorStr;
 }
 
@@ -7455,7 +7440,7 @@ export class ParticleRenderer {
     this.ctx = ctx;
   }
 
-  public renderParticles(particles: readonly Particle[]): void {
+  public renderParticles(particles: readonly Particle[], alpha: number = 0): void {
     const ctx = this.ctx;
     const len = particles.length;
     if (len === 0) return;
@@ -7466,6 +7451,7 @@ export class ParticleRenderer {
     const dustBuckets = new Map<string, Particle[]>();
     const lines: Particle[] = [];
     const rings: Particle[] = [];
+    const timeStep = 1 / 60; // Base engine fixed tick rate
 
     for (let i = 0; i < len; i++) {
       const p = particles[i];
@@ -7475,17 +7461,11 @@ export class ParticleRenderer {
         const sparkColor = p.startColor && p.endColor ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
         const colorKey = p.startColor && p.endColor ? sparkColor : \`\${p.color}_\${Math.round(pct * 20)}\`;
         let bucket = sparkBuckets.get(colorKey);
-        if (!bucket) {
-          bucket = [];
-          sparkBuckets.set(colorKey, bucket);
-        }
+        if (!bucket) { bucket = []; sparkBuckets.set(colorKey, bucket); }
         bucket.push(p);
       } else if (p.shape === "dust") {
         let bucket = dustBuckets.get(p.color);
-        if (!bucket) {
-          bucket = [];
-          dustBuckets.set(p.color, bucket);
-        }
+        if (!bucket) { bucket = []; dustBuckets.set(p.color, bucket); }
         bucket.push(p);
       } else if (p.shape === "line") {
         lines.push(p);
@@ -7502,8 +7482,10 @@ export class ParticleRenderer {
       ctx.globalAlpha = 1.0;
       for (let j = 0; j < bucket.length; j++) {
         const sp = bucket[j];
+        const renderX = sp.x + (sp.vx * alpha * timeStep);
+        const renderY = sp.y + (sp.vy * alpha * timeStep);
         ctx.beginPath();
-        ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+        ctx.arc(renderX, renderY, sp.size, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -7514,7 +7496,9 @@ export class ParticleRenderer {
         const dp = bucket[j];
         const pct = dp.life / dp.maxLife;
         ctx.globalAlpha = pct;
-        ctx.fillRect(dp.x - dp.size / 2, dp.y - dp.size / 2, dp.size, dp.size * 0.7);
+        const renderX = dp.x + (dp.vx * alpha * timeStep);
+        const renderY = dp.y + (dp.vy * alpha * timeStep);
+        ctx.fillRect(renderX - dp.size / 2, renderY - dp.size / 2, dp.size, dp.size * 0.7);
       }
     }
 
@@ -7522,16 +7506,16 @@ export class ParticleRenderer {
       const p = lines[i];
       const pct = p.life / p.maxLife;
       const speed = TrigLUT.fastSqrt(p.vx * p.vx + p.vy * p.vy);
-      let ux = 1;
-      let uy = 0;
-      if (speed > 0) {
-        ux = p.vx / speed;
-        uy = p.vy / speed;
-      }
-      const x1 = p.x - ux * p.size * 8;
-      const y1 = p.y - uy * p.size * 8;
-      const x2 = p.x + ux * p.size * 6;
-      const y2 = p.y + uy * p.size * 6;
+      let ux = 1; let uy = 0;
+      if (speed > 0) { ux = p.vx / speed; uy = p.vy / speed; }
+      
+      const renderX = p.x + (p.vx * alpha * timeStep);
+      const renderY = p.y + (p.vy * alpha * timeStep);
+      
+      const x1 = renderX - ux * p.size * 8;
+      const y1 = renderY - uy * p.size * 8;
+      const x2 = renderX + ux * p.size * 6;
+      const y2 = renderY + uy * p.size * 6;
 
       const lineGrad = ctx.createLinearGradient(x1, y1, x2, y2);
       lineGrad.addColorStop(0.0, getHslaColor(p.color, 0));
@@ -7553,8 +7537,10 @@ export class ParticleRenderer {
       const p = rings[i];
       const pct = p.life / p.maxLife;
       const radius = p.size + (1.0 - pct) * 44;
+      const renderX = p.x + (p.vx * alpha * timeStep);
+      const renderY = p.y + (p.vy * alpha * timeStep);
       ctx.beginPath();
-      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+      ctx.arc(renderX, renderY, radius, 0, Math.PI * 2);
       ctx.strokeStyle = p.color;
       ctx.globalAlpha = pct;
       ctx.lineWidth = 2.5;
@@ -9139,7 +9125,7 @@ export class WorldRenderer {
     const nowTime = performance.now();
 
     this.ctx.save();
-    this.ctx.translate(Camera.offsetX, Camera.offsetY);
+    this.ctx.translate(Math.round(Camera.offsetX), Math.round(Camera.offsetY));
 
     this.staticMap.renderBackground();
     this.staticMap.renderOnewayPlatforms(onewayPlatforms, springPlatforms);
@@ -9286,7 +9272,7 @@ export class WorldRenderer {
       this.ctx.globalAlpha = 0.35;
       this.ctx.translate(-6, 0);
       this.entityRenderer.renderEntities(world, projectilePool, alpha);
-      this.particleRenderer.renderParticles(particles);
+      this.particleRenderer.renderParticles(particles, alpha);
       this.ctx.restore();
 
       // Right offset ghost
@@ -9294,16 +9280,16 @@ export class WorldRenderer {
       this.ctx.globalAlpha = 0.35;
       this.ctx.translate(6, 0);
       this.entityRenderer.renderEntities(world, projectilePool, alpha);
-      this.particleRenderer.renderParticles(particles);
+      this.particleRenderer.renderParticles(particles, alpha);
       this.ctx.restore();
     }
 
     // Main sharp foreground layer rendered normally (zero-latency)
     this.entityRenderer.renderEntities(world, projectilePool, alpha);
-    this.particleRenderer.renderParticles(particles);
+    this.particleRenderer.renderParticles(particles, alpha);
 
     if (bossDeathTimer >= 0 && bossDeathPos) {
-      CinematicDeathRenderer.render(this.ctx, world, bossDeathTimer, bossDeathPos);
+      CinematicDeathRenderer.render(this.ctx, world, bossDeathTimer, bossDeathPos, alpha);
     }
 
     if (isPaused) {
@@ -11049,9 +11035,10 @@ export class CinematicDeathRenderer {
     ctx: CanvasRenderingContext2D,
     world: World,
     bossDeathTimer: number,
-    bossDeathPos: { x: number; y: number }
+    bossDeathPos: { x: number; y: number },
+    alpha: number = 0
   ): void {
-    const t = bossDeathTimer;
+    const t = bossDeathTimer + alpha * (1/60);
     const px = bossDeathPos.x;
     const py = bossDeathPos.y;
 
@@ -12397,7 +12384,7 @@ export class BossVisuals {
     const feetY = drawY + boss.size.height / 2;
 
     ctx.translate(drawX, feetY);
-    ctx.rotate(boss.rotation);
+    ctx.rotate(boss.previousRotation + (boss.rotation - boss.previousRotation) * alphaVal);
 
     const nowTime = performance.now();
     const time = nowTime / 1000;
@@ -12543,7 +12530,7 @@ export class MinionVisuals {
 
         const feetY = drawY + minion.size.height / 2;
         ctx.translate(drawX, feetY);
-        ctx.rotate(minion.rotation);
+        ctx.rotate(minion.previousRotation + (minion.rotation - minion.previousRotation) * alphaVal);
 
         if (minion.isSpawning) {
             ctx.save();
@@ -12887,6 +12874,10 @@ export interface Geometry { vertices: Vector3D[]; faces: Face[]; }
 export class Software3DRenderer {
     private static readonly LIGHT_DIR = { x: 0.577, y: -0.577, z: 0.577 };
     private static geometryCache = new Map<string, Geometry>();
+    
+    // PRE-ALLOCATED STATIC POOLS (Eliminates GC stutter during high entity counts)
+    private static vertexPool: Vector3D[] = Array.from({length: 512}, () => ({x:0, y:0, z:0}));
+    private static facePool: {face: Face, avgZ: number, shadeFactor: number, nz3: number}[] = Array.from({length: 256}, () => ({face: null as unknown as Face, avgZ: 0, shadeFactor: 0, nz3: 0}));
 
     public static readonly BOX_GEOMETRY: Geometry = {
         vertices: [
@@ -12986,13 +12977,8 @@ export class Software3DRenderer {
             { x: -0.5, y: -0.5, z: 0.5 }, { x: 0.5, y: -0.5, z: 0.5 },
             { x: 0.5, y: 0.5, z: 0.5 }, { x: -0.5, y: 0.5, z: 0.5 },
         ];
-
         const vertices = baseBox.map((v) => ({ x: v.x, y: v.y, z: v.z * 0.9 }));
-
-        return {
-            vertices,
-            faces: Software3DRenderer.BOX_GEOMETRY.faces
-        };
+        return { vertices, faces: Software3DRenderer.BOX_GEOMETRY.faces };
     }
 
     public static drawGeometry(
@@ -13002,7 +12988,7 @@ export class Software3DRenderer {
         alpha: number = 1.0, pivotY: "center" | "feet" = "center",
         _bossStageIdx: number = -1
     ) {
-        const projected: { x: number; y: number; z: number }[] = [];
+        const projected = this.vertexPool;
         const hslMatch = baseHslColor.match(/hsl\\(\\s*([\\d.]+)\\s*,\\s*([\\d.]+)%\\s*,\\s*([\\d.]+)%\\s*\\)/);
         const h = hslMatch ? parseFloat(hslMatch[1]) : 142;
         const s = hslMatch ? parseFloat(hslMatch[2]) : 71;
@@ -13029,12 +13015,20 @@ export class Software3DRenderer {
             const x3 = x2 * cosR - y2 * sinR;
             const y3 = x2 * sinR + y2 * cosR;
             
-            projected.push({ x: posX + x3, y: posY + y3, z: z2 });
+            projected[i].x = posX + x3;
+            projected[i].y = posY + y3;
+            projected[i].z = z2;
         }
 
-        const facesWithDepth = geometry.faces.map((face) => {
+        const facesWithDepth = this.facePool;
+        let faceCount = 0;
+
+        for (let i = 0; i < geometry.faces.length; i++) {
+            const face = geometry.faces[i];
             let sumZ = 0;
-            for (const idx of face.indices) sumZ += projected[idx].z;
+            for (let j = 0; j < face.indices.length; j++) {
+                sumZ += projected[face.indices[j]].z;
+            }
             const avgZ = sumZ / face.indices.length;
             const n = face.baseNormal;
             
@@ -13049,15 +13043,23 @@ export class Software3DRenderer {
             
             const dot = nx3 * this.LIGHT_DIR.x + ny3 * this.LIGHT_DIR.y + nz2 * this.LIGHT_DIR.z;
             const shadeFactor = 0.85 + dot * 0.3;
-            return { face, avgZ, shadeFactor, nz3: nz2 };
-        });
+            
+            facesWithDepth[i].face = face;
+            facesWithDepth[i].avgZ = avgZ;
+            facesWithDepth[i].shadeFactor = shadeFactor;
+            facesWithDepth[i].nz3 = nz2;
+            faceCount++;
+        }
 
-        facesWithDepth.sort((a, b) => b.avgZ - a.avgZ);
+        const activeFaces = facesWithDepth.slice(0, faceCount);
+        activeFaces.sort((a, b) => b.avgZ - a.avgZ);
+
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.lineJoin = "round";
 
-        for (const item of facesWithDepth) {
+        for (let i = 0; i < faceCount; i++) {
+            const item = activeFaces[i];
             const face = item.face;
             const shadedLightness = Math.max(10, Math.min(100, l * item.shadeFactor));
             ctx.fillStyle = \`hsl(\${h}, \${s}%, \${shadedLightness}%)\`;
@@ -13068,15 +13070,13 @@ export class Software3DRenderer {
             ctx.beginPath();
             const firstIdx = face.indices[0];
             ctx.moveTo(projected[firstIdx].x, projected[firstIdx].y);
-            for (let i = 1; i < face.indices.length; i++) {
-                const idx = face.indices[i];
+            for (let j = 1; j < face.indices.length; j++) {
+                const idx = face.indices[j];
                 ctx.lineTo(projected[idx].x, projected[idx].y);
             }
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
-
-            
         }
         ctx.restore();
     }
@@ -13105,6 +13105,7 @@ export class BaseEntity implements IEntity, ISpringVisuals {
 
   public rotation = 0;
   public rotationVelocity = 0;
+  public previousRotation = 0;
   public targetRotation = 0;
   public springStiffnessRot = 240;
   public springDampingRot = 16;
@@ -16853,6 +16854,8 @@ export class Projectile extends BaseEntity implements IPoolable {
         customColor: this.customColor,
         projWidth: this.size.width,
         kind: this.kind,
+        posX: this.position.x,
+        posY: this.position.y,
         velX: this.velocity.x,
         velY: this.velocity.y,
       });
@@ -16890,7 +16893,7 @@ import { TrigLUT } from "@/core/TrigLUT";
 import { Software3DRenderer } from "@/core/visuals/Software3DRenderer";
 
 export interface TrailDrawData {
-    drawX: number; drawY: number; oldestX: number; oldestY: number;
+    drawX: number; drawY: number; posX: number; posY: number; oldestX: number; oldestY: number;
     trail: {x: number, y: number}[]; trailHead: number; trailCount: number; trailRingSize: number;
     damage: number; customColor: string | null; projWidth: number; kind?: string;
     velX?: number; velY?: number;
@@ -16913,11 +16916,11 @@ export interface IProjectileStrategy {
     drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void;
 }
 
-function drawTrailPath(ctx: CanvasRenderingContext2D, startX: number, startY: number, trail: {x: number, y: number}[], trailHead: number, trailCount: number, trailRingSize: number) {
+function drawTrailPath(ctx: CanvasRenderingContext2D, startX: number, startY: number, trail: {x: number, y: number}[], trailHead: number, trailCount: number, trailRingSize: number, offsetX: number = 0, offsetY: number = 0) {
     ctx.beginPath(); ctx.moveTo(startX, startY);
     for (let j = 0; j < trailCount; j++) {
         const idx = (trailHead - 1 - j + trailRingSize) % trailRingSize;
-        ctx.lineTo(trail[idx].x, trail[idx].y);
+        ctx.lineTo(trail[idx].x + offsetX, trail[idx].y + offsetY);
     }
     ctx.stroke();
 }
@@ -16944,13 +16947,16 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
     
     drawTrail(ctx: CanvasRenderingContext2D, data: TrailDrawData): void {
         const isLvl2 = data.damage >= 3;
+        const offsetX = data.drawX - data.posX;
+        const offsetY = data.drawY - data.posY;
+        
         ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
         const mainColor = isLvl2 ? "rgba(234, 179, 8, " : "rgba(34, 197, 94, ";
-        const outerGrad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX, data.oldestY);
+        const outerGrad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX + offsetX, data.oldestY + offsetY);
         outerGrad.addColorStop(0.0, mainColor + "0.45)"); outerGrad.addColorStop(1.0, mainColor + "0.0)");
         ctx.strokeStyle = outerGrad; ctx.lineWidth = data.projWidth * 1.5;
         ctx.shadowColor = isLvl2 ? "rgba(234, 179, 8, 0.6)" : "rgba(34, 197, 94, 0.6)"; ctx.shadowBlur = 12;
-        drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
+        drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize, offsetX, offsetY);
         ctx.restore();
     }
 
@@ -16958,7 +16964,6 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         const isLvl2 = data.damage >= 3;
         const angle = TrigLUT.atan2(data.velY, data.velX);
         ctx.save();
-        
         if (isLvl2) {
             const geom = Software3DRenderer.getPrismGeometry("proj-diamond", [{x:0,y:-0.5},{x:0.3,y:0},{x:0,y:0.5},{x:-0.3,y:0}], 0.8);
             Software3DRenderer.drawGeometry(ctx, geom, 0, 0, data.width * 1.5, data.height * 1.5, 1, 1, 0, 0, angle + Math.PI/2, "hsl(45, 100%, 60%)", 1.0, "center");
@@ -16980,32 +16985,20 @@ export class BossProjectileStrategy implements IProjectileStrategy {
     
     drawTrail(ctx: CanvasRenderingContext2D, data: TrailDrawData): void {
         const trailColor = data.customColor || "hsl(350, 80%, 60%)";
+        const offsetX = data.drawX - data.posX;
+        const offsetY = data.drawY - data.posY;
         
-        // Homing Cyan Core & Red Rim Trail implementation [4]
         if (data.kind === "homing") {
-            ctx.save();
-            ctx.globalCompositeOperation = "lighter";
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            
-            // Pulse outer red rim
-            ctx.strokeStyle = "rgba(239, 68, 68, 0.42)";
-            ctx.lineWidth = data.projWidth * 2.2;
-            drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
-            
-            // Render inner cyan laser-like core
-            ctx.strokeStyle = "rgba(34, 197, 255, 0.85)";
-            ctx.lineWidth = data.projWidth * 0.8;
-            drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
-            
-            ctx.restore();
-            return;
+            ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.lineCap = "round"; ctx.lineJoin = "round";
+            ctx.strokeStyle = "rgba(239, 68, 68, 0.42)"; ctx.lineWidth = data.projWidth * 2.2;
+            drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize, offsetX, offsetY);
+            ctx.strokeStyle = "rgba(34, 197, 255, 0.85)"; ctx.lineWidth = data.projWidth * 0.8;
+            drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize, offsetX, offsetY);
+            ctx.restore(); return;
         }
 
-        // Segmented Spine Trail implementation [4]
         if (data.kind === "segmented-spine") {
-            ctx.save();
-            ctx.globalCompositeOperation = "lighter";
+            ctx.save(); ctx.globalCompositeOperation = "lighter";
             for (let i = 0; i < data.trailCount; i++) {
                 const p = i / (data.trailCount - 1 || 1);
                 const idx = (data.trailHead - 1 - i + data.trailRingSize) % data.trailRingSize;
@@ -17014,28 +17007,19 @@ export class BossProjectileStrategy implements IProjectileStrategy {
                 const alpha = 0.82 * Math.pow(1 - p, 1.7);
                 
                 ctx.fillStyle = trailColor.replace("hsl", "hsla").replace(")", \`, \${alpha})\`);
-                
-                // Render diamond segments decaying along the path
                 ctx.beginPath();
-                ctx.moveTo(pt.x, pt.y - width);
-                ctx.lineTo(pt.x + width, pt.y);
-                ctx.lineTo(pt.x, pt.y + width);
-                ctx.lineTo(pt.x - width, pt.y);
-                ctx.closePath();
-                ctx.fill();
+                ctx.moveTo(pt.x + offsetX, pt.y + offsetY - width);
+                ctx.lineTo(pt.x + offsetX + width, pt.y + offsetY);
+                ctx.lineTo(pt.x + offsetX, pt.y + offsetY + width);
+                ctx.lineTo(pt.x + offsetX - width, pt.y + offsetY);
+                ctx.closePath(); ctx.fill();
             }
-            ctx.restore();
-            return;
+            ctx.restore(); return;
         }
 
-        // Swirl Trail implementation [4]
         if (data.kind === "swirl" && data.velX !== undefined && data.velY !== undefined) {
-            ctx.save();
-            ctx.globalCompositeOperation = "lighter";
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            ctx.beginPath();
-            ctx.moveTo(data.drawX, data.drawY);
+            ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.lineCap = "round"; ctx.lineJoin = "round";
+            ctx.beginPath(); ctx.moveTo(data.drawX, data.drawY);
 
             const speed = Math.sqrt(data.velX * data.velX + data.velY * data.velY) || 1;
             const dir = { x: data.velX / speed, y: data.velY / speed };
@@ -17045,47 +17029,33 @@ export class BossProjectileStrategy implements IProjectileStrategy {
             for (let i = 0; i < data.trailCount; i++) {
                 const p = i / (data.trailCount - 1 || 1);
                 const idx = (data.trailHead - 1 - i + data.trailRingSize) % data.trailRingSize;
-                const pt = { ...data.trail[idx] };
-                
-                // Sinusoidal wave offset perpendicular to motion [4]
                 const swirl = Math.sin(p * Math.PI * 4 + time * 12 + idx * 0.5) * 16.0 * (1 - p);
-                pt.x += normal.x * swirl;
-                pt.y += normal.y * swirl;
-                ctx.lineTo(pt.x, pt.y);
+                const ox = data.trail[idx].x + offsetX + normal.x * swirl;
+                const oy = data.trail[idx].y + offsetY + normal.y * swirl;
+                ctx.lineTo(ox, oy);
             }
 
             const alphaColor = trailColor.replace("hsl", "hsla").replace(")", ", 0.65)");
-            ctx.strokeStyle = alphaColor;
-            ctx.lineWidth = data.projWidth * 1.6;
-            ctx.stroke();
-            ctx.restore();
-            return;
+            ctx.strokeStyle = alphaColor; ctx.lineWidth = data.projWidth * 1.6; ctx.stroke();
+            ctx.restore(); return;
         }
 
-        // Fallback linear gradient trail
         const alphaColor0 = trailColor.startsWith("hsl") ? trailColor.replace("hsl", "hsla").replace(")", ", 0.45)") : "rgba(239, 68, 68, 0.45)";
         const alphaColor1 = trailColor.startsWith("hsl") ? trailColor.replace("hsl", "hsla").replace(")", ", 0.0)") : "rgba(239, 68, 68, 0.0)";
-        const grad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX, data.oldestY);
+        const grad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX + offsetX, data.oldestY + offsetY);
         grad.addColorStop(0.0, alphaColor0); grad.addColorStop(1.0, alphaColor1);
-        ctx.strokeStyle = grad; ctx.lineWidth = data.projWidth; ctx.lineCap = "round"; ctx.shadowBlur = 12;
-        ctx.shadowColor = alphaColor0;
-        drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
+        ctx.strokeStyle = grad; ctx.lineWidth = data.projWidth; ctx.lineCap = "round"; ctx.shadowBlur = 12; ctx.shadowColor = alphaColor0;
+        drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize, offsetX, offsetY);
     }
 
     drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void {
         const angle = TrigLUT.atan2(data.velY, data.velX);
         const trailColor = data.customColor || "hsl(350, 82%, 58%)";
-
-        // Cyan logic core & pulsing red rim implementation [4]
         if (data.kind === "homing") {
             const pulse = 1.0 + 0.12 * Math.sin(performance.now() * 0.015);
             const size = data.width * 2 * pulse;
-            
-            // Pulsing outer red rim
             const geomOuter = Software3DRenderer.getRadialGeometry("proj-homing-saw-outer", 6, 0.62, 0, 0.55);
             Software3DRenderer.drawGeometry(ctx, geomOuter, 0, 0, size, size, 1, 1, 0, 0, performance.now() * 0.006, trailColor, 1.0, "center");
-            
-            // Pulsing inner cyan logic core
             const geomInner = Software3DRenderer.getRadialGeometry("proj-homing-saw-inner", 6, 0.35, 0, 0.35);
             Software3DRenderer.drawGeometry(ctx, geomInner, 0, 0, size * 0.58, size * 0.58, 1, 1, 0, 0, performance.now() * -0.008, "hsl(194, 100%, 65%)", 1.0, "center");
             return;
@@ -18862,7 +18832,7 @@ export class PlayerVisuals {
 
     ctx.save();
     ctx.translate(drawX, feetY);
-    ctx.rotate(this.player.rotation);
+    ctx.rotate(this.player.previousRotation + (this.player.rotation - this.player.previousRotation) * alphaVal);
 
     if (this.player.isHealing) {
       ctx.save();
