@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/7/2026, 1:01:03 AM
+ [SYSTEM] Generated: 6/7/2026, 1:40:53 AM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -3589,7 +3589,7 @@ export default function App() {
 
   useMusicLifecycle(isPlayingScreen);
   useFirstGesture(reloadSaveSlots);
-  useEngineSubscriptions(viewportRef, triggerDialogue, resetDialogues);
+  useEngineSubscriptions(triggerDialogue, resetDialogues);
   useRebindCapture(rebindTarget, setRebindTarget, reloadSaveSlots);
 
   const playHoverTick = () => {
@@ -3892,29 +3892,22 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
                 const colors = ["hsl(350, 82%, 58%)", "hsl(4, 88%, 54%)", "hsl(338, 76%, 55%)", "hsl(356, 94%, 62%)", "hsl(82, 38%, 44%)", "hsl(15, 82%, 48%)", "hsl(345, 58%, 46%)"];
                 const baseColor = colors[stageIdx] || colors[0];
                 
-                ctx.fillStyle = "hsl(220, 12%, 10%)";
+                // Totally fill the boss dialogue square with the stage's core color
+                ctx.fillStyle = baseColor;
                 ctx.fillRect(0, 0, w, h);
 
-                ctx.save();
-                ctx.fillStyle = baseColor;
-                ctx.translate(w / 2, h / 2);
+                const strokeColor = "rgba(255, 255, 255, 0.45)";
+                const patternRadius = Math.min(w, h) / 2;
                 
-                const scale = 1.0 + Math.sin(t * 4) * 0.05;
-                ctx.scale(scale, scale);
+                // Flat projection for UI panel
+                const projectFlat = (u: number, v: number) => {
+                    return {
+                        x: w / 2 + u * patternRadius * 2.0,
+                        y: h / 2 + v * patternRadius * 2.0
+                    };
+                };
                 
-                let boxW = w * 0.7;
-                let boxH = h * 0.7;
-                if (stageIdx === 1) { boxW = w * 0.42; boxH = h * 0.85; }
-                else if (stageIdx === 2) { boxW = w * 0.85; boxH = h * 0.35; }
-                else if (stageIdx === 3) { boxW = w * 0.55; boxH = h * 0.80; }
-                else if (stageIdx === 4) { boxW = w * 0.80; boxH = h * 0.55; }
-                
-                ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
-                ctx.restore();
-
-                const strokeColor = "#ffffff";
-                const patternRadius = Math.min(boxW, boxH) * 0.52;
-                Software3DRenderer.drawSacredGeometry(ctx, stageIdx, w / 2, h / 2, patternRadius, t, strokeColor);
+                Software3DRenderer.drawSacredGeometry(ctx, stageIdx, t, strokeColor, projectFlat);
             }
             frameId = requestAnimationFrame(render);
         };
@@ -8534,8 +8527,9 @@ import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
 export class EncounterDirector {
   private world: IWorld;
   private currentPhase = 1;
-  private elapsedFightTime = 0;
-  private spawnCooldownTimer = 12.0;
+  private currentWaveIndex = 0;
+  private waveClearTimer = 1.2;
+  private isBetweenWaves = true;
   private activeStageConfig: StageConfig = GAUNTLET_STAGES[0];
 
   private unsubs: (() => void)[] = [];
@@ -8543,7 +8537,7 @@ export class EncounterDirector {
   constructor(world: IWorld) {
     this.world = world;
     this.setupSubscriptions();
-    this.spawnInitialPlaytestMinions();
+    this.reset();
   }
 
   private setupSubscriptions() {
@@ -8570,8 +8564,7 @@ export class EncounterDirector {
       return;
     }
 
-    this.elapsedFightTime += dt;
-
+    // Clean up dead minions
     for (let i = this.world.minions.length - 1; i >= 0; i--) {
       const m = this.world.minions[i];
       if (m.isDead) {
@@ -8581,41 +8574,37 @@ export class EncounterDirector {
     }
 
     const activeCount = this.world.minions.length;
-    const maxBudget = this.currentPhase === 1 ? 2 : this.currentPhase === 2 ? 3 : 5;
 
-    if (this.spawnCooldownTimer > 0) {
-      this.spawnCooldownTimer -= dt;
-      return;
+    if (activeCount === 0 && !this.isBetweenWaves) {
+      this.isBetweenWaves = true;
+      this.waveClearTimer = 1.5; // colosseum-style buffer between waves
     }
 
-    if (activeCount < maxBudget) {
-      this.triggerNextWave();
+    if (this.isBetweenWaves) {
+      this.waveClearTimer -= dt;
+      if (this.waveClearTimer <= 0) {
+        this.isBetweenWaves = false;
+        this.triggerNextWave();
+      }
     }
   }
 
   private triggerNextWave() {
-    const waves = this.activeStageConfig.encounterWaves.filter(
-      (w) => w.phase === this.currentPhase && this.elapsedFightTime >= (w.earliestTime || 0)
-    );
-
+    const waves = this.activeStageConfig.encounterWaves;
     if (waves.length === 0) return;
 
-    const rand = TrigLUT.randomGameplay();
-    const waveIdx = Math.floor(rand * waves.length);
-    const selectedWave = waves[waveIdx];
+    // Cycle through waves sequentially
+    const wave = waves[this.currentWaveIndex % waves.length];
+    this.currentWaveIndex++;
 
-    const entriesToSpawn = selectedWave.maxActiveMinions;
-    const activeCount = this.world.minions.length;
-    const maxBudget = this.currentPhase === 1 ? 2 : this.currentPhase === 2 ? 3 : 5;
-    const spaceInBudget = maxBudget - activeCount;
-    const limit = Math.min(entriesToSpawn, spaceInBudget);
+    const limit = Math.min(wave.maxActiveMinions, 4);
 
     for (let i = 0; i < limit; i++) {
       const entryRand = TrigLUT.randomGameplay() * 100;
       let accumulatedWeight = 0;
-      let selectedEntry = selectedWave.entries[0];
+      let selectedEntry = wave.entries[0];
 
-      for (const entry of selectedWave.entries) {
+      for (const entry of wave.entries) {
         accumulatedWeight += entry.weight;
         if (entryRand <= accumulatedWeight) {
           selectedEntry = entry;
@@ -8629,9 +8618,8 @@ export class EncounterDirector {
       }
     }
 
-    const minCd = selectedWave.cooldownRange[0];
-    const maxCd = selectedWave.cooldownRange[1];
-    this.spawnCooldownTimer = minCd + TrigLUT.randomGameplay() * (maxCd - minCd);
+    // Play colosseum rattle/confirm
+    this.world.audio.playDashRecharge();
   }
 
   private findSafeAnchor(ids?: string[], tags?: string[]): SpawnAnchor | null {
@@ -8689,23 +8677,6 @@ export class EncounterDirector {
     this.world.minions.push(minion);
   }
 
-  private spawnInitialPlaytestMinions() {
-    const turretAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("catwalk") || a.id.includes("perch"));
-    if (turretAnchor) {
-      this.spawnMinion("TURRET", turretAnchor);
-    }
-
-    const lancerAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("bridge") || a.id.includes("mid"));
-    if (lancerAnchor) {
-      this.spawnMinion("LANCER", lancerAnchor);
-    }
-
-    const flyerAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("air") || a.id.includes("ambush"));
-    if (flyerAnchor) {
-      this.spawnMinion("FLYER", flyerAnchor);
-    }
-  }
-
   private despawnAllMinions() {
     for (const m of this.world.minions) {
       m.teardown();
@@ -8716,9 +8687,9 @@ export class EncounterDirector {
   public reset() {
     this.despawnAllMinions();
     this.currentPhase = 1;
-    this.elapsedFightTime = 0;
-    this.spawnCooldownTimer = 12.0;
-    this.spawnInitialPlaytestMinions();
+    this.currentWaveIndex = 0;
+    this.waveClearTimer = 1.2;
+    this.isBetweenWaves = true;
   }
 
   public teardown() {
@@ -8788,6 +8759,16 @@ export class Engine {
   private onewayPlatforms: Rectangle[] = [];
   private hazards: Rectangle[] = [];
 
+  // Morph and transition states
+  private sourceSolids: Rectangle[] = [];
+  private targetSolids: Rectangle[] = [];
+  private sourceOneways: Rectangle[] = [];
+  private targetOneways: Rectangle[] = [];
+  private sourceHazards: Rectangle[] = [];
+  private targetHazards: Rectangle[] = [];
+  private morphTimer: number = 0;
+  private morphDuration: number = 0;
+
   constructor(world: World, renderer: WorldRenderer) {
     this.world = world;
     this.renderer = renderer;
@@ -8798,9 +8779,10 @@ export class Engine {
     const activeStageIdx = useSessionStore.getState().currentStageIndex;
     this.levelConfig = GAUNTLET_STAGES[activeStageIdx] || GAUNTLET_STAGES[0];
 
-    this.solids = this.levelConfig.solids;
-    this.onewayPlatforms = this.levelConfig.onewayPlatforms;
-    this.hazards = this.levelConfig.hazards;
+    // Create deep copies to avoid reference mutations
+    this.solids = this.levelConfig.solids.map(r => ({ ...r }));
+    this.onewayPlatforms = this.levelConfig.onewayPlatforms.map(r => ({ ...r }));
+    this.hazards = this.levelConfig.hazards.map(r => ({ ...r }));
 
     this.init();
   }
@@ -8876,14 +8858,60 @@ export class Engine {
     this.world.physicsWorld.rebuild(activeSolids, this.hazards, this.onewayPlatforms);
   }
 
-  public loadStage(stageIndex: number) {
+  private interpolateRects(src: Rectangle[], dest: Rectangle[], output: Rectangle[], t: number) {
+    const maxLen = Math.max(src.length, dest.length);
+    output.length = maxLen;
+    for (let i = 0; i < maxLen; i++) {
+      const s = src[i] || { x: dest[i]?.x ?? 0, y: dest[i]?.y ?? 0, width: 0, height: 0 };
+      const d = dest[i] || { x: src[i]?.x ?? 0, y: src[i]?.y ?? 0, width: 0, height: 0 };
+
+      if (!output[i]) {
+        output[i] = { x: 0, y: 0, width: 0, height: 0 };
+      }
+      output[i].x = s.x + (d.x - s.x) * t;
+      output[i].y = s.y + (d.y - s.y) * t;
+      output[i].width = s.width + (d.width - s.width) * t;
+      output[i].height = s.height + (d.height - s.height) * t;
+    }
+  }
+
+  public loadStage(stageIndex: number, forceInstant = false) {
     const stage = GAUNTLET_STAGES[stageIndex];
     if (!stage) return;
 
-    this.levelConfig = stage;
-    this.solids = stage.solids;
-    this.onewayPlatforms = stage.onewayPlatforms;
-    this.hazards = stage.hazards;
+    // Differentiate retries (same stage) from screen transitions/progressions
+    const isProgression = !forceInstant && this.levelConfig && this.levelConfig.id !== stage.id;
+
+    if (isProgression) {
+      // Begin physical morph sequence
+      this.sourceSolids = this.solids.map(r => ({ ...r }));
+      this.targetSolids = stage.solids.map(r => ({ ...r }));
+      this.sourceOneways = this.onewayPlatforms.map(r => ({ ...r }));
+      this.targetOneways = stage.onewayPlatforms.map(r => ({ ...r }));
+      this.sourceHazards = this.hazards.map(r => ({ ...r }));
+      this.targetHazards = stage.hazards.map(r => ({ ...r }));
+
+      this.morphTimer = 1.8;
+      this.morphDuration = 1.8;
+      this.levelConfig = stage;
+
+      // Spawn progression particles
+      setTimeout(() => {
+        this.world.events.publishSpark(stage.playerStart.x, stage.playerStart.y, 0, "hsl(142, 71%, 58%)", true, 35);
+        this.world.events.publishBlast(stage.playerStart.x, stage.playerStart.y, "hsl(142, 100%, 80%)");
+        this.world.events.publishSpark(stage.bossStart.x, stage.bossStart.y, 0, "hsl(350, 82%, 58%)", true, 35);
+        this.world.events.publishBlast(stage.bossStart.x, stage.bossStart.y, "hsl(350, 100%, 80%)");
+        this.world.events.publish("CAMERA_SHAKE", { amplitude: 15, duration: 0.8 });
+        this.world.audio.playDashRecharge();
+      }, 50);
+    } else {
+      // Instant reload layout
+      this.levelConfig = stage;
+      this.solids = stage.solids.map(r => ({ ...r }));
+      this.onewayPlatforms = stage.onewayPlatforms.map(r => ({ ...r }));
+      this.hazards = stage.hazards.map(r => ({ ...r }));
+      this.morphTimer = 0;
+    }
 
     this.activeDissolvePlatforms = (stage.dissolvePlatforms || []).map((r) => new DissolvePlatform(r));
     this.activePogoPosts = (stage.pogoPosts || []).map((r) => new PogoPost(r));
@@ -9003,6 +9031,19 @@ export class Engine {
     }
 
     Camera.update(dt);
+
+    // Apply morph interpolation during transitions
+    if (this.morphTimer > 0) {
+      this.morphTimer -= dt;
+      const progress = 1.0 - Math.max(0, this.morphTimer / this.morphDuration);
+
+      this.interpolateRects(this.sourceSolids, this.targetSolids, this.solids, progress);
+      this.interpolateRects(this.sourceOneways, this.targetOneways, this.onewayPlatforms, progress);
+      this.interpolateRects(this.sourceHazards, this.targetHazards, this.hazards, progress);
+
+      this.rebuildPhysics();
+      this.renderer.resetCache();
+    }
 
     const K = 320;
     const D = 14;
@@ -11976,6 +12017,7 @@ import { StaticMapRenderer } from "@/core/StaticMapRenderer";
 import { EntityRenderer } from "@/core/EntityRenderer";
 import { ParticleRenderer } from "@/core/ParticleRenderer";
 import { DissolvePlatform, PogoPost, DashResetGate } from "./systems/TraversalHazards";
+import { useGameplayStore } from "@/store/useGameStore";
 
 export class WorldRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -12126,6 +12168,27 @@ export class WorldRenderer {
       }
     }
 
+    // Render dynamic entities and particles with a procedural zero-latency chromatic ghosting offset when glitching
+    const isGlitching = useGameplayStore.getState().isGlitching;
+    if (isGlitching) {
+      // Left offset ghost
+      this.ctx.save();
+      this.ctx.globalAlpha = 0.35;
+      this.ctx.translate(-6, 0);
+      this.entityRenderer.renderEntities(world, projectilePool, alpha);
+      this.particleRenderer.renderParticles(particles);
+      this.ctx.restore();
+
+      // Right offset ghost
+      this.ctx.save();
+      this.ctx.globalAlpha = 0.35;
+      this.ctx.translate(6, 0);
+      this.entityRenderer.renderEntities(world, projectilePool, alpha);
+      this.particleRenderer.renderParticles(particles);
+      this.ctx.restore();
+    }
+
+    // Main sharp foreground layer rendered normally (zero-latency)
     this.entityRenderer.renderEntities(world, projectilePool, alpha);
     this.particleRenderer.renderParticles(particles);
 
@@ -13803,7 +13866,6 @@ export function getColorHSL(role: ColorRole, variant: "core" | "light" | "dark" 
 import { LevelConfig } from "../levelData";
 import { Rectangle } from "../Interfaces";
 
-
 export interface VisualShape {
     type: "organic" | "polygon" | "circle";
     points?: {x: number, y: number}[];
@@ -13814,7 +13876,7 @@ export interface VisualShape {
 }
 
 export interface StageConfig extends LevelConfig {
-    visualShapes?: VisualShape[];
+  visualShapes?: VisualShape[];
   id: string;
   title: string;
   subtitle: string;
@@ -13908,28 +13970,28 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     midBossDisplayName: "SCARLET LOCK",
     midBossMaxHp: 48,
     solids: [
-      { x: 0, y: 0, width: 220, height: 1000 },
-      { x: 780, y: 0, width: 220, height: 1000 },
-      { x: 220, y: 920, width: 560, height: 80 },
-      { x: 220, y: 0, width: 560, height: 40 },
-      { x: 220, y: 680, width: 140, height: 32 },
-      { x: 640, y: 440, width: 140, height: 32 },
-      { x: 220, y: 220, width: 140, height: 32 },
+      // Narrow walls compressing horizontal gameplay space
+      { x: 0, y: 0, width: 280, height: 1000 },
+      { x: 720, y: 0, width: 280, height: 1000 },
+      { x: 280, y: 920, width: 440, height: 80 },
+      { x: 280, y: 0, width: 440, height: 280 }, // Lowered dropped ceiling
+      { x: 280, y: 680, width: 120, height: 32 },
+      { x: 600, y: 480, width: 120, height: 32 },
     ],
     onewayPlatforms: [
-      { x: 360, y: 560, width: 280, height: 16 },
-      { x: 360, y: 320, width: 280, height: 16 },
+      { x: 400, y: 580, width: 200, height: 16 },
+      { x: 400, y: 360, width: 200, height: 16 },
     ],
     hazards: [
-      { x: 220, y: 880, width: 100, height: 40 },
-      { x: 680, y: 880, width: 100, height: 40 },
+      { x: 280, y: 880, width: 80, height: 40 },
+      { x: 640, y: 880, width: 80, height: 40 },
     ],
     spawners: [],
     spawnAnchors: [
       { id: "redoubt-floor", x: 500, y: 840, tags: ["low", "ground"] },
-      { id: "redoubt-mid-left", x: 280, y: 600, tags: ["mid", "left", "perch"] },
-      { id: "redoubt-mid-right", x: 720, y: 360, tags: ["mid", "right", "perch"] },
-      { id: "redoubt-air-center", x: 500, y: 400, tags: ["air", "center"] },
+      { id: "redoubt-mid-left", x: 340, y: 620, tags: ["mid", "left", "perch"] },
+      { id: "redoubt-mid-right", x: 660, y: 420, tags: ["mid", "right", "perch"] },
+      { id: "redoubt-air-center", x: 500, y: 440, tags: ["air", "center"] },
     ],
     encounterWaves: [
       {
@@ -13939,8 +14001,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [5, 8],
         maxActiveMinions: 2,
         entries: [
-          { type: "TURRET", anchorIds: ["redoubt-mid-left", "redoubt-mid-right"], weight: 60 },
-          { type: "LANCER", anchorIds: ["redoubt-floor"], weight: 40 }
+          { type: "CLAMPJAW", anchorIds: ["redoubt-floor"], weight: 70 },
+          { type: "TURRET", anchorIds: ["redoubt-mid-left"], weight: 30 }
         ]
       },
       {
@@ -13950,7 +14012,7 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         maxActiveMinions: 2,
         entries: [
           { type: "FLYER", anchorTags: ["air"], weight: 50 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 50 }
+          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 50 }
         ]
       },
       {
@@ -13960,49 +14022,49 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         maxActiveMinions: 3,
         entries: [
           { type: "FLYER", anchorTags: ["air"], weight: 40 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
+          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 30 },
           { type: "TURRET", anchorTags: ["perch"], weight: 30 }
         ]
       }
     ],
-    playerStart: { x: 300, y: 800 },
+    playerStart: { x: 360, y: 800 },
     visualShapes: [
-        { type: "polygon", points: [{x:220,y:200},{x:260,y:240},{x:230,y:300},{x:220,y:280}], colorRole: "arena-infection", infectionSeams: true },
-        { type: "polygon", points: [{x:780,y:600},{x:740,y:640},{x:770,y:700},{x:780,y:680}], colorRole: "arena-infection", infectionSeams: true }
+      { type: "polygon", points: [{x:280,y:200},{x:320,y:240},{x:290,y:300},{x:280,y:280}], colorRole: "arena-infection", infectionSeams: true },
+      { type: "polygon", points: [{x:720,y:600},{x:680,y:640},{x:710,y:700},{x:720,y:680}], colorRole: "arena-infection", infectionSeams: true }
     ],
-
-    bossStart: { x: 700, y: 800 },
+    bossStart: { x: 640, y: 800 },
   },
   {
     id: "stage-3",
     title: "THE ORBITAL GALLOWS",
-    subtitle: "STAGE 3 - ARC READING",
+    subtitle: "STAGE 3 - FLOORLESS HAZARDS",
     midBossId: "carminal-orbit",
     midBossDisplayName: "CARMINAL ORBIT",
     midBossMaxHp: 58,
     solids: [
-      { x: 0, y: 920, width: 1000, height: 80 },
+      { x: 0, y: 920, width: 40, height: 80 },
+      { x: 960, y: 920, width: 40, height: 80 },
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
       { x: 380, y: 480, width: 240, height: 32 },
     ],
     onewayPlatforms: [
-      { x: 140, y: 640, width: 180, height: 16 },
-      { x: 680, y: 640, width: 180, height: 16 },
-      { x: 140, y: 320, width: 180, height: 16 },
-      { x: 680, y: 320, width: 180, height: 16 },
+      // Tiny orbiting ledges
+      { x: 120, y: 640, width: 160, height: 16 },
+      { x: 720, y: 640, width: 160, height: 16 },
+      { x: 120, y: 320, width: 160, height: 16 },
+      { x: 720, y: 320, width: 160, height: 16 },
     ],
+    // Spike bed covering the bottom floor completely
     hazards: [
-      { x: 40, y: 880, width: 200, height: 40 },
-      { x: 760, y: 880, width: 200, height: 40 },
+      { x: 40, y: 920, width: 920, height: 80 },
     ],
     spawners: [],
     spawnAnchors: [
       { id: "orbit-center-block", x: 500, y: 420, tags: ["mid", "center", "ground"] },
-      { id: "orbit-low-mid", x: 500, y: 840, tags: ["low", "center"] },
-      { id: "orbit-left-cat", x: 230, y: 580, tags: ["mid", "left", "perch"] },
-      { id: "orbit-right-cat", x: 770, y: 580, tags: ["mid", "right", "perch"] },
+      { id: "orbit-left-cat", x: 200, y: 580, tags: ["mid", "left", "perch"] },
+      { id: "orbit-right-cat", x: 800, y: 580, tags: ["mid", "right", "perch"] },
       { id: "orbit-air-high", x: 500, y: 200, tags: ["air", "center"] },
     ],
     encounterWaves: [
@@ -14013,8 +14075,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [5, 8],
         maxActiveMinions: 2,
         entries: [
-          { type: "FLYER", anchorTags: ["air"], weight: 70 },
-          { type: "LANCER", anchorIds: ["orbit-center-block"], weight: 30 }
+          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 75 },
+          { type: "TURRET", anchorIds: ["orbit-left-cat"], weight: 25 }
         ]
       },
       {
@@ -14023,8 +14085,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [4, 7],
         maxActiveMinions: 3,
         entries: [
-          { type: "TURRET", anchorTags: ["perch"], weight: 40 },
-          { type: "SHIELDER", anchorIds: ["orbit-low-mid"], weight: 40 },
+          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 45 },
+          { type: "TURRET", anchorTags: ["perch"], weight: 35 },
           { type: "FLYER", anchorTags: ["air"], weight: 20 }
         ]
       },
@@ -14034,40 +14096,40 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [3, 6],
         maxActiveMinions: 4,
         entries: [
-          { type: "FLYER", anchorTags: ["air"], weight: 45 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 25 }
+          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 50 },
+          { type: "FLYER", anchorTags: ["air"], weight: 30 },
+          { type: "TURRET", anchorTags: ["perch"], weight: 20 }
         ]
       }
     ],
-    playerStart: { x: 500, y: 800 },
-    bossStart: { x: 500, y: 400 },
+    playerStart: { x: 500, y: 400 },
+    bossStart: { x: 500, y: 260 },
   },
   {
     id: "stage-4",
     title: "THE DISSOLVING CHOIR",
-    subtitle: "STAGE 4 - PLATFORM DECAY",
+    subtitle: "STAGE 4 - PATH OF PAIN MATRIX",
     midBossId: "vermilion-needle",
     midBossDisplayName: "VERMILION NEEDLE",
     midBossMaxHp: 64,
     solids: [
-      { x: 0, y: 920, width: 260, height: 80 },
-      { x: 740, y: 920, width: 260, height: 80 },
-      { x: 260, y: 960, width: 480, height: 40 },
+      { x: 0, y: 920, width: 240, height: 80 },
+      { x: 760, y: 920, width: 240, height: 80 },
+      { x: 240, y: 960, width: 520, height: 40 },
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 40, y: 400, width: 160, height: 32 },
-      { x: 800, y: 400, width: 160, height: 32 },
+      { x: 40, y: 400, width: 140, height: 32 },
+      { x: 820, y: 400, width: 140, height: 32 },
     ],
     onewayPlatforms: [],
-    hazards: [{ x: 260, y: 920, width: 480, height: 80 }],
+    hazards: [{ x: 240, y: 920, width: 520, height: 80 }],
     spawners: [],
     spawnAnchors: [
-      { id: "choir-left-solid", x: 130, y: 340, tags: ["high", "left", "perch"] },
-      { id: "choir-right-solid", x: 870, y: 340, tags: ["high", "right", "perch"] },
-      { id: "choir-mid-ledge-l", x: 350, y: 590, tags: ["mid", "left"] },
-      { id: "choir-mid-ledge-r", x: 650, y: 590, tags: ["mid", "right"] },
+      { id: "choir-left-solid", x: 110, y: 340, tags: ["high", "left", "perch"] },
+      { id: "choir-right-solid", x: 890, y: 340, tags: ["high", "right", "perch"] },
+      { id: "choir-mid-ledge-l", x: 330, y: 590, tags: ["mid", "left"] },
+      { id: "choir-mid-ledge-r", x: 670, y: 590, tags: ["mid", "right"] },
       { id: "choir-air-mid", x: 500, y: 280, tags: ["air", "center"] },
     ],
     encounterWaves: [
@@ -14078,7 +14140,7 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [5, 8],
         maxActiveMinions: 2,
         entries: [
-          { type: "TURRET", anchorIds: ["choir-left-solid", "choir-right-solid"], weight: 70 },
+          { type: "HYMN_NAIL", anchorIds: ["choir-mid-ledge-l"], weight: 70 },
           { type: "FLYER", anchorTags: ["air"], weight: 30 }
         ]
       },
@@ -14088,8 +14150,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [4, 7],
         maxActiveMinions: 3,
         entries: [
-          { type: "LANCER", anchorIds: ["choir-mid-ledge-l", "choir-mid-ledge-r"], weight: 50 },
-          { type: "SHIELDER", anchorTags: ["high"], weight: 50 }
+          { type: "HYMN_NAIL", anchorIds: ["choir-mid-ledge-l", "choir-mid-ledge-r"], weight: 50 },
+          { type: "TURRET", anchorTags: ["high"], weight: 50 }
         ]
       },
       {
@@ -14098,17 +14160,17 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [3, 6],
         maxActiveMinions: 4,
         entries: [
-          { type: "FLYER", anchorTags: ["air"], weight: 40 },
-          { type: "TURRET", anchorTags: ["high"], weight: 30 },
-          { type: "LANCER", anchorTags: ["mid"], weight: 30 }
+          { type: "HYMN_NAIL", anchorTags: ["mid"], weight: 45 },
+          { type: "FLYER", anchorTags: ["air"], weight: 35 },
+          { type: "TURRET", anchorTags: ["high"], weight: 20 }
         ]
       }
     ],
-    playerStart: { x: 120, y: 800 },
-    bossStart: { x: 880, y: 800 },
+    playerStart: { x: 100, y: 800 },
+    bossStart: { x: 900, y: 800 },
     dissolvePlatforms: [
-      { x: 260, y: 640, width: 140, height: 16 },
-      { x: 600, y: 640, width: 140, height: 16 },
+      { x: 240, y: 640, width: 140, height: 16 },
+      { x: 620, y: 640, width: 140, height: 16 },
     ],
     pogoPosts: [
       { x: 470, y: 720, width: 60, height: 32 },
@@ -14120,31 +14182,31 @@ export const GAUNTLET_STAGES: StageConfig[] = [
   {
     id: "stage-5",
     title: "THE MARROW ROT",
-    subtitle: "STAGE 5 - GEOMETRIC CONTAMINATION",
+    subtitle: "STAGE 5 - ORGANIC CYSTS",
     midBossId: "marrow-king",
     midBossDisplayName: "MARROW KING",
     midBossMaxHp: 74,
     solids: [
-      { x: 0, y: 920, width: 340, height: 80 },
-      { x: 660, y: 920, width: 340, height: 80 },
-      { x: 340, y: 960, width: 320, height: 40 },
+      { x: 0, y: 920, width: 300, height: 80 },
+      { x: 700, y: 920, width: 300, height: 80 },
+      { x: 300, y: 960, width: 400, height: 40 },
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 260, y: 580, width: 480, height: 32 },
+      { x: 280, y: 580, width: 440, height: 32 },
     ],
     onewayPlatforms: [
-      { x: 40, y: 380, width: 220, height: 16 },
-      { x: 740, y: 380, width: 220, height: 16 },
+      { x: 40, y: 380, width: 200, height: 16 },
+      { x: 760, y: 380, width: 200, height: 16 },
     ],
-    hazards: [{ x: 340, y: 920, width: 320, height: 80 }],
+    hazards: [{ x: 300, y: 920, width: 400, height: 80 }],
     spawners: [],
     spawnAnchors: [
-      { id: "marrow-high-left", x: 150, y: 320, tags: ["high", "left", "perch"] },
-      { id: "marrow-high-right", x: 850, y: 320, tags: ["high", "right", "perch"] },
+      { id: "marrow-high-left", x: 140, y: 320, tags: ["high", "left", "perch"] },
+      { id: "marrow-high-right", x: 860, y: 320, tags: ["high", "right", "perch"] },
       { id: "marrow-center-growth", x: 500, y: 520, tags: ["mid", "center", "ground"] },
-      { id: "marrow-low-l", x: 180, y: 860, tags: ["low", "left", "ground"] },
-      { id: "marrow-low-r", x: 820, y: 860, tags: ["low", "right", "ground"] },
+      { id: "marrow-low-l", x: 160, y: 860, tags: ["low", "left", "ground"] },
+      { id: "marrow-low-r", x: 840, y: 860, tags: ["low", "right", "ground"] },
       { id: "marrow-air", x: 500, y: 220, tags: ["air", "center"] },
     ],
     encounterWaves: [
@@ -14155,8 +14217,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [5, 8],
         maxActiveMinions: 2,
         entries: [
-          { type: "LANCER", anchorIds: ["marrow-center-growth"], weight: 60 },
-          { type: "FLYER", anchorTags: ["air"], weight: 40 }
+          { type: "BLISTER_OX", anchorIds: ["marrow-center-growth"], weight: 65 },
+          { type: "FLYER", anchorTags: ["air"], weight: 35 }
         ]
       },
       {
@@ -14165,8 +14227,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [4, 7],
         maxActiveMinions: 3,
         entries: [
-          { type: "SHIELDER", anchorTags: ["low"], weight: 40 },
-          { type: "TURRET", anchorTags: ["high"], weight: 40 },
+          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 45 },
+          { type: "TURRET", anchorTags: ["high"], weight: 35 },
           { type: "FLYER", anchorTags: ["air"], weight: 20 }
         ]
       },
@@ -14176,26 +14238,24 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [3, 6],
         maxActiveMinions: 4,
         entries: [
+          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 40 },
           { type: "FLYER", anchorTags: ["air"], weight: 30 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 20 },
-          { type: "TURRET", anchorTags: ["high"], weight: 20 }
+          { type: "TURRET", anchorTags: ["high"], weight: 30 }
         ]
       }
     ],
     playerStart: { x: 120, y: 800 },
     visualShapes: [
-        { type: "circle", center: {x: 150, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeams: true },
-        { type: "circle", center: {x: 850, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeams: true },
-        { type: "circle", center: {x: 500, y: 800}, radius: 120, colorRole: "arena-stone", infectionSeams: false }
+      { type: "circle", center: {x: 120, y: 480}, radius: 90, colorRole: "arena-infection", infectionSeams: true },
+      { type: "circle", center: {x: 880, y: 480}, radius: 90, colorRole: "arena-infection", infectionSeams: true },
+      { type: "circle", center: {x: 500, y: 820}, radius: 130, colorRole: "arena-stone", infectionSeams: false }
     ],
-
     bossStart: { x: 880, y: 800 },
   },
   {
     id: "stage-6",
     title: "THE RUST CATHEDRAL",
-    subtitle: "STAGE 6 - SLAB COMPRESSION",
+    subtitle: "STAGE 6 - SLAB COMPRESSORS",
     midBossId: "rust-cathedral",
     midBossDisplayName: "RUST CATHEDRAL",
     midBossMaxHp: 88,
@@ -14204,8 +14264,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 120, y: 440, width: 180, height: 120 },
-      { x: 700, y: 440, width: 180, height: 120 },
+      { x: 100, y: 440, width: 200, height: 140 },
+      { x: 700, y: 440, width: 200, height: 140 },
       { x: 400, y: 550, width: 200, height: 40 },
     ],
     onewayPlatforms: [
@@ -14215,11 +14275,11 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     hazards: [],
     spawners: [],
     spawnAnchors: [
-      { id: "cath-high-left", x: 210, y: 380, tags: ["high", "left", "perch"] },
-      { id: "cath-high-right", x: 790, y: 380, tags: ["high", "right", "perch"] },
+      { id: "cath-high-left", x: 200, y: 380, tags: ["high", "left", "perch"] },
+      { id: "cath-high-right", x: 800, y: 380, tags: ["high", "right", "perch"] },
       { id: "cath-center-slab", x: 500, y: 490, tags: ["mid", "center", "ground"] },
-      { id: "cath-low-l", x: 350, y: 840, tags: ["low", "left", "ground"] },
-      { id: "cath-low-r", x: 650, y: 840, tags: ["low", "right", "ground"] },
+      { id: "cath-low-l", x: 330, y: 840, tags: ["low", "left", "ground"] },
+      { id: "cath-low-r", x: 670, y: 840, tags: ["low", "right", "ground"] },
     ],
     encounterWaves: [
       {
@@ -14229,8 +14289,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [5, 8],
         maxActiveMinions: 2,
         entries: [
-          { type: "SHIELDER", anchorIds: ["cath-center-slab"], weight: 60 },
-          { type: "TURRET", anchorTags: ["high"], weight: 40 }
+          { type: "BELL_HAMMER", anchorIds: ["cath-center-slab"], weight: 65 },
+          { type: "TURRET", anchorTags: ["high"], weight: 35 }
         ]
       },
       {
@@ -14239,9 +14299,9 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [4, 7],
         maxActiveMinions: 3,
         entries: [
-          { type: "LANCER", anchorTags: ["low"], weight: 45 },
-          { type: "FLYER", anchorIds: ["cath-high-left", "cath-high-right"], weight: 40 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 15 }
+          { type: "BELL_HAMMER", anchorTags: ["low"], weight: 50 },
+          { type: "FLYER", anchorIds: ["cath-high-left", "cath-high-right"], weight: 30 },
+          { type: "TURRET", anchorTags: ["high"], weight: 20 }
         ]
       },
       {
@@ -14250,10 +14310,9 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [3, 6],
         maxActiveMinions: 4,
         entries: [
-          { type: "LANCER", anchorTags: ["ground"], weight: 35 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 30 },
-          { type: "TURRET", anchorTags: ["high"], weight: 20 },
-          { type: "FLYER", anchorTags: ["high"], weight: 15 }
+          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 45 },
+          { type: "TURRET", anchorTags: ["high"], weight: 35 },
+          { type: "FLYER", anchorTags: ["high"], weight: 20 }
         ]
       }
     ],
@@ -14263,7 +14322,7 @@ export const GAUNTLET_STAGES: StageConfig[] = [
   {
     id: "stage-7",
     title: "THE PANTHEON BOX",
-    subtitle: "STAGE 7 - FINAL SYNTHESIS",
+    subtitle: "STAGE 7 - THE FINAL CRUCIBLE",
     midBossId: "false-square",
     midBossDisplayName: "THE FALSE SQUARE",
     midBossMaxHp: 110,
@@ -16461,172 +16520,273 @@ export class Software3DRenderer {
     public static drawSacredGeometry(
         ctx: CanvasRenderingContext2D,
         stageIdx: number,
-        cx: number,
-        cy: number,
-        radius: number,
         time: number,
-        glowColor: string
+        glowColor: string,
+        project: (u: number, v: number) => { x: number; y: number }
     ) {
         ctx.save();
         ctx.strokeStyle = glowColor;
-        ctx.lineWidth = Math.max(1.5, radius * 0.06);
+        ctx.lineWidth = 1.5;
         ctx.lineJoin = "round";
         ctx.lineCap = "round";
-        
-        ctx.shadowColor = glowColor;
-        ctx.shadowBlur = radius * 0.45;
+
+        const drawCircle = (r: number) => {
+            ctx.beginPath();
+            const steps = 32;
+            for (let i = 0; i <= steps; i++) {
+                const theta = (i * Math.PI * 2) / steps;
+                const p = project(r * Math.cos(theta), r * Math.sin(theta));
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            }
+            ctx.stroke();
+        };
 
         if (stageIdx === 0) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            
-            const offset = Math.sin(time * 6) * (radius * 0.1);
-            ctx.beginPath();
-            ctx.moveTo(-radius + offset, -radius);
-            ctx.lineTo(radius + offset, radius);
-            ctx.stroke();
+            // Prime Wound: Scrolling zigzag diagonal wave grid
+            const spacing = 0.22;
+            const scroll = (time * 0.4) % spacing;
 
-            const squares = 3;
-            for (let i = 1; i <= squares; i++) {
-                ctx.save();
-                const r = radius * (i / squares);
-                ctx.rotate(time * 0.8 * (i % 2 === 0 ? 1 : -1));
-                ctx.strokeRect(-r, -r, r * 2, r * 2);
-                ctx.restore();
+            for (let offset = -1.2; offset < 1.2; offset += spacing) {
+                ctx.beginPath();
+                let started = false;
+                for (let u = -0.6; u <= 0.6; u += 0.05) {
+                    const v = offset + scroll + u;
+                    if (v >= -0.6 && v <= 0.6) {
+                        const p = project(u, v);
+                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+                        else ctx.lineTo(p.x, p.y);
+                    }
+                }
+                ctx.stroke();
             }
-            ctx.restore();
+
+            const zigCount = 16;
+            for (let offset = -1.2; offset < 1.2; offset += spacing) {
+                ctx.beginPath();
+                let started = false;
+                for (let i = 0; i <= zigCount; i++) {
+                    const t = i / zigCount;
+                    const u = -0.6 + 1.2 * t;
+                    const baseV = offset - scroll + u;
+                    if (baseV >= -0.6 && baseV <= 0.6) {
+                        const amp = 0.045;
+                        const zigzag = (i % 2 === 0 ? 1 : -1) * amp;
+                        const p = project(u + zigzag, baseV - zigzag);
+                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+                        else ctx.lineTo(p.x, p.y);
+                    }
+                }
+                ctx.stroke();
+            }
         } else if (stageIdx === 1) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            const gridCount = 3;
-            const wave = Math.sin(time * 4) * 0.5 + 0.5;
-            for (let i = 0; i < gridCount; i++) {
-                const offset = (i - 1) * (radius * 0.45) * (0.8 + wave * 0.4);
-                ctx.beginPath();
-                ctx.moveTo(offset, -radius);
-                ctx.lineTo(offset, radius);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(-radius, offset);
-                ctx.lineTo(radius, offset);
-                ctx.stroke();
-            }
-            ctx.beginPath();
-            ctx.arc(0, 0, radius * 0.3 * (1 + wave * 0.2), 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
-        } else if (stageIdx === 2) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            const orbits = 4;
-            const rot = time * 0.5;
-            ctx.beginPath();
-            ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            for (let i = 1; i <= orbits; i++) {
-                const r = radius * (i / orbits);
-                ctx.beginPath();
-                ctx.arc(0, 0, r, 0, Math.PI * 2);
-                ctx.stroke();
+            // Scarlet Lock: Interlocking horizontal and vertical scrolling grids
+            const spacing = 0.22;
+            const scrollH = (time * 0.35) % spacing;
+            const scrollV = (time * 0.22) % spacing;
 
-                const nodeAngle = rot + (i * Math.PI / 2);
-                const nx = Math.cos(nodeAngle) * r;
-                const ny = Math.sin(nodeAngle) * r;
+            for (let v = -0.8; v <= 0.8; v += spacing) {
                 ctx.beginPath();
-                ctx.arc(nx, ny, Math.max(2.5, radius * 0.08), 0, Math.PI * 2);
-                ctx.fillStyle = glowColor;
-                ctx.fill();
+                const p1 = project(-0.6, v + scrollH);
+                const p2 = project(0.6, v + scrollH);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
                 ctx.stroke();
             }
-            ctx.restore();
+
+            for (let u = -0.8; u <= 0.8; u += spacing) {
+                ctx.beginPath();
+                const p1 = project(u + scrollV, -0.6);
+                const p2 = project(u + scrollV, 0.6);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+            }
+
+            drawCircle(0.16);
+            drawCircle(0.36);
+        } else if (stageIdx === 2) {
+            // Carminal Orbit: Rippling Concentric Circles & Radial Zigzag Rays
+            const spacing = 0.18;
+            const scroll = (time * 0.3) % spacing;
+
+            for (let r = scroll; r < 0.9; r += spacing) {
+                if (r <= 0.01) continue;
+                drawCircle(r);
+            }
+
+            const rays = 8;
+            const baseAngle = time * 1.5;
+            const segments = 10;
+            for (let i = 0; i < rays; i++) {
+                const angle = baseAngle + (i * Math.PI * 2) / rays;
+                ctx.beginPath();
+                let started = false;
+                for (let j = 0; j <= segments; j++) {
+                    const r = 0.8 * (j / segments);
+                    const theta = angle + 0.15 * Math.sin(j * 1.8 + time * 8) * (j % 2 === 0 ? 1 : -1);
+                    const p = project(r * Math.cos(theta), r * Math.sin(theta));
+                    if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+            }
         } else if (stageIdx === 3) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            const spikes = 12;
-            const wave = Math.sin(time * 10) * 0.15;
-            ctx.beginPath();
-            for (let i = 0; i < spikes * 2; i++) {
-                const theta = (i * Math.PI) / spikes;
-                const r = radius * (i % 2 === 0 ? 0.9 : 0.4 - wave);
-                const px = Math.cos(theta) * r;
-                const py = Math.sin(theta) * r;
-                if (i === 0) ctx.moveTo(px, py);
-                else ctx.lineTo(px, py);
+            // Vermilion Needle: Columns of nested sharp chevron patterns
+            const spacingX = 0.18;
+            const spacingY = 0.22;
+            const scrollY = (time * 0.5) % spacingY;
+
+            for (let x = -0.8; x <= 0.8; x += spacingX) {
+                ctx.beginPath();
+                const p1 = project(x, -0.6);
+                const p2 = project(x, 0.6);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
             }
-            ctx.closePath();
-            ctx.stroke();
-            ctx.restore();
+
+            const colCount = 6;
+            for (let col = -colCount; col <= colCount; col++) {
+                const lx = col * spacingX;
+                for (let y = -0.8; y <= 0.8; y += spacingY) {
+                    const curY = y + scrollY;
+                    if (curY >= -0.6 && curY <= 0.6) {
+                        ctx.beginPath();
+                        const pLeft = project(lx - spacingX * 0.5, curY - spacingY * 0.3);
+                        const pMid = project(lx, curY + spacingY * 0.3);
+                        const pRight = project(lx + spacingX * 0.5, curY - spacingY * 0.3);
+                        ctx.moveTo(pLeft.x, pLeft.y);
+                        ctx.lineTo(pMid.x, pMid.y);
+                        ctx.lineTo(pRight.x, pRight.y);
+                        ctx.stroke();
+                    }
+                }
+            }
         } else if (stageIdx === 4) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.beginPath();
-            let theta = time * 1.5;
-            const goldenAngle = 137.5 * (Math.PI / 180);
-            for (let i = 0; i < 35; i++) {
-                const r = radius * 0.16 * Math.sqrt(i);
-                theta += goldenAngle;
-                const px = Math.cos(theta) * r;
-                const py = Math.sin(theta) * r;
-                
-                if (i === 0) ctx.moveTo(px, py);
-                else ctx.lineTo(px, py);
-                
-                if (i % 5 === 0) {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(px, py, Math.max(1.5, radius * 0.05 * (1 + Math.sin(time * 5 + i) * 0.3)), 0, Math.PI * 2);
-                    ctx.fillStyle = glowColor;
-                    ctx.fill();
-                    ctx.restore();
+            // Marrow Rot: Organic Sinuous Ribbon Waves Scrolling Across
+            const waveCount = 3;
+            const stepX = 0.05;
+            for (let w = 0; w < waveCount; w++) {
+                const phase = (w * Math.PI) / waveCount;
+                const scrollX = time * 4.0;
+                const amp = 0.14;
+
+                ctx.beginPath();
+                let first = true;
+                for (let lu = -0.6; lu <= 0.6; lu += stepX) {
+                    const lv = amp * Math.sin(lu * 7.0 + scrollX + phase) * Math.cos(lu * 2.4);
+                    const p = project(lu, lv);
+                    if (first) { ctx.moveTo(p.x, p.y); first = false; }
+                    else ctx.lineTo(p.x, p.y);
                 }
+                ctx.stroke();
             }
-            ctx.stroke();
-            ctx.restore();
+
+            for (let w = 0; w < waveCount; w++) {
+                const phase = (w * Math.PI) / waveCount + Math.PI / 2;
+                const scrollY = time * 3.0;
+                const amp = 0.12;
+
+                ctx.beginPath();
+                let first = true;
+                for (let lv = -0.6; lv <= 0.6; lv += stepX) {
+                    const lu = amp * Math.cos(lv * 7.0 + scrollY + phase) * Math.sin(lv * 2.4);
+                    const p = project(lu, lv);
+                    if (first) { ctx.moveTo(p.x, p.y); first = false; }
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+            }
         } else if (stageIdx === 5) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            const slabs = 3;
-            const step = Math.sin(time * 3) * (radius * 0.15);
-            for (let i = 1; i <= slabs; i++) {
-                const r = radius * (i / slabs) - step;
-                if (r > 0) {
-                    ctx.strokeRect(-r, -r, r * 2, r * 2);
-                    ctx.beginPath();
-                    ctx.moveTo(-r, -r); ctx.lineTo(-r + 6, -r + 6);
-                    ctx.moveTo(r, -r); ctx.lineTo(r - 6, -r + 6);
-                    ctx.moveTo(-r, r); ctx.lineTo(-r + 6, r - 6);
-                    ctx.moveTo(r, r); ctx.lineTo(r - 6, r - 6);
-                    ctx.stroke();
-                }
+            // Rust Cathedral: Isometric Columnar Wireframe Grid
+            const spacing = 0.25;
+            const scroll = (time * 0.3) % spacing;
+
+            for (let u = -0.8; u <= 0.8; u += spacing) {
+                ctx.beginPath();
+                const p1 = project(u + scroll, -0.6);
+                const p2 = project(u + scroll, 0.6);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
             }
-            ctx.restore();
-        } else if (stageIdx === 6) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            
-            const isGlitched = Math.sin(time * 15) > 0.6;
-            const glitchShearX = isGlitched ? (Math.random() - 0.5) * (radius * 0.4) : 0;
-            const glitchShearY = isGlitched ? (Math.random() - 0.5) * (radius * 0.4) : 0;
-            
-            ctx.translate(glitchShearX, glitchShearY);
-            
-            const frames = 3;
-            for (let i = 1; i <= frames; i++) {
-                const r = radius * (i / frames);
-                ctx.save();
-                if (isGlitched) {
-                    ctx.rotate((Math.random() - 0.5) * 0.2);
-                } else {
-                    ctx.rotate(time * 0.1 * i);
+
+            for (let offset = -1.2; offset <= 1.2; offset += spacing) {
+                ctx.beginPath();
+                let started = false;
+                for (let u = -0.6; u <= 0.6; u += 0.1) {
+                    const v = offset + scroll * 0.866 + u * 0.577;
+                    if (v >= -0.6 && v <= 0.6) {
+                        const p = project(u, v);
+                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+                        else ctx.lineTo(p.x, p.y);
+                    }
                 }
-                ctx.strokeRect(-r, -r, r * 2, r * 2);
-                ctx.restore();
+                ctx.stroke();
+            }
+
+            for (let offset = -1.2; offset <= 1.2; offset += spacing) {
+                ctx.beginPath();
+                let started = false;
+                for (let u = -0.6; u <= 0.6; u += 0.1) {
+                    const v = offset - scroll * 0.866 - u * 0.577;
+                    if (v >= -0.6 && v <= 0.6) {
+                        const p = project(u, v);
+                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+                        else ctx.lineTo(p.x, p.y);
+                    }
+                }
+                ctx.stroke();
+            }
+        } else {
+            // The False Square: Glitchy, morphing seamless square grid
+            const spacing = 0.22;
+            const scroll = (time * 0.4) % spacing;
+
+            const isGlitchActive = Math.sin(time * 18) > 0.8;
+            const glitchX = isGlitchActive ? Math.sin(time * 50) * 0.05 : 0;
+            const glitchY = isGlitchActive ? Math.cos(time * 40) * 0.03 : 0;
+
+            ctx.save();
+
+            for (let v = -0.8; v <= 0.8; v += spacing) {
+                ctx.beginPath();
+                const p1 = project(-0.6 + glitchX, v + scroll + glitchY);
+                const p2 = project(0.6 + glitchX, v + scroll + glitchY);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+            }
+
+            for (let u = -0.8; u <= 0.8; u += spacing) {
+                ctx.beginPath();
+                const p1 = project(u + scroll + glitchX, -0.6 + glitchY);
+                const p2 = project(u + scroll + glitchX, 0.6 + glitchY);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+            }
+
+            const sqSpacing = 0.16;
+            const sqScroll = (time * 0.25) % sqSpacing;
+            for (let r = sqScroll; r < 0.8; r += sqSpacing) {
+                if (r <= 0.01) continue;
+                ctx.beginPath();
+                const p1 = project(-r + glitchX, -r + glitchY);
+                const p2 = project(r + glitchX, -r + glitchY);
+                const p3 = project(r + glitchX, r + glitchY);
+                const p4 = project(-r + glitchX, r + glitchY);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.lineTo(p3.x, p3.y);
+                ctx.lineTo(p4.x, p4.y);
+                ctx.closePath();
+                ctx.stroke();
             }
             ctx.restore();
         }
-        
+
         ctx.restore();
     }
 
@@ -16711,16 +16871,8 @@ export class Software3DRenderer {
             ctx.fill();
             ctx.stroke();
 
-            if (bossStageIdx >= 0 && face.color === "FRONT") {
-                let sumX = 0, sumY = 0;
-                for (const idx of face.indices) {
-                    sumX += projected[idx].x;
-                    sumY += projected[idx].y;
-                }
-                const fcx = sumX / face.indices.length;
-                const fcy = sumY / face.indices.length;
-                const radius = Math.min(sizeW * scaleX, sizeH * scaleY) * 0.38;
-                
+            // Projection mapping on ALL visible faces of the 3D box model!
+            if (bossStageIdx >= 0) {
                 ctx.save();
                 ctx.beginPath();
                 ctx.moveTo(projected[firstIdx].x, projected[firstIdx].y);
@@ -16731,8 +16883,48 @@ export class Software3DRenderer {
                 ctx.clip();
                 
                 const time = performance.now() / 1000;
-                const strokeColor = `hsl(${h}, ${s}%, ${Math.min(100, shadedLightness + 35)}%)`;
-                Software3DRenderer.drawSacredGeometry(ctx, bossStageIdx, fcx, fcy, radius, time, strokeColor);
+                // Modulate projection intensity to respect the 3D face's direct lighting
+                const strokeColor = `hsla(${h}, ${s}%, ${Math.min(100, shadedLightness + 35)}%, 0.8)`;
+                
+                // Establish a screen-space projection mapped center at the box model's origin
+                const transformLocalPoint = (lx: number, ly: number, lz: number) => {
+                    const x0 = lx * sizeW * scaleX;
+                    const lyVal = pivotY === "feet" ? (ly - 0.5) * sizeH * scaleY : ly * sizeH * scaleY;
+                    const z0 = lz * ((sizeW + sizeH) / 2);
+                    
+                    const x1 = x0 * cosY + z0 * sinY;
+                    const y1 = lyVal;
+                    const z1 = -x0 * sinY + z0 * cosY;
+                    
+                    const x2 = x1;
+                    const y2 = y1 * cosP - z1 * sinP;
+
+                    
+                    const x3 = x2 * cosR - y2 * sinR;
+                    const y3 = x2 * sinR + y2 * cosR;
+                    
+                    return { x: posX + x3, y: posY + y3 };
+                };
+
+                const project3D = (u: number, v: number) => {
+                    let lx: number, ly: number, lz: number;
+                    if (face.color === "FRONT") {
+                        lx = u; ly = v; lz = -0.5;
+                    } else if (face.color === "BACK") {
+                        lx = -u; ly = v; lz = 0.5;
+                    } else if (face.color === "LEFT") {
+                        lx = -0.5; ly = v; lz = u;
+                    } else if (face.color === "RIGHT") {
+                        lx = 0.5; ly = v; lz = -u;
+                    } else if (face.color === "TOP") {
+                        lx = u; ly = -0.5; lz = v;
+                    } else { // BOTTOM
+                        lx = u; ly = 0.5; lz = -v;
+                    }
+                    return transformLocalPoint(lx, ly, lz);
+                };
+                
+                Software3DRenderer.drawSacredGeometry(ctx, bossStageIdx, time, strokeColor, project3D);
                 ctx.restore();
             }
         }
@@ -22095,7 +22287,6 @@ import { eventBroker } from "@/core/eventBroker";
 import { useGameplayStore } from "@/store/useGameStore";
 
 export function useEngineSubscriptions(
-  viewportRef: React.RefObject<HTMLDivElement | null>,
   triggerDialogue: (speaker: "player" | "boss", text: string) => void,
   resetDialogues: () => void
 ) {
@@ -22108,17 +22299,6 @@ export function useEngineSubscriptions(
   });
 
   useEffect(() => {
-    const unsubGameplay = useGameplayStore.subscribe((state) => {
-      const viewport = viewportRef.current;
-      if (viewport) {
-        if (state.isGlitching) {
-          viewport.classList.add("filter-chromatic");
-        } else {
-          viewport.classList.remove("filter-chromatic");
-        }
-      }
-    });
-
     const unsubs = [
       eventBroker.subscribe("DIALOGUE_TRIGGERED", ({ speaker, text }) => {
         triggerRef.current(speaker, text);
@@ -22138,10 +22318,9 @@ export function useEngineSubscriptions(
     ];
 
     return () => {
-      unsubGameplay();
       unsubs.forEach((unsub) => unsub());
     };
-  }, [viewportRef]);
+  }, []);
 }
 
 
