@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BGxPmd5k.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DcqgdQ9K.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -5726,7 +5726,7 @@ export class CinematicSystem {
   }
 }
 `,"src/core/EncounterDirector.ts":`import { IWorld } from "./Interfaces";
-import { SpawnAnchor, MinionType } from "./levelData";
+import { SpawnAnchor, MinionType, EncounterWave } from "./levelData";
 import { BaseMinion } from "@/entities/BaseMinion";
 import { MinionFactory } from "@/entities/MinionFactory";
 import { TrigLUT } from "./TrigLUT";
@@ -5739,6 +5739,10 @@ export class EncounterDirector {
   private waveClearTimer = 1.2;
   private isBetweenWaves = true;
   private activeStageConfig: StageConfig = GAUNTLET_STAGES[0];
+
+  private spawnsLeftInWave = 0;
+  private spawnCooldownTimer = 0;
+  private readonly trickleCooldown = 0.8;
 
   private unsubs: (() => void)[] = [];
 
@@ -5772,7 +5776,6 @@ export class EncounterDirector {
       return;
     }
 
-    // Clean up dead minions
     for (let i = this.world.minions.length - 1; i >= 0; i--) {
       const m = this.world.minions[i];
       if (m.isDead) {
@@ -5781,19 +5784,48 @@ export class EncounterDirector {
       }
     }
 
+    const waves = this.activeStageConfig.encounterWaves;
+    if (waves.length === 0) return;
+
+    const activeWave = waves[this.currentWaveIndex % waves.length];
     const activeCount = this.world.minions.length;
 
-    if (activeCount === 0 && !this.isBetweenWaves) {
-      this.isBetweenWaves = true;
-      this.waveClearTimer = 1.5; // colosseum-style buffer between waves
-    }
+    const scaledMaxActive = Math.ceil(activeWave.maxActiveMinions * 1.5);
 
     if (this.isBetweenWaves) {
       this.waveClearTimer -= dt;
       if (this.waveClearTimer <= 0) {
         this.isBetweenWaves = false;
-        this.triggerNextWave();
+        this.startNewWave(activeWave, scaledMaxActive);
       }
+    } else {
+      if (this.spawnsLeftInWave > 0 && activeCount < scaledMaxActive) {
+        this.spawnCooldownTimer -= dt;
+        if (this.spawnCooldownTimer <= 0) {
+          this.spawnCooldownTimer = this.trickleCooldown;
+          const spawnCountToTrigger = Math.min(2, scaledMaxActive - activeCount);
+          for (let k = 0; k < spawnCountToTrigger; k++) {
+            this.spawnNextMinion(activeWave);
+          }
+        }
+      }
+
+      if (this.spawnsLeftInWave <= 0 && activeCount === 0) {
+        this.isBetweenWaves = true;
+        this.waveClearTimer = 2.0;
+        this.currentWaveIndex++;
+      }
+    }
+  }
+
+  private startNewWave(wave: EncounterWave, scaledMaxActive: number) {
+    const quotaMultiplier = 2.0;
+    this.spawnsLeftInWave = Math.max(scaledMaxActive, Math.floor(scaledMaxActive * quotaMultiplier));
+    this.spawnCooldownTimer = 0.5;
+
+    const initialSpawns = Math.min(this.spawnsLeftInWave, scaledMaxActive);
+    for (let i = 0; i < initialSpawns; i++) {
+      this.spawnNextMinion(wave);
     }
   }
 
@@ -5814,59 +5846,42 @@ export class EncounterDirector {
     }
   }
 
-  private triggerNextWave() {
-    const waves = this.activeStageConfig.encounterWaves;
-    if (waves.length === 0) return;
+  private spawnNextMinion(wave: EncounterWave) {
+    if (this.spawnsLeftInWave <= 0) return;
 
-    // Cycle through waves sequentially
-    const wave = waves[this.currentWaveIndex % waves.length];
-    this.currentWaveIndex++;
-
-    // Calculate maximum threat based on active boss footprint and narrow map constraints
     const bossActive = this.world.boss && !this.world.boss.isDead;
-    const isNarrowMap = false; // Narrow Redoubt
-
-    let maxThreatBudget = bossActive ? 4 : 8;
-    if (isNarrowMap) {
-      maxThreatBudget = bossActive ? 2 : 4;
-    }
+    const maxThreatBudget = bossActive ? 6 : 12;
 
     let activeThreat = 0;
     for (const m of this.world.minions) {
       activeThreat += this.getMinionThreatValue((m as BaseMinion).minionType);
     }
 
-    const maxCandidates = Math.min(wave.maxActiveMinions, isNarrowMap ? 2 : 4);
+    let totalWeight = 0;
+    for (const entry of wave.entries) totalWeight += entry.weight;
+    const entryRand = TrigLUT.randomGameplay() * totalWeight;
+    let accumulatedWeight = 0;
+    let selectedEntry = wave.entries[0];
 
-    for (let i = 0; i < maxCandidates; i++) {
-      let totalWeight = 0;
-      for (const entry of wave.entries) totalWeight += entry.weight;
-      const entryRand = TrigLUT.randomGameplay() * totalWeight;
-      let accumulatedWeight = 0;
-      let selectedEntry = wave.entries[0];
-
-      for (const entry of wave.entries) {
-        accumulatedWeight += entry.weight;
-        if (entryRand <= accumulatedWeight) {
-          selectedEntry = entry;
-          break;
-        }
-      }
-
-      const candidateThreat = this.getMinionThreatValue(selectedEntry.type);
-      if (activeThreat + candidateThreat > maxThreatBudget) {
-        continue; // Exceeds tactical screen footprint and threat budget bounds
-      }
-
-      const anchor = this.findSafeAnchor(selectedEntry.anchorIds, selectedEntry.anchorTags);
-      if (anchor) {
-        this.spawnMinion(selectedEntry.type, anchor);
-        activeThreat += candidateThreat;
+    for (const entry of wave.entries) {
+      accumulatedWeight += entry.weight;
+      if (entryRand <= accumulatedWeight) {
+        selectedEntry = entry;
+        break;
       }
     }
 
-    // Play colosseum rattle/confirm feedback
-    this.world.audio.playDashRecharge();
+    const candidateThreat = this.getMinionThreatValue(selectedEntry.type);
+    if (activeThreat + candidateThreat > maxThreatBudget) {
+      return;
+    }
+
+    const anchor = this.findSafeAnchor(selectedEntry.anchorIds, selectedEntry.anchorTags);
+    if (anchor) {
+      this.spawnMinion(selectedEntry.type, anchor);
+      this.spawnsLeftInWave--;
+      this.world.audio.playDashRecharge();
+    }
   }
 
   private findSafeAnchor(ids?: string[], tags?: string[]): SpawnAnchor | null {
@@ -5892,10 +5907,8 @@ export class EncounterDirector {
       const dp = player ? Math.sqrt(Math.pow(player.position.x - anchor.x, 2) + Math.pow(player.position.y - anchor.y, 2)) : 500;
       const db = boss ? Math.sqrt(Math.pow(boss.position.x - anchor.x, 2) + Math.pow(boss.position.y - anchor.y, 2)) : 500;
 
-      // Safe Spawn Anchor scoring formula to calculate tactical placement
       let safetyScore = dp * 1.0 + db * 0.45;
 
-      // Penalize anchors that spawn directly on top of active hazards or exit lanes
       if (dp < 160) safetyScore -= 300;
       if (db < 80) safetyScore -= 150;
 
@@ -5940,6 +5953,8 @@ export class EncounterDirector {
     this.currentWaveIndex = 0;
     this.waveClearTimer = 1.2;
     this.isBetweenWaves = true;
+    this.spawnsLeftInWave = 0;
+    this.spawnCooldownTimer = 0;
   }
 
   public teardown() {
