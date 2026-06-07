@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-41oWE_ki.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BYONI51T.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -18136,7 +18136,6 @@ export class PhysicsComponent implements IEntityComponent {
   public disablePlatformCollisionTimer: number = 0;
 
   private overlapScratch: Rectangle[] = [];
-  private readonly cornerNudgeThreshold: number = UNITS.CORNER_NUDGE_MAX_OVERLAP;
   private readonly groundDetectionOffset: number = UNITS.GROUND_DETECTION_OFFSET;
 
   public setup(owner: BaseEntity, dependencies?: PhysicsComponentOptions): void {
@@ -18197,6 +18196,7 @@ export class PhysicsComponent implements IEntityComponent {
       let normX = 0;
       let normY = 0;
       let hitFound = false;
+      let hitSolid: Rectangle | null = null;
 
       for (const solid of solidCandidates) {
         const sweep = this.sweptAABBCheck(this.owner.position, this.owner.size, vx, vy, solid, dt * timeLeft);
@@ -18205,6 +18205,7 @@ export class PhysicsComponent implements IEntityComponent {
           normX = sweep.normalX;
           normY = sweep.normalY;
           hitFound = true;
+          hitSolid = solid;
         }
       }
 
@@ -18226,6 +18227,7 @@ export class PhysicsComponent implements IEntityComponent {
               normX = sweep.normalX;
               normY = sweep.normalY;
               hitFound = true;
+              hitSolid = platform;
 
               this.owner.world.events.publish("PLATFORM_IMPACT", {
                 platform,
@@ -18237,46 +18239,27 @@ export class PhysicsComponent implements IEntityComponent {
         }
       }
 
-      // Calculate an adaptive safety step margin based on current linear velocity magnitude
       const velocityMagnitude = Math.sqrt(vx * vx + vy * vy) || 1.0;
       const stepEpsilon = Math.min(0.001, 1.0 / (velocityMagnitude * 10.0));
       const moveFraction = Math.max(0, earliestT - stepEpsilon);
       this.owner.position.x += vx * moveFraction * dt * timeLeft;
       this.owner.position.y += vy * moveFraction * dt * timeLeft;
 
-      // Handle terminal snapping against the collision face normal
-      if (earliestT < 1.0) {
+      if (earliestT < 1.0 && hitSolid) {
         if (normX !== 0) {
           const halfW = this.owner.size.width / 2;
-          const solidCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
-            this.owner.position.x + normX,
-            this.owner.position.y,
-            this.owner.size.width,
-            this.owner.size.height,
-            "solid"
-          );
-          for (const solid of solidCandidates) {
-            if (normX < 0) {
-              // Snapping to the left side of solid bounding box
-              this.owner.position.x = solid.x - halfW;
-            } else if (normX > 0) {
-              // Snapping to the right side of solid bounding box
-              this.owner.position.x = solid.x + solid.width + halfW;
-            }
+          if (normX < 0) {
+            this.owner.position.x = hitSolid.x - halfW;
+          } else if (normX > 0) {
+            this.owner.position.x = hitSolid.x + hitSolid.width + halfW;
           }
         }
         if (normY < 0) {
           const halfH = this.owner.size.height / 2;
-          const solidCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
-            this.owner.position.x,
-            this.owner.position.y + normY,
-            this.owner.size.width,
-            this.owner.size.height,
-            "solid"
-          );
-          for (const solid of solidCandidates) {
-            this.owner.position.y = solid.y - halfH;
-          }
+          this.owner.position.y = hitSolid.y - halfH;
+        } else if (normY > 0) {
+          const halfH = this.owner.size.height / 2;
+          this.owner.position.y = hitSolid.y + hitSolid.height + halfH;
         }
       }
 
@@ -18357,7 +18340,7 @@ export class PhysicsComponent implements IEntityComponent {
     const tEntry = Math.max(rxEntry, ryEntry);
     const tExit = Math.min(rxExit, ryExit);
 
-    if (tEntry > tExit || rxExit < 0 || ryExit < 0 || rxEntry > 1 || ryEntry > 1) {
+    if (tEntry > tExit || rxExit <= 0 || ryExit <= 0 || rxEntry > 1 || ryEntry > 1) {
       return result;
     }
 
@@ -18398,13 +18381,14 @@ export class PhysicsComponent implements IEntityComponent {
         const minX = Math.min(overlapX1, overlapX2);
         const minY = Math.min(overlapY1, overlapY2);
 
-        if (minX < minY && minX <= this.cornerNudgeThreshold) {
+        if (minX < minY) {
           if (overlapX1 < overlapX2) {
             this.owner.position.x += overlapX1;
           } else {
             this.owner.position.x -= overlapX2;
           }
-        } else if (minY <= this.cornerNudgeThreshold) {
+          this.owner.velocity.x = 0;
+        } else {
           if (overlapY1 < overlapY2) {
             this.owner.position.y += overlapY1;
           } else {
@@ -18448,8 +18432,12 @@ export class PhysicsComponent implements IEntityComponent {
         );
         for (const platform of platformCandidates) {
           if (this.isOverlapping(this.owner.position.x, testPosY, platform)) {
-            this.isGrounded = true;
-            break;
+            const halfH = this.owner.size.height / 2;
+            const feetY = this.owner.position.y + halfH;
+            if (feetY - 2 <= platform.y) {
+              this.isGrounded = true;
+              break;
+            }
           }
         }
       }
