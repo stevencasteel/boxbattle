@@ -319,7 +319,103 @@ export class GapRingPattern implements AttackPattern {
   }
 }
 
+export class CompressionMarchPattern implements AttackPattern {
+  public id = "COMPRESSION_MARCH";
+  public tags: AttackTag[] = ["arena-denial", "reposition"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.2;
+  }
+}
+
+export class SatelliteTaxPattern implements AttackPattern {
+  public id = "SATELLITE_TAX";
+  public tags: AttackTag[] = ["projectile-heavy", "arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 55;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.0;
+  }
+}
+
+export class PogoTaxPattern implements AttackPattern {
+  public id = "POGO_TAX";
+  public tags: AttackTag[] = ["arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 55;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.0;
+  }
+}
+
+export class SicknessLeanPattern implements AttackPattern {
+  public id = "SICKNESS_LEAN";
+  public tags: AttackTag[] = ["arena-denial", "reposition"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.0;
+  }
+}
+
+export class WeightTransferPattern implements AttackPattern {
+  public id = "WEIGHT_TRANSFER";
+  public tags: AttackTag[] = ["melee", "arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 60;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.5;
+  }
+}
+
 export const ALL_PATTERNS: AttackPattern[] = [
+  new CompressionMarchPattern(),
+  new SatelliteTaxPattern(),
+  new PogoTaxPattern(),
+  new SicknessLeanPattern(),
+  new WeightTransferPattern(),
+
   new OmniBurstPattern(),
   new VolleyPattern(),
   new GateDropPattern(),
@@ -346,18 +442,17 @@ export function selectBestAttack(ctx: BossAttackContext): AttackPattern {
   if (stageIdx === 0) {
     candidates = ALL_PATTERNS.filter(p => ["OMNI_BURST", "VOLLEY", "PREDICTIVE_SHOT"].includes(p.id));
   } else if (stageIdx === 1) {
-    candidates = ALL_PATTERNS.filter(p => ["GATE_DROP", "LOCKSTEP_VOLLEY", "VOLLEY"].includes(p.id));
+    candidates = ALL_PATTERNS.filter(p => ["GATE_DROP", "LOCKSTEP_VOLLEY", "COMPRESSION_MARCH"].includes(p.id));
   } else if (stageIdx === 2) {
-    candidates = ALL_PATTERNS.filter(p => ["APHELION_RING", "PERIHELION_DIVE", "FAN_BURST"].includes(p.id));
+    candidates = ALL_PATTERNS.filter(p => ["APHELION_RING", "PERIHELION_DIVE", "SATELLITE_TAX"].includes(p.id));
   } else if (stageIdx === 3) {
-    candidates = ALL_PATTERNS.filter(p => ["NEEDLE_RAIN", "DASH_THREAD", "PREDICTIVE_SHOT"].includes(p.id));
+    candidates = ALL_PATTERNS.filter(p => ["NEEDLE_RAIN", "DASH_THREAD", "POGO_TAX"].includes(p.id));
   } else if (stageIdx === 4) {
-    candidates = ALL_PATTERNS.filter(p => ["BELLY_TIDE", "BLISTER_SPAWN", "OMNI_BURST"].includes(p.id));
+    candidates = ALL_PATTERNS.filter(p => ["BELLY_TIDE", "BLISTER_SPAWN", "SICKNESS_LEAN"].includes(p.id));
   } else if (stageIdx === 5) {
-    candidates = ALL_PATTERNS.filter(p => ["CATHEDRAL_TOLL", "FALLING_NAVE", "GAP_RING"].includes(p.id));
+    candidates = ALL_PATTERNS.filter(p => ["CATHEDRAL_TOLL", "FALLING_NAVE", "WEIGHT_TRANSFER"].includes(p.id));
   } else if (stageIdx === 6) {
-    // Stage 7 (False Square) imitates preceding attacks randomly with glitches
-    candidates = ALL_PATTERNS.filter(p => !["BLISTER_SPAWN"].includes(p.id)); // exclude spawner to maintain boss footprint focus
+    candidates = ALL_PATTERNS.filter(p => !["BLISTER_SPAWN"].includes(p.id));
   }
 
   let bestPattern = candidates[0] || ALL_PATTERNS[0];

@@ -238,6 +238,7 @@ export interface IAudioManager {
   playBossTelegraph(): void;
   playBossLunge(): void;
   playBossSwipe(): void;
+  playBossPhaseShift(x?: number): void;
   playMenuConfirm(): void;
   playMenuBack(): void;
   playSelectTick(): void;

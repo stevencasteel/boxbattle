@@ -461,7 +461,7 @@ export class Software3DRenderer {
         sizeW: number, sizeH: number, scaleX: number, scaleY: number,
         yaw: number, pitch: number, roll: number, baseHslColor: string,
         alpha: number = 1.0, pivotY: "center" | "feet" = "center",
-        bossStageIdx: number = -1
+        _bossStageIdx: number = -1
     ) {
         const projected: { x: number; y: number; z: number }[] = [];
         const hslMatch = baseHslColor.match(/hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
@@ -537,62 +537,7 @@ export class Software3DRenderer {
             ctx.fill();
             ctx.stroke();
 
-            // Projection mapping on ALL visible faces of the 3D box model!
-            if (bossStageIdx >= 0) {
-                ctx.save();
-                ctx.beginPath();
-                ctx.moveTo(projected[firstIdx].x, projected[firstIdx].y);
-                for (let i = 1; i < face.indices.length; i++) {
-                    ctx.lineTo(projected[face.indices[i]].x, projected[face.indices[i]].y);
-                }
-                ctx.closePath();
-                ctx.clip();
-                
-                const time = performance.now() / 1000;
-                // Modulate projection intensity to respect the 3D face's direct lighting
-                const strokeColor = `hsla(${h}, ${s}%, ${Math.min(100, shadedLightness + 35)}%, 0.8)`;
-                
-                // Establish a screen-space projection mapped center at the box model's origin
-                const transformLocalPoint = (lx: number, ly: number, lz: number) => {
-                    const x0 = lx * sizeW * scaleX;
-                    const lyVal = pivotY === "feet" ? (ly - 0.5) * sizeH * scaleY : ly * sizeH * scaleY;
-                    const z0 = lz * ((sizeW + sizeH) / 2);
-                    
-                    const x1 = x0 * cosY + z0 * sinY;
-                    const y1 = lyVal;
-                    const z1 = -x0 * sinY + z0 * cosY;
-                    
-                    const x2 = x1;
-                    const y2 = y1 * cosP - z1 * sinP;
-
-                    
-                    const x3 = x2 * cosR - y2 * sinR;
-                    const y3 = x2 * sinR + y2 * cosR;
-                    
-                    return { x: posX + x3, y: posY + y3 };
-                };
-
-                const project3D = (u: number, v: number) => {
-                    let lx: number, ly: number, lz: number;
-                    if (face.color === "FRONT") {
-                        lx = u; ly = v; lz = -0.5;
-                    } else if (face.color === "BACK") {
-                        lx = -u; ly = v; lz = 0.5;
-                    } else if (face.color === "LEFT") {
-                        lx = -0.5; ly = v; lz = u;
-                    } else if (face.color === "RIGHT") {
-                        lx = 0.5; ly = v; lz = -u;
-                    } else if (face.color === "TOP") {
-                        lx = u; ly = -0.5; lz = v;
-                    } else { // BOTTOM
-                        lx = u; ly = 0.5; lz = -v;
-                    }
-                    return transformLocalPoint(lx, ly, lz);
-                };
-                
-                Software3DRenderer.drawSacredGeometry(ctx, bossStageIdx, time, strokeColor, project3D);
-                ctx.restore();
-            }
+            
         }
         ctx.restore();
     }

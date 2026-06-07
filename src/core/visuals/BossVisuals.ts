@@ -35,14 +35,7 @@ export class BossVisuals {
     const nowTime = performance.now();
     const time = nowTime / 1000;
 
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    ctx.strokeStyle = activeState === "TELEGRAPH" ? "hsla(45, 100%, 70%, 0.65)" : "hsla(350, 80%, 60%, 0.28)";
-    ctx.lineWidth = activeState === "TELEGRAPH" ? 3.5 : 1.4;
-    ctx.beginPath();
-    ctx.ellipse(0, -boss.size.height / 2, boss.size.width * (0.74 + boss.currentPhase * 0.08), boss.size.height * 0.72, time * 1.5, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+
 
     const geometry = Software3DRenderer.getTransformedBossGeometry(stageIdx, boss.currentPhase, time);
 

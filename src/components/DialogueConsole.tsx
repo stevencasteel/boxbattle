@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { DialogueState } from "@/hooks/useGameDialogue";
 import { useSessionStore } from "@/store/useGameStore";
 import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
-import { Software3DRenderer } from "@/core/visuals/Software3DRenderer";
+
 
 interface DialogueConsoleProps { playerDialogue: DialogueState; bossDialogue: DialogueState; isTouchDevice: boolean; }
 
@@ -28,18 +28,7 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
                 ctx.fillStyle = baseColor;
                 ctx.fillRect(0, 0, w, h);
 
-                const strokeColor = "rgba(255, 255, 255, 0.45)";
-                const patternRadius = Math.min(w, h) / 2;
                 
-                // Flat projection for UI panel
-                const projectFlat = (u: number, v: number) => {
-                    return {
-                        x: w / 2 + u * patternRadius * 2.0,
-                        y: h / 2 + v * patternRadius * 2.0
-                    };
-                };
-                
-                Software3DRenderer.drawSacredGeometry(ctx, stageIdx, t, strokeColor, projectFlat);
             }
             frameId = requestAnimationFrame(render);
         };

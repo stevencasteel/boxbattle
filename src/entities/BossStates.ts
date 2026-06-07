@@ -7,7 +7,8 @@ import { PhysicsComponent } from "@/entities/components/PhysicsComponent";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { setVec } from "@/core/VecUtils";
 import { selectBestAttack, BossAttackContext, IBossAttackState } from "./BossAttackPatterns";
-import { useSessionStore } from "@/store/useGameStore";
+import { useSessionStore, useGameplayStore } from "@/store/useGameStore";
+import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
 import { MinionFactory } from "./MinionFactory";
 
 export abstract class BossState implements IState {
@@ -198,6 +199,21 @@ export class BossAttackState extends BossState implements IBossAttackState {
         break;
       case "CATHEDRAL_TOLL":
         this.fireCathedralToll();
+        break;
+      case "COMPRESSION_MARCH":
+        this.fireCompressionMarch();
+        break;
+      case "SATELLITE_TAX":
+        this.fireSatelliteTax();
+        break;
+      case "POGO_TAX":
+        this.firePogoTax();
+        break;
+      case "SICKNESS_LEAN":
+        this.fireSicknessLean();
+        break;
+      case "WEIGHT_TRANSFER":
+        this.fireWeightTransfer();
         break;
     }
   }
@@ -597,6 +613,117 @@ export class BossAttackState extends BossState implements IBossAttackState {
     this.owner.world.minions.push(cyst);
     
     this.owner.world.events.publishBlast(spawnX, this.owner.position.y, "hsl(82, 38%, 44%)");
+  }
+
+  private fireCompressionMarch() {
+    this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 6, duration: 0.3 });
+    this.owner.velocity.x = this.owner.facingDirection * 150;
+    for (let y = 300; y <= 800; y += 150) {
+      this.owner.world.spawnProjectile(
+        40, y, 1, 0, "boss", 1, 350, 2.5, "hsl(4, 88%, 54%)", "needle"
+      );
+      this.owner.world.spawnProjectile(
+        960, y, -1, 0, "boss", 1, 350, 2.5, "hsl(4, 88%, 54%)", "needle"
+      );
+    }
+    this.owner.world.audio.playBossSwipe();
+  }
+
+  private fireSatelliteTax() {
+    this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 4, duration: 0.2 });
+    const projectileCount = 6;
+    const angleStep = (Math.PI * 2) / projectileCount;
+    for (let i = 0; i < projectileCount; i++) {
+      const angle = i * angleStep;
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
+      this.owner.world.spawnProjectile(
+        this.owner.position.x + dirX * 50,
+        this.owner.position.y + dirY * 50,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        320,
+        4.0,
+        "hsl(338, 76%, 55%)",
+        "homing"
+      );
+    }
+    this.owner.world.audio.playBossTelegraph();
+  }
+
+  private firePogoTax() {
+    const stage = GAUNTLET_STAGES[3];
+    const pogoX = stage.pogoPosts && stage.pogoPosts[0] ? stage.pogoPosts[0].x + stage.pogoPosts[0].width / 2 : 500;
+    this.owner.world.events.publishSpark(pogoX, 80, Math.PI / 2, "hsl(356, 94%, 62%)", true, 12);
+    for (let i = -2; i <= 2; i++) {
+      this.owner.world.spawnProjectile(
+        pogoX + i * 30,
+        80,
+        0,
+        1,
+        "boss",
+        1,
+        600,
+        2.5,
+        "hsl(356, 94%, 62%)",
+        "needle"
+      );
+    }
+    this.owner.world.audio.playErrorTick();
+  }
+
+  private fireSicknessLean() {
+    this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 10, duration: 0.45 });
+    this.owner.world.events.publish("STATE_PROJECTED", {
+      playerHP: useGameplayStore.getState().playerHP,
+      bossHP: this.owner.health.currentHealth,
+      healingCharges: this.owner.world.player ? (this.owner.world.player as Player).healingCharges : 0,
+      determination: this.owner.world.player ? (this.owner.world.player as Player).determinationCounter : 0
+    });
+    useGameplayStore.getState().triggerGlitch(250);
+    const count = 8;
+    for (let i = 0; i < count; i++) {
+      const angle = (i * Math.PI * 2) / count;
+      const dirX = TrigLUT.cos(angle);
+      const dirY = TrigLUT.sin(angle);
+      this.owner.world.spawnProjectile(
+        this.owner.position.x,
+        this.owner.position.y,
+        dirX,
+        dirY,
+        "boss",
+        1,
+        260,
+        3.0,
+        "hsl(82, 38%, 44%)",
+        "swirl"
+      );
+    }
+    this.owner.world.audio.playBossPhaseShift();
+  }
+
+  private fireWeightTransfer() {
+    this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 12, duration: 0.4 });
+    this.owner.velocity.y = -650;
+    this.owner.physics.isGrounded = false;
+    
+    setTimeout(() => {
+      if (this.owner && !this.owner.isDead) {
+        this.owner.world.events.publish("CAMERA_SHAKE", { amplitude: 20, duration: 0.4 });
+        this.owner.world.events.publishSpark(this.owner.position.x, 900, 0, "hsl(15, 82%, 48%)", true, 20, "line");
+        this.owner.world.events.publishBlast(this.owner.position.x, 900, "hsl(15, 82%, 48%)");
+        
+        if (this.owner.world.player) {
+          const playerPhys = this.owner.world.player.getComponent(PhysicsComponent);
+          if (playerPhys) {
+            playerPhys.disablePlatformCollisionTimer = 1.5;
+          }
+        }
+      }
+    }, 600);
+    this.owner.world.audio.playBossSwipe();
   }
 
   private fireCathedralToll() {
