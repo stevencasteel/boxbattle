@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/6/2026, 7:02:57 PM
+ [SYSTEM] Generated: 6/6/2026, 7:43:16 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -3874,209 +3874,90 @@ import { DialogueState } from "@/hooks/useGameDialogue";
 import { useSessionStore } from "@/store/useGameStore";
 import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
 
-interface DialogueConsoleProps {
-  playerDialogue: DialogueState;
-  bossDialogue: DialogueState;
-  isTouchDevice: boolean;
-}
+interface DialogueConsoleProps { playerDialogue: DialogueState; bossDialogue: DialogueState; isTouchDevice: boolean; }
 
 function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typing: boolean }) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let frameId: number;
-
-    const render = () => {
-      const w = canvas.width;
-      const h = canvas.height;
-      const t = performance.now() / 1000;
-
-      ctx.clearRect(0, 0, w, h);
-
-      if (speaker === "player") {
-        ctx.fillStyle = "hsl(142, 72%, 56%)";
-        ctx.fillRect(0, 0, w, h);
-
-        if (typing) {
-          ctx.fillStyle = "#ffffff";
-          ctx.beginPath();
-          ctx.arc(w / 2, h / 2, 4 + Math.sin(t * 12) * 2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      } else {
-        const stageIdx = useSessionStore.getState().currentStageIndex;
-
-        ctx.fillStyle = "hsl(350, 82%, 58%)";
-        if (stageIdx === 4) ctx.fillStyle = "hsl(82, 38%, 44%)";
-        ctx.fillRect(0, 0, w, h);
-
-        if (stageIdx === 0) {
-          ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.lineTo(w, h);
-          ctx.stroke();
-        } else if (stageIdx === 1) {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-          ctx.fillRect(8, 0, 6, h);
-          ctx.fillRect(17, 0, 6, h);
-          ctx.fillRect(26, 0, 6, h);
-        } else if (stageIdx === 2) {
-          ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.arc(w / 2, h / 2, 10, 0, Math.PI * 2);
-          ctx.arc(w / 2, h / 2, 16, 0, Math.PI * 2);
-          ctx.stroke();
-        } else if (stageIdx === 3) {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-          ctx.beginPath();
-          ctx.moveTo(w / 2, 0);
-          ctx.lineTo(w / 2 + 10, 14);
-          ctx.lineTo(w / 2 - 10, 14);
-          ctx.closePath();
-          ctx.fill();
-
-          ctx.beginPath();
-          ctx.moveTo(w / 2, h);
-          ctx.lineTo(w / 2 + 10, h - 14);
-          ctx.lineTo(w / 2 - 10, h - 14);
-          ctx.closePath();
-          ctx.fill();
-        } else if (stageIdx === 4) {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-          ctx.beginPath();
-          ctx.arc(14, 14, 6 + Math.sin(t * 4) * 1.5, 0, Math.PI * 2);
-          ctx.arc(34, 34, 8 + Math.cos(t * 3.5) * 2, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (stageIdx === 5) {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-          ctx.fillRect(8, 8, 12, 12);
-          ctx.fillRect(28, 24, 12, 12);
-        } else if (stageIdx === 6) {
-          const split = (t * 8) % 4 === 0;
-          if (split) {
-            ctx.fillStyle = "rgba(0,0,0,0.9)";
-            ctx.fillRect(w / 2 - 8, 0, 16, h);
-          } else {
-            ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(6, 6, w - 12, h - 12);
-          }
-        }
-      }
-
-      frameId = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      cancelAnimationFrame(frameId);
-    };
-  }, [speaker, typing]);
-
-  return <canvas ref={canvasRef} width={48} height={48} style={{ width: "100%", height: "100%", display: "block", borderRadius: "5px" }} />;
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    useEffect(() => {
+        const canvas = canvasRef.current; if (!canvas) return;
+        const ctx = canvas.getContext("2d"); if (!ctx) return;
+        let frameId: number;
+        const render = () => {
+            const w = canvas.width, h = canvas.height, t = performance.now() / 1000;
+            ctx.clearRect(0, 0, w, h);
+            if (speaker === "player") {
+                ctx.fillStyle = "hsl(142, 72%, 56%)"; ctx.fillRect(0, 0, w, h);
+                if (typing) { ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(w / 2, h / 2, 4 + Math.sin(t * 12) * 2, 0, Math.PI * 2); ctx.fill(); }
+            } else {
+                const stageIdx = useSessionStore.getState().currentStageIndex;
+                const colors = ["hsl(350, 82%, 58%)", "hsl(4, 88%, 54%)", "hsl(338, 76%, 55%)", "hsl(356, 94%, 62%)", "hsl(82, 38%, 44%)", "hsl(15, 82%, 48%)", "hsl(345, 58%, 46%)"];
+                ctx.fillStyle = colors[stageIdx] || colors[0];
+                ctx.fillRect(0, 0, w, h);
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.8)"; ctx.fillStyle = "rgba(0, 0, 0, 0.8)"; ctx.lineWidth = 3;
+                
+                if (stageIdx === 0) { // Prime Wound: Diagonal fault line
+                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w, h); ctx.stroke();
+                } else if (stageIdx === 1) { // Scarlet Lock: Prison bars
+                    ctx.fillRect(8, 0, 6, h); ctx.fillRect(17, 0, 6, h); ctx.fillRect(26, 0, 6, h);
+                } else if (stageIdx === 2) { // Carminal Orbit: Concentric circles
+                    ctx.beginPath(); ctx.arc(w/2, h/2, 10, 0, Math.PI*2); ctx.arc(w/2, h/2, 16, 0, Math.PI*2); ctx.stroke();
+                } else if (stageIdx === 3) { // Vermilion Needle: Inward teeth
+                    ctx.beginPath(); ctx.moveTo(w/2, 0); ctx.lineTo(w/2+10, 14); ctx.lineTo(w/2-10, 14); ctx.closePath(); ctx.fill();
+                    ctx.beginPath(); ctx.moveTo(w/2, h); ctx.lineTo(w/2+10, h-14); ctx.lineTo(w/2-10, h-14); ctx.closePath(); ctx.fill();
+                } else if (stageIdx === 4) { // Marrow King: Blisters
+                    ctx.beginPath(); ctx.arc(14, 14, 6 + Math.sin(t*4)*1.5, 0, Math.PI*2); ctx.arc(34, 34, 8 + Math.cos(t*3.5)*2, 0, Math.PI*2); ctx.fill();
+                } else if (stageIdx === 5) { // Rust Cathedral: Block insets
+                    ctx.fillRect(8, 8, 12, 12); ctx.fillRect(28, 24, 12, 12);
+                } else if (stageIdx === 6) { // False Square: Fractures
+                    const split = (t * 8) % 4 === 0;
+                    if (split) { ctx.fillRect(w/2 - 8, 0, 16, h); } 
+                    else { ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.lineWidth = 1.5; ctx.strokeRect(6, 6, w-12, h-12); }
+                }
+            }
+            frameId = requestAnimationFrame(render);
+        };
+        render();
+        return () => cancelAnimationFrame(frameId);
+    }, [speaker, typing]);
+    return <canvas ref={canvasRef} width={48} height={48} style={{ width: "100%", height: "100%", display: "block", borderRadius: "5px" }} />;
 }
 
 export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }: DialogueConsoleProps) {
-  const mobileClass = isTouchDevice ? "is-mobile" : "";
+    const mobileClass = isTouchDevice ? "is-mobile" : "";
+    const leftState = playerDialogue.active ? "active" : bossDialogue.active ? "inactive" : "idle";
+    const rightState = bossDialogue.active ? "active" : playerDialogue.active ? "inactive" : "idle";
+    const currentStageIndex = useSessionStore((state) => state.currentStageIndex);
+    const activeStage = GAUNTLET_STAGES[currentStageIndex];
+    const bossName = activeStage ? activeStage.midBossDisplayName : "BOSS";
 
-  const leftState = playerDialogue.active 
-    ? "active" 
-    : bossDialogue.active 
-      ? "inactive" 
-      : "idle";
+    const getVariants = (speaker: "player" | "boss") => ({
+        active: { scale: 1.02, opacity: 1, borderColor: speaker === "player" ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)", boxShadow: speaker === "player" ? "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(34, 197, 94, 0.15)" : "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(239, 68, 68, 0.15)" },
+        inactive: { scale: 0.96, opacity: 0.15, borderColor: "rgba(0, 0, 0, 0.3)", boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)" },
+        idle: { scale: 0.98, opacity: 0.35, borderColor: "rgba(0, 0, 0, 0.3)", boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)" }
+    });
 
-  const rightState = bossDialogue.active 
-    ? "active" 
-    : playerDialogue.active 
-      ? "inactive" 
-      : "idle";
-
-  const currentStageIndex = useSessionStore((state) => state.currentStageIndex);
-  const activeStage = GAUNTLET_STAGES[currentStageIndex];
-  const bossName = activeStage ? activeStage.midBossDisplayName : "BOSS";
-
-  const getVariants = (speaker: "player" | "boss") => ({
-    active: {
-      scale: 1.02,
-      opacity: 1,
-      borderColor: speaker === "player" ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)",
-      boxShadow: speaker === "player" 
-        ? "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(34, 197, 94, 0.15)"
-        : "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(239, 68, 68, 0.15)",
-    },
-    inactive: {
-      scale: 0.96,
-      opacity: 0.15,
-      borderColor: "rgba(0, 0, 0, 0.3)",
-      boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)",
-    },
-    idle: {
-      scale: 0.98,
-      opacity: 0.35,
-      borderColor: "rgba(0, 0, 0, 0.3)",
-      boxShadow: "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9)",
-    }
-  });
-
-  return (
-    <div className={`dialogue-console ${mobileClass}`}>
-      <motion.div
-        animate={leftState}
-        variants={getVariants("player")}
-        transition={{ type: "spring", stiffness: 220, damping: 25 }}
-        className={`dialogue-box-left neo-pressed ${mobileClass}`}
-      >
-        <div 
-          className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`}
-          style={{ overflow: "hidden", display: "flex", padding: 0 }}
-        >
-          <PortraitCanvas speaker="player" typing={playerDialogue.isTyping} />
+    return (
+        <div className={`dialogue-console ${mobileClass}`}>
+            <motion.div animate={leftState} variants={getVariants("player")} transition={{ type: "spring", stiffness: 220, damping: 25 }} className={`dialogue-box-left neo-pressed ${mobileClass}`}>
+                <div className={`portrait-square led-green ${playerDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`} style={{ overflow: "hidden", display: "flex", padding: 0 }}>
+                    <PortraitCanvas speaker="player" typing={playerDialogue.isTyping} />
+                </div>
+                <div className="dialogue-text-container">
+                    <div className={`dialogue-speaker-label ${mobileClass}`}>PLAYER</div>
+                    <div className={`dialogue-body-text ${mobileClass}`}>{playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}</div>
+                </div>
+            </motion.div>
+            <motion.div animate={rightState} variants={getVariants("boss")} transition={{ type: "spring", stiffness: 220, damping: 25 }} className={`dialogue-box-right neo-pressed ${mobileClass}`}>
+                <div className="dialogue-text-container" style={{ textAlign: "right" }}>
+                    <div className={`dialogue-speaker-label ${mobileClass}`} style={{ color: "var(--signal-red)" }}>{bossName}</div>
+                    <div className={`dialogue-body-text ${mobileClass}`}>{bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}</div>
+                </div>
+                <div className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`} style={{ overflow: "hidden", display: "flex", padding: 0 }}>
+                    <PortraitCanvas speaker="boss" typing={bossDialogue.isTyping} />
+                </div>
+            </motion.div>
         </div>
-        <div className="dialogue-text-container">
-          <div className={`dialogue-speaker-label ${mobileClass}`}>
-            PLAYER
-          </div>
-          <div className={`dialogue-body-text ${mobileClass}`}>
-            {playerDialogue.active ? playerDialogue.displayed : "[ NO SIGNAL ]"}
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        animate={rightState}
-        variants={getVariants("boss")}
-        transition={{ type: "spring", stiffness: 220, damping: 25 }}
-        className={`dialogue-box-right neo-pressed ${mobileClass}`}
-      >
-        <div className="dialogue-text-container" style={{ textAlign: "right" }}>
-          <div
-            className={`dialogue-speaker-label ${mobileClass}`}
-            style={{ color: "var(--signal-red)" }}
-          >
-            {bossName}
-          </div>
-          <div className={`dialogue-body-text ${mobileClass}`}>
-            {bossDialogue.active ? bossDialogue.displayed : "[ NO SIGNAL ]"}
-          </div>
-        </div>
-        <div 
-          className={`portrait-square led-red ${bossDialogue.isTyping ? "portrait-rumble" : ""} ${mobileClass}`}
-          style={{ overflow: "hidden", display: "flex", padding: 0 }}
-        >
-          <PortraitCanvas speaker="boss" typing={bossDialogue.isTyping} />
-        </div>
-      </motion.div>
-    </div>
-  );
+    );
 }
 
 
@@ -8365,210 +8246,103 @@ import { CinematicSystem } from "@/core/CinematicSystem";
 import { useSessionStore } from "@/store/useGameStore";
 
 export class BattleDirector {
-  private events: IEventBus;
-  private audio: IAudioManager;
-  private hasTriggeredFirstHit = false;
-  private hasTriggeredPhase2 = false;
-  private hasTriggeredPhase3 = false;
-  private cinematic: CinematicSystem;
-  private onBattleEnd: () => void;
+    private events: IEventBus;
+    private audio: IAudioManager;
+    private hasTriggeredFirstHit = false;
+    private hasTriggeredPhase2 = false;
+    private hasTriggeredPhase3 = false;
+    private cinematic: CinematicSystem;
+    private onBattleEnd: () => void;
 
-  constructor(events: IEventBus, audio: IAudioManager, onBattleEnd: () => void) {
-    this.events = events;
-    this.audio = audio;
-    this.onBattleEnd = onBattleEnd;
-    this.cinematic = new CinematicSystem(events, audio);
-  }
-
-  public isCinematicActive(): boolean {
-    return this.cinematic.isActive();
-  }
-
-  public getDeathVisuals() {
-    return {
-      timer: this.cinematic.getDeathTimer(),
-      pos: this.cinematic.getDeathPos(),
-    };
-  }
-
-  public update(dt: number, player: Player, boss: Boss) {
-    this.cinematic.update(dt);
-
-    if (this.cinematic.isActive()) {
-      return;
+    constructor(events: IEventBus, audio: IAudioManager, onBattleEnd: () => void) {
+        this.events = events; this.audio = audio; this.onBattleEnd = onBattleEnd;
+        this.cinematic = new CinematicSystem(events, audio);
     }
+    public isCinematicActive(): boolean { return this.cinematic.isActive(); }
+    public getDeathVisuals() { return { timer: this.cinematic.getDeathTimer(), pos: this.cinematic.getDeathPos() }; }
 
-    const bHealth = boss.getComponent(HealthComponent);
-    if (bHealth) {
-      const maxHp = bHealth.maxHealth;
-      const phase2Threshold = Math.floor(maxHp * UNITS.BOSS_PHASE_2_HP_PCT);
-      const phase3Threshold = Math.floor(maxHp * UNITS.BOSS_PHASE_3_HP_PCT);
+    public update(dt: number, player: Player, boss: Boss) {
+        this.cinematic.update(dt);
+        if (this.cinematic.isActive()) return;
+        const bHealth = boss.getComponent(HealthComponent);
+        if (bHealth) {
+            const maxHp = bHealth.maxHealth;
+            const phase2Threshold = Math.floor(maxHp * UNITS.BOSS_PHASE_2_HP_PCT);
+            const phase3Threshold = Math.floor(maxHp * UNITS.BOSS_PHASE_3_HP_PCT);
+            const stageIdx = useSessionStore.getState().currentStageIndex;
 
-      const stageIdx = useSessionStore.getState().currentStageIndex;
-
-      if (bHealth.currentHealth < maxHp && !this.hasTriggeredFirstHit) {
-        this.hasTriggeredFirstHit = true;
-        if (stageIdx === 0) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "A square returns to be measured." });
-        } else if (stageIdx === 1) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Every exit is a rule." });
-        } else if (stageIdx === 2) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Target locked in orbital coordinates." });
-        } else if (stageIdx === 3) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Jump. Cut. Beg the floor to remember you." });
-        } else if (stageIdx === 4) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "The lumpy marrow deforms. Feel the weight." });
-        } else if (stageIdx === 5) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Cathedral toll rings. Slabs descend." });
-        } else if (stageIdx === 6) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "I can be you." });
+            if (bHealth.currentHealth < maxHp && !this.hasTriggeredFirstHit) {
+                this.hasTriggeredFirstHit = true;
+                const intros = [
+                    "A perfect square returns to the crucible. Let us see if your edges still hold.",
+                    "The Redoubt is sealed. Your chaotic movement ends here, anomaly.",
+                    "Your trajectory is predictable. My orbital math is absolute.",
+                    "Jump. Cut. Bleed. The floor will not remember you.",
+                    "Feel the weight of the infection. The marrow deforms all it touches.",
+                    "The Cathedral tolls for the square. Bow beneath the falling nave.",
+                    "I can be you. I can be perfect. Give me your outline."
+                ];
+                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: intros[stageIdx] || intros[0] });
+            }
+            if (bHealth.currentHealth <= phase2Threshold && !this.hasTriggeredPhase2) {
+                this.hasTriggeredPhase2 = true;
+                const p2s = [
+                    "You cling to your shape, but the virus demands fluidity! Bend or break!",
+                    "Modulo columns engage! There is no escape from the grid!",
+                    "Aphelion ring contracting. You cannot outrun the event horizon.",
+                    "Sine-wave splines activated! I will thread you through the needle's eye!",
+                    "Pulsing blister cells! Mutate and consume the pure!",
+                    "Compression march! The architecture demands your sacrifice!",
+                    "Glitches fracture! I will replicate your previous forms!"
+                ];
+                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: p2s[stageIdx] || p2s[0] });
+                this.events.publish("BOSS_PHASE_SHIFT", undefined);
+            }
+            if (bHealth.currentHealth <= phase3Threshold && !this.hasTriggeredPhase3) {
+                this.hasTriggeredPhase3 = true;
+                const p3s = [
+                    "My geometry... fractures... the purity... burns!",
+                    "The locks... are broken...",
+                    "My orbit... decays...",
+                    "The thread... snaps...",
+                    "The rot... recedes...",
+                    "The pillars... crumble...",
+                    "I only... copy... the truth..."
+                ];
+                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: p3s[stageIdx] || p3s[0] });
+                this.events.publish("BOSS_PHASE_SHIFT", undefined);
+            }
         }
-      }
 
-      if (bHealth.currentHealth <= phase2Threshold && !this.hasTriggeredPhase2) {
-        this.hasTriggeredPhase2 = true;
-        if (stageIdx === 0) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Edges teach faster than mercy." });
-        } else if (stageIdx === 1) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Lock step! Modulo columns commit!" });
-        } else if (stageIdx === 2) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Perihelion dive. No intersection." });
-        } else if (stageIdx === 3) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Sine-offset splines activated. Accelerate!" });
-        } else if (stageIdx === 4) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Pulsing blister cells, mutate!" });
-        } else if (stageIdx === 5) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Cathedral toll commits. Sickness lean." });
-        } else if (stageIdx === 6) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Glitches fracture. Replicate previous forms." });
+        if (player.isDead && !this.cinematic.isActive()) {
+            this.cinematic.startSequence(player.position, () => { this.audio.playPlayerExplosion(); }, [
+                { triggerTime: 2.0, action: () => { this.events.publish("RECORD_LOSS", undefined); } },
+                { triggerTime: 2.5, action: () => { this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "My shape... is breaking..." }); } },
+                { triggerTime: 3.8, action: () => { this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "The virus reclaims its geometry. Purity is a myth." }); } },
+                { triggerTime: 7.2, action: () => { this.events.publish("CLEAR_DIALOGUES", undefined); this.events.publish("GAME_OVER", undefined); this.onBattleEnd(); } },
+            ]);
+        } else if (boss.isDead && !this.cinematic.isActive()) {
+            const stageIdx = useSessionStore.getState().currentStageIndex;
+            this.cinematic.startSequence(boss.position, () => { this.audio.playBossExplosion(); }, [
+                { triggerTime: 2.0, action: () => { this.events.publish("RECORD_WIN", undefined); } },
+                { triggerTime: 2.5, action: () => { 
+                    const defeats = ["Impossible... my geometry...", "The locks... shatter...", "My orbit... decays...", "The thread... snaps...", "The rot... recedes...", "The pillars... crumble...", "I only... copy... the truth..."];
+                    this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: defeats[stageIdx] || defeats[0] }); 
+                } },
+                { triggerTime: 4.8, action: () => { 
+                    const wins = ["Your corruption is just a flawed equation. I am the constant.", "A cage is just a shape waiting to be shattered.", "Your math forgot one variable: my will.", "I am the eye of the storm. You are just the wind.", "Sickness is just a temporary state. Purity is eternal.", "Your cathedral is built on rust. Mine is built on resolve.", "You can copy the shape, but you'll never hold the soul."];
+                    this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: wins[stageIdx] || wins[0] }); 
+                } },
+                { triggerTime: 7.2, action: () => { 
+                    this.events.publish("CLEAR_DIALOGUES", undefined);
+                    const currentStageIdx = useSessionStore.getState().currentStageIndex;
+                    if (currentStageIdx === 6) { this.events.publish("VICTORY", undefined); this.onBattleEnd(); } 
+                    else { useSessionStore.getState().setCurrentStageIndex(currentStageIdx + 1); this.events.publish("LOAD_STAGE", { stageIndex: currentStageIdx + 1 }); }
+                } },
+            ]);
         }
-        this.events.publish("BOSS_PHASE_SHIFT", undefined);
-      }
-
-      if (bHealth.currentHealth <= phase3Threshold && !this.hasTriggeredPhase3) {
-        this.hasTriggeredPhase3 = true;
-        if (stageIdx === 0) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Good. Now the pit gets a vote." });
-        } else if (stageIdx === 1) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Align or compress!" });
-        } else if (stageIdx === 2) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Aphelion ring contracting." });
-        } else if (stageIdx === 3) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Pogo taxes. Dissolving choir screams." });
-        } else if (stageIdx === 4) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Contamination limits full." });
-        } else if (stageIdx === 5) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Falling Nave commits." });
-        } else if (stageIdx === 6) {
-          this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Unstable square fails." });
-        }
-        this.events.publish("BOSS_PHASE_SHIFT", undefined);
-      }
     }
-
-    if (player.isDead && !this.cinematic.isActive()) {
-      this.cinematic.startSequence(
-        player.position,
-        () => {
-          this.audio.playPlayerExplosion();
-        },
-        [
-          {
-            triggerTime: 2.0,
-            action: () => {
-              this.events.publish("RECORD_LOSS", undefined);
-            },
-          },
-          {
-            triggerTime: 2.5,
-            action: () => {
-              this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "No... I can't hold my shape..." });
-            },
-          },
-          {
-            triggerTime: 3.8,
-            action: () => {
-              this.events.publish("DIALOGUE_TRIGGERED", {
-                speaker: "boss",
-                text: "purity bends to the rules.",
-              });
-            },
-          },
-          {
-            triggerTime: 7.2,
-            action: () => {
-              this.events.publish("CLEAR_DIALOGUES", undefined);
-              this.events.publish("GAME_OVER", undefined);
-              this.onBattleEnd();
-            },
-          },
-        ]
-      );
-    } else if (boss.isDead && !this.cinematic.isActive()) {
-      const stageIdx = useSessionStore.getState().currentStageIndex;
-
-      this.cinematic.startSequence(
-        boss.position,
-        () => {
-          this.audio.playBossExplosion();
-        },
-        [
-          {
-            triggerTime: 2.0,
-            action: () => {
-              this.events.publish("RECORD_WIN", undefined);
-            },
-          },
-          {
-            triggerTime: 2.5,
-            action: () => {
-              if (stageIdx === 0) {
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "No... You were meant to bend." });
-              } else if (stageIdx === 6) {
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Purity... restored." });
-              } else {
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "The outline... fractures..." });
-              }
-            },
-          },
-          {
-            triggerTime: 4.8,
-            action: () => {
-              if (stageIdx === 0) {
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I did. I came back square." });
-              } else if (stageIdx === 6) {
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "I only copy the truth." });
-              } else {
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "The gauntlet records the measurement." });
-              }
-            },
-          },
-          {
-            triggerTime: 7.2,
-            action: () => {
-              this.events.publish("CLEAR_DIALOGUES", undefined);
-              
-              const currentStageIdx = useSessionStore.getState().currentStageIndex;
-              const isLastStage = currentStageIdx === 6;
-
-              if (isLastStage) {
-                this.events.publish("VICTORY", undefined);
-                this.onBattleEnd();
-              } else {
-                const nextStageIdx = currentStageIdx + 1;
-                useSessionStore.getState().setCurrentStageIndex(nextStageIdx);
-                this.events.publish("LOAD_STAGE", { stageIndex: nextStageIdx });
-              }
-            },
-          },
-        ]
-      );
-    }
-  }
-
-  public cleanup() {
-    this.cinematic.cleanup();
-  }
+    public cleanup() { this.cinematic.cleanup(); }
 }
 
 
@@ -11693,193 +11467,184 @@ export class StateProjectionSystem {
 import { Rectangle } from "./Interfaces";
 import { UNITS } from "@/core/Units";
 import { useSessionStore } from "@/store/useGameStore";
+import { GAUNTLET_STAGES } from "./design/GauntletStages";
 
 export class StaticMapRenderer {
-  private ctx: CanvasRenderingContext2D;
-  private staticCanvas: HTMLCanvasElement;
-  private staticCtx: CanvasRenderingContext2D;
-  private staticCacheBuilt = false;
+    private ctx: CanvasRenderingContext2D;
+    private staticCanvas: HTMLCanvasElement;
+    private staticCtx: CanvasRenderingContext2D;
+    private staticCacheBuilt = false;
 
-  constructor(ctx: CanvasRenderingContext2D) {
-    this.ctx = ctx;
-    this.staticCanvas = document.createElement("canvas");
-    this.staticCanvas.width = UNITS.WORLD_SIZE;
-    this.staticCanvas.height = UNITS.WORLD_SIZE;
-    const staticCtx = this.staticCanvas.getContext("2d");
-    if (!staticCtx) throw new Error("Could not create static canvas context");
-    this.staticCtx = staticCtx;
-  }
+    constructor(ctx: CanvasRenderingContext2D) {
+        this.ctx = ctx;
+        this.staticCanvas = document.createElement("canvas");
+        this.staticCanvas.width = UNITS.WORLD_SIZE;
+        this.staticCanvas.height = UNITS.WORLD_SIZE;
+        this.staticCtx = this.staticCanvas.getContext("2d")!;
+    }
 
-  public buildStaticCache(solids: Rectangle[], hazards: Rectangle[]): void {
-    if (this.staticCacheBuilt) return;
-    const sctx = this.staticCtx;
+    public buildStaticCache(solids: Rectangle[], hazards: Rectangle[]): void {
+        if (this.staticCacheBuilt) return;
+        const sctx = this.staticCtx;
+        const stageIdx = useSessionStore.getState().currentStageIndex;
+        const stageConfig = GAUNTLET_STAGES[stageIdx];
+        const bg = sctx.createLinearGradient(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
+        bg.addColorStop(0, "hsl(230, 12%, 5%)");
+        bg.addColorStop(0.45, stageIdx === 4 ? "hsl(82, 18%, 8%)" : "hsl(220, 10%, 8%)");
+        bg.addColorStop(1, "hsl(322, 30%, 9%)");
+        sctx.fillStyle = bg;
+        sctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
 
-    sctx.fillStyle = "#07080b";
-    sctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
+        this.drawBackgroundArchitecture(sctx, stageIdx);
 
-    if (hazards.length > 0) {
-      sctx.fillStyle = "hsl(350, 80%, 60%)";
-      sctx.beginPath();
-      for (const hazard of hazards) {
-        const spikeWidth = 20;
-        const spikeCount = Math.floor(hazard.width / spikeWidth);
-        const startY = (hazard.y === 920 && hazard.height === 80) ? 960 : hazard.y + hazard.height;
-        for (let i = 0; i < spikeCount; i++) {
-          sctx.moveTo(hazard.x + i * spikeWidth, startY);
-          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, hazard.y);
-          sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, startY);
+        // Draw Organic Visual Shapes (Infection / Stone)
+        if (stageConfig && stageConfig.visualShapes) {
+            for (const shape of stageConfig.visualShapes) {
+                sctx.fillStyle = shape.colorRole === "arena-infection" ? "hsla(330, 28%, 25%, 0.78)" : "hsl(220, 10%, 12%)";
+                sctx.strokeStyle = "hsla(336, 42%, 38%, 0.62)";
+                sctx.lineWidth = 2;
+                sctx.beginPath();
+                if (shape.type === "circle" && shape.center && shape.radius) {
+                    sctx.arc(shape.center.x, shape.center.y, shape.radius, 0, Math.PI * 2);
+                } else if (shape.points && shape.points.length > 0) {
+                    sctx.moveTo(shape.points[0].x, shape.points[0].y);
+                    for (let i = 1; i < shape.points.length; i++) sctx.lineTo(shape.points[i].x, shape.points[i].y);
+                    sctx.closePath();
+                }
+                sctx.fill();
+                if (shape.infectionSeams) sctx.stroke();
+            }
         }
-      }
-      sctx.fill();
+
+        if (hazards.length > 0) {
+            sctx.fillStyle = "hsl(358, 92%, 52%)";
+            sctx.shadowColor = "hsla(358, 92%, 52%, 0.48)";
+            sctx.shadowBlur = 12;
+            sctx.beginPath();
+            for (const hazard of hazards) {
+                const spikeWidth = 18;
+                const spikeCount = Math.floor(hazard.width / spikeWidth);
+                const startY = (hazard.y === 920 && hazard.height === 80) ? 960 : hazard.y + hazard.height;
+                for (let i = 0; i < spikeCount; i++) {
+                    sctx.moveTo(hazard.x + i * spikeWidth, startY);
+                    sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth / 2, hazard.y);
+                    sctx.lineTo(hazard.x + i * spikeWidth + spikeWidth, startY);
+                }
+            }
+            sctx.fill();
+            sctx.shadowBlur = 0;
+            sctx.strokeStyle = "hsla(12, 100%, 66%, 0.62)";
+            sctx.lineWidth = 1.5;
+            sctx.stroke();
+        }
+
+        sctx.fillStyle = "hsl(220, 10%, 12%)";
+        sctx.beginPath();
+        for (const solid of solids) {
+            this.drawRoundedRectPath(sctx, solid.x, solid.y, solid.width, solid.height, 8);
+        }
+        sctx.fill();
+
+        sctx.save();
+        sctx.clip();
+        sctx.strokeStyle = "rgba(255, 255, 255, 0.035)";
+        sctx.lineWidth = 1;
+        for (let x = -1000; x < 1600; x += 42) {
+            sctx.beginPath();
+            sctx.moveTo(x, 0);
+            sctx.lineTo(x + 1000, 1000);
+            sctx.stroke();
+        }
+        sctx.restore();
+
+        // GRAMMAR FIX: Inset line is now Arena Infection (Magenta/Red), NOT Green (Player Agency)
+        sctx.strokeStyle = "hsl(336, 42%, 38%)"; 
+        sctx.lineWidth = 3.2;
+        sctx.lineJoin = "round";
+        sctx.shadowColor = "hsl(330, 28%, 25%)";
+        sctx.shadowBlur = 6.4;
+        sctx.beginPath();
+        this.drawInnerPerimeterPath(sctx, 1.6, stageIdx);
+        for (const solid of solids) {
+            const isBoundary = solid.x <= 40 || solid.x + solid.width >= 960 || solid.y <= 40 || solid.y + solid.height >= 920;
+            if (!isBoundary) {
+                this.drawRoundedRectPath(sctx, solid.x + 1.6, solid.y + 1.6, solid.width - 3.2, solid.height - 3.2, 6.4);
+            }
+        }
+        sctx.stroke();
+        sctx.shadowBlur = 0;
+
+        this.staticCacheBuilt = true;
     }
 
-    sctx.fillStyle = "#13151a";
-    sctx.beginPath();
-    for (const solid of solids) {
-      this.drawRoundedRectPath(sctx, solid.x, solid.y, solid.width, solid.height, 8);
+    private drawBackgroundArchitecture(ctx: CanvasRenderingContext2D, stageIdx: number) {
+        ctx.save();
+        ctx.globalAlpha = 0.45;
+        ctx.strokeStyle = "hsla(215, 12%, 22%, 0.55)";
+        ctx.lineWidth = 2;
+        const offset = (stageIdx * 73) % 180;
+        for (let i = 0; i < 8; i++) {
+            const x = 80 + i * 130 - offset;
+            ctx.beginPath();
+            ctx.moveTo(x, 80);
+            ctx.lineTo(x + 70, 220);
+            ctx.lineTo(x + 20, 360);
+            ctx.lineTo(x + 110, 520);
+            ctx.lineTo(x + 40, 760);
+            ctx.stroke();
+        }
+
+        ctx.globalAlpha = 0.36;
+        ctx.fillStyle = stageIdx === 2 ? "hsla(338, 76%, 25%, 0.18)" : "hsla(330, 28%, 25%, 0.22)";
+        for (let i = 0; i < 5; i++) {
+            const cx = 160 + ((i * 221 + stageIdx * 89) % 720);
+            const cy = 150 + ((i * 157 + stageIdx * 51) % 650);
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, 46 + i * 9, 18 + (i % 3) * 10, (i + stageIdx) * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
     }
-    sctx.fill();
 
-    const stageIdx = useSessionStore.getState().currentStageIndex;
-
-    sctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
-    sctx.lineWidth = 3.2;
-    sctx.lineJoin = "round";
-    sctx.shadowColor = "rgba(34, 197, 94, 0.25)";
-    sctx.shadowBlur = 6.4;
-    
-    sctx.beginPath();
-    this.drawInnerPerimeterPath(sctx, 1.6, stageIdx);
-    
-    for (const solid of solids) {
-      const isBoundary = solid.x <= 40 || solid.x + solid.width >= 960 || solid.y <= 40 || solid.y + solid.height >= 920;
-      const isStage2Boundary = stageIdx === 1 && (solid.x <= 220 || solid.x + solid.width >= 780);
-      if (!isBoundary && !isStage2Boundary) {
-        this.drawRoundedRectPath(sctx, solid.x + 1.6, solid.y + 1.6, solid.width - 3.2, solid.height - 3.2, 6.4);
-      }
+    private drawRoundedRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+        const rad = Math.min(r, w / 2, h / 2);
+        ctx.moveTo(x + rad, y); ctx.lineTo(x + w - rad, y); ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
+        ctx.lineTo(x + w, y + h - rad); ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+        ctx.lineTo(x + rad, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
+        ctx.lineTo(x, y + rad); ctx.quadraticCurveTo(x, y, x + rad, y);
     }
-    sctx.stroke();
-    sctx.shadowBlur = 0;
 
-    sctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-    sctx.lineWidth = 0.8;
-    sctx.beginPath();
-    this.drawInnerPerimeterPath(sctx, 2.8, stageIdx);
-    
-    for (const solid of solids) {
-      const isBoundary = solid.x <= 40 || solid.x + solid.width >= 960 || solid.y <= 40 || solid.y + solid.height >= 920;
-      const isStage2Boundary = stageIdx === 1 && (solid.x <= 220 || solid.x + solid.width >= 780);
-      if (!isBoundary && !isStage2Boundary) {
-        this.drawRoundedRectPath(sctx, solid.x + 4, solid.y + 4, solid.width - 8, solid.height - 8, 4);
-      }
+    private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number, stageIdx: number) {
+        if (stageIdx === 1) { 
+            ctx.moveTo(220 - inset, 40 - inset); ctx.lineTo(780 + inset, 40 - inset);
+            ctx.lineTo(780 + inset, 920 + inset); ctx.lineTo(220 - inset, 920 + inset); ctx.closePath();
+        } else { 
+            ctx.moveTo(40 - inset, 40 - inset); ctx.lineTo(960 + inset, 40 - inset);
+            ctx.lineTo(960 + inset, 920 + inset); ctx.lineTo(40 - inset, 920 + inset); ctx.closePath();
+        }
     }
-    sctx.stroke();
 
-    this.staticCacheBuilt = true;
-  }
-
-  private drawRoundedRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-    const rad = Math.min(r, w / 2, h / 2);
-    ctx.moveTo(x + rad, y);
-    ctx.lineTo(x + w - rad, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
-    ctx.lineTo(x + w, y + h - rad);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
-    ctx.lineTo(x + rad, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
-    ctx.lineTo(x, y + rad);
-    ctx.quadraticCurveTo(x, y, x + rad, y);
-  }
-
-  private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number, stageIdx: number) {
-    if (stageIdx === 1) { // Stage 2: Narrow Redoubt
-      const ceilingY = 40 - inset;
-      const leftWallX = 220 - inset;
-      const rightWallX = 780 + inset;
-      const floorY = 920 + inset;
-
-      ctx.moveTo(leftWallX, ceilingY);
-      ctx.lineTo(rightWallX, ceilingY);
-      ctx.lineTo(rightWallX, floorY);
-      ctx.lineTo(leftWallX, floorY);
-      ctx.closePath();
-    } else if (stageIdx === 3 || stageIdx === 4) { // Stage 4: Dissolving Choir / Stage 5: Marrow Rot
-      const ceilingY = 40 - inset;
-      const leftWallX = 40 - inset;
-      const rightWallX = 960 + inset;
-      const leftFloorY = 920 + inset;
-      const rightFloorY = 920 + inset;
-      const leftPitWallX = (stageIdx === 3 ? 260 : 340) - inset;
-      const rightPitWallX = (stageIdx === 3 ? 740 : 660) + inset;
-      const pitFloorY = 960 + inset;
-
-      ctx.moveTo(leftWallX, ceilingY);
-      ctx.lineTo(rightWallX, ceilingY);
-      ctx.lineTo(rightWallX, rightFloorY);
-      ctx.lineTo(rightPitWallX, rightFloorY);
-      ctx.lineTo(rightPitWallX, pitFloorY);
-      ctx.lineTo(leftPitWallX, pitFloorY);
-      ctx.lineTo(leftPitWallX, leftFloorY);
-      ctx.lineTo(leftWallX, leftFloorY);
-      ctx.closePath();
-    } else if (stageIdx === 5) { // Stage 6: Rust Cathedral
-      const ceilingY = 40 - inset;
-      const leftWallX = 40 - inset;
-      const rightWallX = 960 + inset;
-      const floorY = 900 + inset;
-
-      ctx.moveTo(leftWallX, ceilingY);
-      ctx.lineTo(rightWallX, ceilingY);
-      ctx.lineTo(rightWallX, floorY);
-      ctx.lineTo(leftWallX, floorY);
-      ctx.closePath();
-    } else { // Stage 1, Stage 3, Stage 7
-      const ceilingY = 40 - inset;
-      const leftWallX = 40 - inset;
-      const rightWallX = 960 + inset;
-      const leftFloorY = 920 + inset;
-      const rightFloorY = 920 + inset;
-      const leftPitWallX = 320 - inset;
-      const rightPitWallX = 680 + inset;
-      const pitFloorY = 960 + inset;
-
-      ctx.moveTo(leftWallX, ceilingY);
-      ctx.lineTo(rightWallX, ceilingY);
-      ctx.lineTo(rightWallX, rightFloorY);
-      ctx.lineTo(rightPitWallX, rightFloorY);
-      ctx.lineTo(rightPitWallX, pitFloorY);
-      ctx.lineTo(leftPitWallX, pitFloorY);
-      ctx.lineTo(leftPitWallX, leftFloorY);
-      ctx.lineTo(leftWallX, leftFloorY);
-      ctx.closePath();
+    public renderBackground(): void { this.ctx.drawImage(this.staticCanvas, 0, 0); }
+    public renderOnewayPlatforms(onewayPlatforms: Rectangle[], springPlatforms: { rect: Rectangle; offsetY: number }[]): void {
+        for (const platform of onewayPlatforms) {
+            const sp = springPlatforms.find((s) => s.rect === platform);
+            const offsetY = sp ? sp.offsetY : 0;
+            this.ctx.save(); this.ctx.translate(0, offsetY);
+            const grad = this.ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.height);
+            grad.addColorStop(0, "hsl(215, 16%, 24%)");
+            grad.addColorStop(1, "hsl(220, 10%, 10%)");
+            this.ctx.fillStyle = grad;
+            this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            this.ctx.strokeStyle = "hsla(194, 62%, 52%, 0.35)";
+            this.ctx.lineWidth = 1.8;
+            this.ctx.beginPath();
+            this.ctx.moveTo(platform.x + 5, platform.y + 2);
+            this.ctx.lineTo(platform.x + platform.width - 5, platform.y + 2);
+            this.ctx.stroke();
+            this.ctx.restore();
+        }
     }
-  }
-
-  public renderBackground(): void {
-    this.ctx.drawImage(this.staticCanvas, 0, 0);
-  }
-
-  public renderOnewayPlatforms(
-    onewayPlatforms: Rectangle[],
-    springPlatforms: { rect: Rectangle; offsetY: number }[]
-  ): void {
-    this.ctx.fillStyle = "#2c3e50";
-    for (const platform of onewayPlatforms) {
-      const sp = springPlatforms.find((s) => s.rect === platform);
-      const offsetY = sp ? sp.offsetY : 0;
-
-      this.ctx.save();
-      this.ctx.translate(0, offsetY);
-      this.ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-      this.ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
-      this.ctx.restore();
-    }
-  }
-
-  public resetCache(): void {
-    this.staticCacheBuilt = false;
-  }
+    public resetCache(): void { this.staticCacheBuilt = false; }
 }
 
 
@@ -14007,7 +13772,18 @@ export function getColorHSL(role: ColorRole, variant: "core" | "light" | "dark" 
 import { LevelConfig } from "../levelData";
 import { Rectangle } from "../Interfaces";
 
+
+export interface VisualShape {
+    type: "organic" | "polygon" | "circle";
+    points?: {x: number, y: number}[];
+    center?: {x: number, y: number};
+    radius?: number;
+    colorRole: "arena-stone" | "arena-infection";
+    infectionSeams?: boolean;
+}
+
 export interface StageConfig extends LevelConfig {
+    visualShapes?: VisualShape[];
   id: string;
   title: string;
   subtitle: string;
@@ -14159,6 +13935,11 @@ export const GAUNTLET_STAGES: StageConfig[] = [
       }
     ],
     playerStart: { x: 300, y: 800 },
+    visualShapes: [
+        { type: "polygon", points: [{x:220,y:200},{x:260,y:240},{x:230,y:300},{x:220,y:280}], colorRole: "arena-infection", infectionSeams: true },
+        { type: "polygon", points: [{x:780,y:600},{x:740,y:640},{x:770,y:700},{x:780,y:680}], colorRole: "arena-infection", infectionSeams: true }
+    ],
+
     bossStart: { x: 700, y: 800 },
   },
   {
@@ -14372,6 +14153,12 @@ export const GAUNTLET_STAGES: StageConfig[] = [
       }
     ],
     playerStart: { x: 120, y: 800 },
+    visualShapes: [
+        { type: "circle", center: {x: 150, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeams: true },
+        { type: "circle", center: {x: 850, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeems: true },
+        { type: "circle", center: {x: 500, y: 800}, radius: 120, colorRole: "arena-stone", infectionSeams: false }
+    ],
+
     bossStart: { x: 880, y: 800 },
   },
   {
@@ -15933,6 +15720,57 @@ export class DashResetGate {
 ────────────────────────────────────────────────────
 import { Boss } from "@/entities/Boss";
 import { Software3DRenderer } from "./Software3DRenderer";
+import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
+import { useSessionStore } from "@/store/useGameStore";
+
+const getBossGeometry = (stageIdx: number, phase: number) => {
+  const stage = GAUNTLET_STAGES[stageIdx] || GAUNTLET_STAGES[0];
+  const seed = stageIdx * 1.37 + phase * 0.41;
+  const corruption = 0.42 + stageIdx * 0.055 + phase * 0.08;
+
+  if (stage.midBossId === "scarlet-lock") {
+    return Software3DRenderer.getPrismGeometry("boss-scarlet-lock", [
+      { x: -0.42, y: -0.5 }, { x: 0.42, y: -0.5 }, { x: 0.5, y: -0.08 },
+      { x: 0.30, y: 0.5 }, { x: -0.30, y: 0.5 }, { x: -0.5, y: -0.08 }
+    ], 0.68);
+  }
+  if (stage.midBossId === "carminal-orbit") {
+    return Software3DRenderer.getRadialGeometry("boss-carminal-orbit", 8, 0.72 - phase * 0.05, Math.PI / 8, 0.7);
+  }
+  if (stage.midBossId === "vermilion-needle") {
+    return Software3DRenderer.getPrismGeometry("boss-vermilion-needle", [
+      { x: 0, y: -0.62 }, { x: 0.46, y: -0.16 }, { x: 0.18, y: 0.04 },
+      { x: 0.36, y: 0.54 }, { x: 0, y: 0.36 }, { x: -0.36, y: 0.54 },
+      { x: -0.18, y: 0.04 }, { x: -0.46, y: -0.16 }
+    ], 0.62);
+  }
+  if (stage.midBossId === "marrow-king") {
+    return Software3DRenderer.getRadialGeometry("boss-marrow-king", 10, 0.82, seed, 0.86);
+  }
+  if (stage.midBossId === "rust-cathedral") {
+    return Software3DRenderer.getPrismGeometry("boss-rust-cathedral", [
+      { x: -0.5, y: -0.44 }, { x: -0.12, y: -0.58 }, { x: 0.12, y: -0.58 },
+      { x: 0.5, y: -0.44 }, { x: 0.42, y: 0.5 }, { x: 0.08, y: 0.34 },
+      { x: -0.08, y: 0.34 }, { x: -0.42, y: 0.5 }
+    ], 0.82);
+  }
+  if (stage.midBossId === "false-square") {
+    return Software3DRenderer.getCorruptedBoxGeometry("boss-false-square", 0.95, performance.now() * 0.0006, 2);
+  }
+
+  return Software3DRenderer.getCorruptedBoxGeometry(stage.midBossId, corruption, seed, phase);
+};
+
+const getBossColor = (stageIdx: number, activeState: string, flashing: boolean): string => {
+  if (flashing) return "hsl(0, 0%, 100%)";
+  if (activeState === "TELEGRAPH") return "hsl(45, 100%, 60%)";
+  if (stageIdx === 2) return "hsl(338, 76%, 55%)";
+  if (stageIdx === 3) return "hsl(356, 94%, 62%)";
+  if (stageIdx === 4) return "hsl(82, 38%, 44%)";
+  if (stageIdx === 5) return "hsl(14, 76%, 48%)";
+  if (stageIdx === 6) return "hsl(330, 82%, 64%)";
+  return "hsl(350, 82%, 58%)";
+};
 
 export class BossVisuals {
   static draw(ctx: CanvasRenderingContext2D, boss: Boss, alpha: number): void {
@@ -15943,15 +15781,12 @@ export class BossVisuals {
     const drawY = boss.previousPosition.y + (boss.position.y - boss.previousPosition.y) * alphaVal;
 
     const activeState = boss.activeStateName;
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+    const stage = GAUNTLET_STAGES[stageIdx] || GAUNTLET_STAGES[0];
 
     ctx.save();
 
-    let baseColor = "hsl(350, 80%, 60%)";
-    if (boss.health.isFlashing()) {
-      baseColor = "hsl(0, 0%, 100%)";
-    } else if (activeState === "TELEGRAPH") {
-      baseColor = "hsl(45, 100%, 50%)";
-    }
+    const baseColor = getBossColor(stageIdx, activeState, boss.health.isFlashing());
 
     const feetY = drawY + boss.size.height / 2;
 
@@ -15961,9 +15796,18 @@ export class BossVisuals {
     const yaw = 0.15 * boss.facingDirection + (boss.velocity.x / boss.lungeSpeed) * 0.45;
     const pitch = 0.08 + (boss.velocity.y / 1200) * 0.25;
 
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.strokeStyle = activeState === "TELEGRAPH" ? "hsla(45, 100%, 70%, 0.65)" : "hsla(350, 80%, 60%, 0.28)";
+    ctx.lineWidth = activeState === "TELEGRAPH" ? 3.5 : 1.4;
+    ctx.beginPath();
+    ctx.ellipse(0, -boss.size.height / 2, boss.size.width * (0.74 + boss.currentPhase * 0.08), boss.size.height * 0.72, performance.now() * 0.0015, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
     Software3DRenderer.drawGeometry(
       ctx,
-      Software3DRenderer.BOX_GEOMETRY,
+      getBossGeometry(stageIdx, boss.currentPhase),
       0,
       0,
       boss.size.width,
@@ -15978,6 +15822,26 @@ export class BossVisuals {
       "feet"
     );
 
+    ctx.save();
+    const localY = -boss.size.height / 2;
+    ctx.globalAlpha = boss.health.isFlashing() ? 0.25 : 0.9;
+    ctx.fillStyle = "rgba(4, 5, 8, 0.82)";
+    if (stage.midBossId === "carminal-orbit") {
+      ctx.beginPath();
+      ctx.arc(0, localY, 8, 0, Math.PI * 2);
+      ctx.arc(0, localY, 15, 0, Math.PI * 2);
+      ctx.fill("evenodd");
+    } else if (stage.midBossId === "false-square") {
+      ctx.fillRect(-17, localY - 12, 10, 24);
+      ctx.fillRect(7, localY - 12, 10, 24);
+      ctx.fillStyle = "rgba(255,255,255,0.72)";
+      ctx.fillRect(-3, localY - 3, 6, 6);
+    } else {
+      ctx.fillRect(boss.facingDirection * 7 - 3, localY - 7, 6, 5);
+      ctx.fillRect(-boss.facingDirection * 8 - 2, localY - 5, 4, 4);
+    }
+    ctx.restore();
+
     ctx.restore();
   }
 }
@@ -15990,225 +15854,160 @@ import { Software3DRenderer } from "./Software3DRenderer";
 import { TrigLUT } from "@/core/TrigLUT";
 import { BaseMinion } from "@/entities/BaseMinion";
 import { Boss } from "@/entities/Boss";
+import { ShapeFamily } from "./ShapeRenderer";
 
 interface CageSegment { x1: number; y1: number; x2: number; y2: number; color: string; width: number; }
 const backCageScratch: CageSegment[] = [];
 const frontCageScratch: CageSegment[] = [];
 
-export class MinionVisuals {
-  static draw(ctx: CanvasRenderingContext2D, minion: BaseMinion, alpha: number): void {
-    if (minion.isDead) return;
-
-    const alphaVal = alpha !== undefined ? alpha : 1.0;
-    const drawX = minion.previousPosition.x + (minion.position.x - minion.previousPosition.x) * alphaVal;
-    const drawY = minion.previousPosition.y + (minion.position.y - minion.previousPosition.y) * alphaVal;
-
-    const nowTime = performance.now();
-    backCageScratch.length = 0;
-    frontCageScratch.length = 0;
-
-    const totalSpawnTime = 1.2;
-    const elapsedTime = totalSpawnTime - minion.spawnTimer;
-    const spawnPct = Math.max(0, Math.min(1.0, elapsedTime / totalSpawnTime));
-
-    ctx.save();
-
-    if (minion.isSpawning) {
-      const secondHalfProgress = spawnPct <= 0.5 ? 0 : (spawnPct - 0.5) / 0.5;
-
-      const firstHalfProgress = spawnPct <= 0.5 ? spawnPct / 0.5 : 1.0;
-      const t = 1.0 - firstHalfProgress;
-      const accordionScale = 1.0 - t * t * t * TrigLUT.cos(firstHalfProgress * 3.5 * Math.PI);
-
-      const staticFlicker = TrigLUT.random() < 0.04 ? 0.45 : 1.0;
-      const cageAlpha = spawnPct <= 0.5 ? 0.85 * staticFlicker : (1.0 - secondHalfProgress) * 0.85 * staticFlicker;
-
-      const boss = minion.world.boss;
-      const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
-      let mColor = `hsla(194, 62%, 52%, ${cageAlpha})`;
-      if (phase === 2) {
-        mColor = `hsla(45, 100%, 60%, ${cageAlpha})`;
-      } else if (phase === 3) {
-        mColor = `hsla(350, 82%, 58%, ${cageAlpha})`;
-      }
-
-      const H = minion.size.height;
-      const W = minion.size.width;
-      const R = W * 0.72;
-
-      const rotation = nowTime * 0.005;
-
-      const hBottom = (H / 2) - (H / 2) * accordionScale;
-      const hTop = (H / 2) + (H / 2) * accordionScale;
-
-      const ringHeights = [hBottom, (hBottom + hTop) / 2, hTop];
-
-      const isHex = minion.id.includes("TURRET") || minion.id.includes("SHIELDER") || minion.id.includes("BELL_HAMMER");
-      const isTri = minion.id.includes("LANCER") || minion.id.includes("PIT_LANCER");
-      const isFork = minion.id.includes("HYMN_NAIL");
-      const isBubble = minion.id.includes("BLISTER_OX");
-
-      const sides = isHex ? 6 : isTri ? 3 : isFork ? 4 : isBubble ? 16 : 8;
-
-      const getPrismPoint = (i: number, N: number, baseRadius: number, rot: number) => {
-        const theta = (i * Math.PI * 2) / N + rot;
-        return {
-          x: baseRadius * TrigLUT.cos(theta),
-          y: baseRadius * TrigLUT.sin(theta) * 0.28
-        };
-      };
-
-      for (let rIdx = 0; rIdx < ringHeights.length; rIdx++) {
-        const hHeight = ringHeights[rIdx];
-        const dir = rIdx % 2 === 0 ? 1 : -1;
-        const ringRotation = rotation * dir;
-
-        for (let i = 0; i < sides; i++) {
-          const p1 = getPrismPoint(i, sides, R, ringRotation);
-          const p2 = getPrismPoint((i + 1) % sides, sides, R, ringRotation);
-
-          const x1 = p1.x;
-          const y1 = -hHeight + p1.y;
-          const x2 = p2.x;
-          const y2 = -hHeight + p2.y;
-
-          const thetaMid = ((i + 0.5) * Math.PI * 2) / sides + ringRotation;
-          const isBehind = TrigLUT.sin(thetaMid) < 0;
-
-          const segment = { x1, y1, x2, y2, color: mColor, width: 1.5 };
-          if (isBehind) {
-            backCageScratch.push(segment);
-          } else {
-            frontCageScratch.push(segment);
-          }
-        }
-      }
-
-      for (let i = 0; i < sides; i++) {
-        const p = getPrismPoint(i, sides, R, rotation);
-        const x = p.x;
-        const yBottom = -hBottom + p.y;
-        const yTop = -hTop + p.y;
-
-        const theta = (i * Math.PI * 2) / sides + rotation;
-        const isBehind = TrigLUT.sin(theta) < 0;
-
-        const segment = { x1: x, y1: yBottom, x2: x, y2: yTop, color: mColor, width: 2.0 };
-        if (isBehind) {
-          backCageScratch.push(segment);
-        } else {
-          frontCageScratch.push(segment);
-        }
-      }
+const getShapePoints = (family: ShapeFamily): {x: number, y: number}[] => {
+    switch(family) {
+        case "diamond": return [{x:0,y:-0.5},{x:0.5,y:0},{x:0,y:0.5},{x:-0.5,y:0}];
+        case "kite": return [{x:0,y:-0.5},{x:0.4,y:-0.1},{x:0,y:0.5},{x:-0.4,y:-0.1}];
+        case "needle": return [{x:0,y:-0.5},{x:0.15,y:0},{x:0,y:0.5},{x:-0.15,y:0}];
+        case "hex": return Array.from({length: 6}, (_, i) => ({ x: Math.cos(i * Math.PI / 3) * 0.5, y: Math.sin(i * Math.PI / 3) * 0.5 }));
+        case "saw": return Array.from({length: 16}, (_, i) => {
+            const r = i % 2 === 0 ? 0.52 : 0.33;
+            return { x: Math.cos(i * Math.PI / 8) * r, y: Math.sin(i * Math.PI / 8) * r };
+        });
+        case "orb":
+        case "blister": return Array.from({length: 10}, (_, i) => {
+            const wobble = family === "blister" ? 1 + Math.sin(i * 2.1) * 0.09 : 1;
+            return { x: Math.cos(i * Math.PI / 5) * 0.45 * wobble, y: Math.sin(i * Math.PI / 5) * 0.45 * wobble };
+        });
+        default: return [{x:-0.5,y:-0.5},{x:0.5,y:-0.5},{x:0.5,y:0.5},{x:-0.5,y:0.5}]; // corrupted-box fallback
     }
+};
 
-    const feetY = drawY + minion.size.height / 2;
-    ctx.translate(drawX, feetY);
-    ctx.rotate(minion.rotation);
-
-    const drawCageSegments = (segments: CageSegment[]) => {
-      for (let s = 0; s < segments.length; s++) {
-        const seg = segments[s];
-        ctx.strokeStyle = seg.color;
-        ctx.lineWidth = seg.width;
+const drawRoleGlyph = (ctx: CanvasRenderingContext2D, family: ShapeFamily, facing: number, localY: number, width: number, height: number) => {
+    ctx.save();
+    ctx.fillStyle = "rgba(3, 5, 8, 0.78)";
+    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 1;
+    if (family === "needle" || family === "kite") {
         ctx.beginPath();
-        ctx.moveTo(seg.x1, seg.y1);
-        ctx.lineTo(seg.x2, seg.y2);
+        ctx.moveTo(facing * 3, localY - height * 0.28);
+        ctx.lineTo(facing * 10, localY);
+        ctx.lineTo(facing * 3, localY + height * 0.28);
         ctx.stroke();
-      }
-    };
-
-    if (minion.isSpawning) {
-      ctx.save();
-      ctx.shadowBlur = 10;
-      ctx.lineCap = "round";
-      drawCageSegments(backCageScratch);
-      ctx.restore();
-    }
-
-    ctx.save();
-
-    if (minion.isSpawning) {
-      const secondHalfProgress = spawnPct <= 0.5 ? 0 : (spawnPct - 0.5) / 0.5;
-      ctx.globalAlpha = secondHalfProgress;
-    } else if (minion.isDying) {
-      const pct = minion.dissolveTimer / 0.5;
-      ctx.globalAlpha = pct;
-      ctx.translate(0, -minion.size.height / 2);
-      ctx.scale(pct, pct);
-      ctx.translate(0, minion.size.height / 2);
-    }
-
-    const geom = (minion.id.includes("TURRET") || minion.id.includes("SHIELDER") || minion.id.includes("BELL_HAMMER"))
-      ? Software3DRenderer.HEXAGON_GEOMETRY
-      : Software3DRenderer.BOX_GEOMETRY;
-
-    const yaw = 0.15 * minion.facingDirection + (minion.velocity.x / 450) * 0.35;
-    const pitch = 0.08 + (minion.velocity.y / 1000) * 0.22;
-    const pivotY = minion.squashPivot === "feet" ? "feet" : "center";
-    const posY = pivotY === "feet" ? 0 : -minion.size.height / 2;
-    const localY = minion.squashPivot === "feet" ? -minion.size.height / 2 : 0;
-
-    if (minion.isDying) {
-      const shrapnelProgress = 1.0 - minion.dissolveTimer / 0.5;
-      Software3DRenderer.drawFragments(
-        ctx,
-        geom,
-        0,
-        posY,
-        minion.size.width,
-        minion.size.height,
-        minion.visualScale.x,
-        minion.visualScale.y,
-        yaw,
-        pitch,
-        0,
-        minion.minionColor,
-        shrapnelProgress,
-        180,
-        minion.dissolveTimer / 0.5,
-        pivotY
-      );
+    } else if (family === "diamond" || family === "hex") {
+        ctx.fillRect(facing * 6 - 2, localY - 8, 4, 4);
+        ctx.fillRect(-facing * 4 - 1.5, localY + 4, 3, 3);
+    } else if (family === "blister" || family === "corrupted-box") {
+        ctx.beginPath();
+        ctx.arc(-width * 0.15, localY - 4, 4, 0, Math.PI * 2);
+        ctx.arc(width * 0.18, localY + 5, 5, 0, Math.PI * 2);
+        ctx.fill();
     } else {
-      let baseColor = minion.minionColor;
-      if (minion.health.isFlashing()) {
-        baseColor = "hsl(0, 0%, 100%)";
-      } else if (minion.attackState === "TELEGRAPH") {
-        baseColor = "hsl(45, 100%, 50%)";
-      }
-
-      Software3DRenderer.drawGeometry(
-        ctx,
-        geom,
-        0,
-        posY,
-        minion.size.width,
-        minion.size.height,
-        minion.visualScale.x,
-        minion.visualScale.y,
-        yaw,
-        pitch,
-        0,
-        baseColor,
-        1.0,
-        pivotY
-      );
+        ctx.fillRect(facing * 6.4 - 1.6, localY - 9.6, 4.8, 3.2);
     }
-
-    ctx.fillStyle = "black";
-    ctx.fillRect(minion.facingDirection * 6.4 - 1.6, localY - 9.6, 4.8, 3.2);
     ctx.restore();
+};
 
-    if (minion.isSpawning) {
-      ctx.save();
-      ctx.shadowBlur = 10;
-      ctx.lineCap = "round";
-      drawCageSegments(frontCageScratch);
-      ctx.restore();
+export class MinionVisuals {
+    static draw(ctx: CanvasRenderingContext2D, minion: BaseMinion, alpha: number): void {
+        if (minion.isDead) return;
+        const alphaVal = alpha !== undefined ? alpha : 1.0;
+        const drawX = minion.previousPosition.x + (minion.position.x - minion.previousPosition.x) * alphaVal;
+        const drawY = minion.previousPosition.y + (minion.position.y - minion.previousPosition.y) * alphaVal;
+        const nowTime = performance.now();
+        
+        backCageScratch.length = 0;
+        frontCageScratch.length = 0;
+        const totalSpawnTime = 1.2;
+        const elapsedTime = totalSpawnTime - minion.spawnTimer;
+        const spawnPct = Math.max(0, Math.min(1.0, elapsedTime / totalSpawnTime));
+
+        ctx.save();
+        if (minion.isSpawning) {
+            const profile = minion.getVisualProfile();
+            const points = getShapePoints(profile.shapeFamily);
+            const sides = points.length;
+            const H = minion.size.height;
+            const W = minion.size.width;
+            const R = W * 0.72;
+            const rotation = nowTime * 0.005;
+            const hBottom = (H / 2) - (H / 2) * (1.0 - spawnPct);
+            const hTop = (H / 2) + (H / 2) * (1.0 - spawnPct);
+            const ringHeights = [hBottom, (hBottom + hTop) / 2, hTop];
+            
+            const boss = minion.world.boss;
+            const phase = boss ? (boss as Boss).currentPhase || 1 : 1;
+            let mColor = `hsla(194, 62%, 52%, ${0.85})`;
+            if (phase === 2) mColor = `hsla(45, 100%, 60%, ${0.85})`;
+            else if (phase === 3) mColor = `hsla(350, 82%, 58%, ${0.85})`;
+
+            for (let rIdx = 0; rIdx < ringHeights.length; rIdx++) {
+                const hHeight = ringHeights[rIdx];
+                const dir = rIdx % 2 === 0 ? 1 : -1;
+                const ringRotation = rotation * dir;
+                for (let i = 0; i < sides; i++) {
+                    const p1 = points[i];
+                    const p2 = points[(i + 1) % sides];
+                    const x1 = p1.x * R * 2; const y1 = -hHeight + p1.y * R * 0.5;
+                    const x2 = p2.x * R * 2; const y2 = -hHeight + p2.y * R * 0.5;
+                    const thetaMid = ((i + 0.5) * Math.PI * 2) / sides + ringRotation;
+                    const isBehind = TrigLUT.sin(thetaMid) < 0;
+                    const segment = { x1, y1, x2, y2, color: mColor, width: 1.5 };
+                    if (isBehind) backCageScratch.push(segment); else frontCageScratch.push(segment);
+                }
+            }
+        }
+
+        const feetY = drawY + minion.size.height / 2;
+        ctx.translate(drawX, feetY);
+        ctx.rotate(minion.rotation);
+
+        if (minion.isSpawning) {
+            ctx.save();
+            ctx.shadowBlur = 10; ctx.lineCap = "round";
+            for (const seg of backCageScratch) { ctx.strokeStyle = seg.color; ctx.lineWidth = seg.width; ctx.beginPath(); ctx.moveTo(seg.x1, seg.y1); ctx.lineTo(seg.x2, seg.y2); ctx.stroke(); }
+            ctx.restore();
+        }
+
+        ctx.save();
+        if (minion.isSpawning) {
+            ctx.globalAlpha = spawnPct;
+        } else if (minion.isDying) {
+            const pct = minion.dissolveTimer / 0.5;
+            ctx.globalAlpha = pct;
+            ctx.translate(0, -minion.size.height / 2);
+            ctx.scale(pct, pct);
+            ctx.translate(0, minion.size.height / 2);
+        }
+
+        const profile = minion.getVisualProfile();
+        const points = getShapePoints(profile.shapeFamily);
+        const geom = profile.shapeFamily === "corrupted-box"
+            ? Software3DRenderer.getCorruptedBoxGeometry(minion.id, profile.corruption, profile.phaseOffset + minion.size.width, profile.danger > 0.5 ? 1 : 0)
+            : profile.shapeFamily === "saw"
+              ? Software3DRenderer.getRadialGeometry(minion.id + "-saw", profile.spikeCount || 8, 0.62, profile.phaseOffset, 0.44)
+              : Software3DRenderer.getPrismGeometry(minion.id + "-geom-" + profile.shapeFamily, points, 0.4 + profile.weight * 0.28);
+        
+        const yaw = 0.15 * minion.facingDirection + (minion.velocity.x / 450) * 0.35;
+        const pitch = 0.08 + (minion.velocity.y / 1000) * 0.22;
+        const pivotY = minion.squashPivot === "feet" ? "feet" : "center";
+        const posY = pivotY === "feet" ? 0 : -minion.size.height / 2;
+        const localY = minion.squashPivot === "feet" ? -minion.size.height / 2 : 0;
+
+        let baseColor = minion.minionColor;
+        if (minion.health.isFlashing()) baseColor = "hsl(0, 0%, 100%)";
+        else if (minion.attackState === "TELEGRAPH") baseColor = "hsl(45, 100%, 50%)";
+
+        const roll = profile.spinRate !== 0 ? nowTime * 0.001 * profile.spinRate : 0;
+        Software3DRenderer.drawGeometry(ctx, geom, 0, posY, minion.size.width, minion.size.height, minion.visualScale.x, minion.visualScale.y, yaw, pitch, roll, baseColor, 1.0, pivotY);
+
+        drawRoleGlyph(ctx, profile.shapeFamily, minion.facingDirection, localY, minion.size.width, minion.size.height);
+        ctx.restore();
+
+        if (minion.isSpawning) {
+            ctx.save();
+            ctx.shadowBlur = 10; ctx.lineCap = "round";
+            for (const seg of frontCageScratch) { ctx.strokeStyle = seg.color; ctx.lineWidth = seg.width; ctx.beginPath(); ctx.moveTo(seg.x1, seg.y1); ctx.lineTo(seg.x2, seg.y2); ctx.stroke(); }
+            ctx.restore();
+        }
+        ctx.restore();
     }
-
-    ctx.restore();
-  }
 }
 
 
@@ -16492,291 +16291,187 @@ export function drawVisualProfile(
 ────────────────────────────────────────────────────
 import { TrigLUT } from "../TrigLUT";
 
-export interface Vector3D {
-  x: number;
-  y: number;
-  z: number;
-}
-
-export interface Face {
-  indices: number[];
-  color: string;
-  baseNormal: Vector3D;
-}
-
-export interface Geometry {
-  vertices: Vector3D[];
-  faces: Face[];
-}
+export interface Vector3D { x: number; y: number; z: number; }
+export interface Face { indices: number[]; color: string; baseNormal: Vector3D; }
+export interface Geometry { vertices: Vector3D[]; faces: Face[]; }
 
 export class Software3DRenderer {
-  private static readonly LIGHT_DIR = { x: 0.577, y: -0.577, z: 0.577 };
+    private static readonly LIGHT_DIR = { x: 0.577, y: -0.577, z: 0.577 };
+    private static geometryCache = new Map<string, Geometry>();
 
-  public static readonly BOX_GEOMETRY: Geometry = {
-    vertices: [
-      { x: -0.5, y: -0.5, z: -0.5 },
-      { x: 0.5, y: -0.5, z: -0.5 },
-      { x: 0.5, y: 0.5, z: -0.5 },
-      { x: -0.5, y: 0.5, z: -0.5 },
-      { x: -0.5, y: -0.5, z: 0.5 },
-      { x: 0.5, y: -0.5, z: 0.5 },
-      { x: 0.5, y: 0.5, z: 0.5 },
-      { x: -0.5, y: 0.5, z: 0.5 },
-    ],
-    faces: [
-      { indices: [0, 1, 2, 3], color: "FRONT", baseNormal: { x: 0, y: 0, z: -1 } },
-      { indices: [1, 5, 6, 2], color: "RIGHT", baseNormal: { x: 1, y: 0, z: 0 } },
-      { indices: [5, 4, 7, 6], color: "BACK", baseNormal: { x: 0, y: 0, z: 1 } },
-      { indices: [4, 0, 3, 7], color: "LEFT", baseNormal: { x: -1, y: 0, z: 0 } },
-      { indices: [4, 5, 1, 0], color: "TOP", baseNormal: { x: 0, y: -1, z: 0 } },
-      { indices: [3, 2, 6, 7], color: "BOTTOM", baseNormal: { x: 0, y: 1, z: 0 } },
-    ]
-  };
+    public static readonly BOX_GEOMETRY: Geometry = {
+        vertices: [
+            { x: -0.5, y: -0.5, z: -0.5 }, { x: 0.5, y: -0.5, z: -0.5 },
+            { x: 0.5, y: 0.5, z: -0.5 }, { x: -0.5, y: 0.5, z: -0.5 },
+            { x: -0.5, y: -0.5, z: 0.5 }, { x: 0.5, y: -0.5, z: 0.5 },
+            { x: 0.5, y: 0.5, z: 0.5 }, { x: -0.5, y: 0.5, z: 0.5 },
+        ],
+        faces: [
+            { indices: [0, 1, 2, 3], color: "FRONT", baseNormal: { x: 0, y: 0, z: -1 } },
+            { indices: [1, 5, 6, 2], color: "RIGHT", baseNormal: { x: 1, y: 0, z: 0 } },
+            { indices: [5, 4, 7, 6], color: "BACK", baseNormal: { x: 0, y: 0, z: 1 } },
+            { indices: [4, 0, 3, 7], color: "LEFT", baseNormal: { x: -1, y: 0, z: 0 } },
+            { indices: [4, 5, 1, 0], color: "TOP", baseNormal: { x: 0, y: -1, z: 0 } },
+            { indices: [3, 2, 6, 7], color: "BOTTOM", baseNormal: { x: 0, y: 1, z: 0 } },
+        ]
+    };
 
-  public static readonly HEXAGON_GEOMETRY: Geometry = (() => {
-    const vertices: Vector3D[] = [];
-    const faces: Face[] = [];
-    for (let i = 0; i < 6; i++) {
-      const angle = (i * Math.PI) / 3;
-      vertices.push({ x: Math.cos(angle) * 0.5, y: Math.sin(angle) * 0.5, z: -0.5 });
-    }
-    for (let i = 0; i < 6; i++) {
-      const angle = (i * Math.PI) / 3;
-      vertices.push({ x: Math.cos(angle) * 0.5, y: Math.sin(angle) * 0.5, z: 0.5 });
-    }
-    faces.push({ indices: [5, 4, 3, 2, 1, 0], color: "FRONT", baseNormal: { x: 0, y: 0, z: -1 } });
-    faces.push({ indices: [6, 7, 8, 9, 10, 11], color: "BACK", baseNormal: { x: 0, y: 0, z: 1 } });
-    for (let i = 0; i < 6; i++) {
-      const next = (i + 1) % 6;
-      const angle = ((i + 0.5) * Math.PI) / 3;
-      faces.push({
-        indices: [i, next, next + 6, i + 6],
-        color: "SIDE",
-        baseNormal: { x: Math.cos(angle), y: Math.sin(angle), z: 0 }
-      });
-    }
-    return { vertices, faces };
-  })();
+    public static getPrismGeometry(id: string, points: {x: number, y: number}[], depth: number): Geometry {
+        if (this.geometryCache.has(id)) return this.geometryCache.get(id)!;
+        const vertices: Vector3D[] = [];
+        const faces: Face[] = [];
+        const halfDepth = depth / 2;
+        const n = points.length;
 
-  public static drawGeometry(
-    ctx: CanvasRenderingContext2D,
-    geometry: Geometry,
-    posX: number,
-    posY: number,
-    sizeW: number,
-    sizeH: number,
-    scaleX: number,
-    scaleY: number,
-    yaw: number,
-    pitch: number,
-    roll: number,
-    baseHslColor: string,
-    alpha: number = 1.0,
-    pivotY: "center" | "feet" = "center"
-  ) {
-    const projected: { x: number; y: number; z: number }[] = [];
-    const hslMatch = baseHslColor.match(/hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
-    const h = hslMatch ? parseFloat(hslMatch[1]) : 142;
-    const s = hslMatch ? parseFloat(hslMatch[2]) : 71;
-    const l = hslMatch ? parseFloat(hslMatch[3]) : 58;
-
-    const cosY = TrigLUT.cos(yaw);
-    const sinY = TrigLUT.sin(yaw);
-    const cosP = TrigLUT.cos(pitch);
-    const sinP = TrigLUT.sin(pitch);
-    const cosR = TrigLUT.cos(roll);
-    const sinR = TrigLUT.sin(roll);
-
-    for (let i = 0; i < geometry.vertices.length; i++) {
-      const v = geometry.vertices[i];
-      const lx = v.x * sizeW * scaleX;
-      
-      const ly = pivotY === "feet"
-        ? (v.y - 0.5) * sizeH * scaleY
-        : v.y * sizeH * scaleY;
-      
-      const lz = v.z * ((sizeW + sizeH) / 2);
-
-      const x1 = lx * cosY + lz * sinY;
-      const y1 = ly;
-      const z1 = -lx * sinY + lz * cosY;
-
-      const x2 = x1;
-      const y2 = y1 * cosP - z1 * sinP;
-      const z2 = y1 * sinP + z1 * cosP;
-
-      const x3 = x2 * cosR - y2 * sinR;
-      const y3 = x2 * sinR + y2 * cosR;
-
-      projected.push({ x: posX + x3, y: posY + y3, z: z2 });
-    }
-
-    const facesWithDepth = geometry.faces.map((face) => {
-      let sumZ = 0;
-      for (const idx of face.indices) {
-        sumZ += projected[idx].z;
-      }
-      const avgZ = sumZ / face.indices.length;
-
-      const n = face.baseNormal;
-      const nx1 = n.x * cosY + n.z * sinY;
-      const ny1 = n.y;
-      const nz1 = -n.x * sinY + n.z * cosY;
-
-      const nx2 = nx1;
-      const ny2 = ny1 * cosP - nz1 * sinP;
-      const nz2 = ny1 * sinP + nz1 * cosP;
-
-      const nx3 = nx2 * cosR - ny2 * sinR;
-      const ny3 = nx2 * sinR + ny2 * cosR;
-
-      const dot = nx3 * this.LIGHT_DIR.x + ny3 * this.LIGHT_DIR.y + nz2 * this.LIGHT_DIR.z;
-      const shadeFactor = 0.85 + dot * 0.3;
-
-      return { face, avgZ, shadeFactor, nz3: nz2 };
-    });
-
-    facesWithDepth.sort((a, b) => b.avgZ - a.avgZ);
-
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.lineJoin = "round";
-
-    for (const item of facesWithDepth) {
-      const face = item.face;
-      const shadedLightness = Math.max(10, Math.min(100, l * item.shadeFactor));
-      ctx.fillStyle = `hsl(${h}, ${s}%, ${shadedLightness}%)`;
-
-      const rimGlow = Math.pow(1.0 - Math.abs(item.nz3), 4.0);
-      ctx.lineWidth = 1.5 + rimGlow * 1.8;
-      ctx.strokeStyle = `hsla(${h}, ${s}%, ${Math.min(100, shadedLightness + rimGlow * 20)}%, ${0.35 + rimGlow * 0.35})`;
-
-      ctx.beginPath();
-      const firstIdx = face.indices[0];
-      ctx.moveTo(projected[firstIdx].x, projected[firstIdx].y);
-      for (let i = 1; i < face.indices.length; i++) {
-        const idx = face.indices[i];
-        ctx.lineTo(projected[idx].x, projected[idx].y);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  public static drawFragments(
-    ctx: CanvasRenderingContext2D,
-    geometry: Geometry,
-    posX: number,
-    posY: number,
-    sizeW: number,
-    sizeH: number,
-    scaleX: number,
-    scaleY: number,
-    yaw: number,
-    pitch: number,
-    roll: number,
-    baseHslColor: string,
-    shrapnelProgress: number,
-    explosionSpeed: number = 220,
-    alpha: number = 1.0,
-    pivotY: "center" | "feet" = "center"
-  ) {
-    const hslMatch = baseHslColor.match(/hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
-    const h = hslMatch ? parseFloat(hslMatch[1]) : 142;
-    const s = hslMatch ? parseFloat(hslMatch[2]) : 71;
-    const l = hslMatch ? parseFloat(hslMatch[3]) : 58;
-
-    const cosY = TrigLUT.cos(yaw);
-    const sinY = TrigLUT.sin(yaw);
-    const cosP = TrigLUT.cos(pitch);
-    const sinP = TrigLUT.sin(pitch);
-    const cosR = TrigLUT.cos(roll);
-    const sinR = TrigLUT.sin(roll);
-
-    const facesWithFragments = geometry.faces.map((face) => {
-      const n = face.baseNormal;
-      const nx1 = n.x * cosY + n.z * sinY;
-      const ny1 = n.y;
-      const nz1 = -n.x * sinY + n.z * cosY;
-
-      const nx2 = nx1;
-      const ny2 = ny1 * cosP - nz1 * sinP;
-      const nz2 = ny1 * sinP + nz1 * cosP;
-
-      const nx3 = nx2 * cosR - ny2 * sinR;
-      const ny3 = nx2 * sinR + ny2 * cosR;
-
-      const gravityEffect = 0.5 * 980 * shrapnelProgress * shrapnelProgress;
-      const offX = nx3 * explosionSpeed * shrapnelProgress;
-      const offY = ny3 * explosionSpeed * shrapnelProgress + gravityEffect;
-      const offZ = nz2 * explosionSpeed * shrapnelProgress;
-
-      const faceProj: { x: number; y: number; z: number }[] = [];
-      let sumZ = 0;
-
-      for (const idx of face.indices) {
-        const v = geometry.vertices[idx];
-        const lx = v.x * sizeW * scaleX;
+        points.forEach(p => vertices.push({ x: p.x, y: p.y, z: -halfDepth }));
+        points.forEach(p => vertices.push({ x: p.x, y: p.y, z: halfDepth }));
         
-        const ly = pivotY === "feet"
-          ? (v.y - 0.5) * sizeH * scaleY
-          : v.y * sizeH * scaleY;
+        const frontIndices = Array.from({length: n}, (_, i) => i);
+        const backIndices = Array.from({length: n}, (_, i) => i + n);
         
-        const lz = v.z * ((sizeW + sizeH) / 2);
-
-        const rx1 = lx * cosY + lz * sinY;
-        const ry1 = ly;
-        const rz1 = -lx * sinY + lz * cosY;
-
-        const rx2 = rx1;
-        const ry2 = ry1 * cosP - rz1 * sinP;
-        const rz2 = ry1 * sinP + rz1 * cosP;
-
-        const rx3 = rx2 * cosR - ry2 * sinR;
-        const ry3 = rx2 * sinR + ry2 * cosR;
-
-        const finalX = posX + rx3 + offX;
-        const finalY = posY + ry3 + offY;
-        const finalZ = rz2 + offZ;
-
-        faceProj.push({ x: finalX, y: finalY, z: finalZ });
-        sumZ += finalZ;
-      }
-
-      const avgZ = sumZ / face.indices.length;
-      const dot = nx3 * this.LIGHT_DIR.x + ny3 * this.LIGHT_DIR.y + nz2 * this.LIGHT_DIR.z;
-      const shadeFactor = 0.85 + dot * 0.3;
-
-      return { face, avgZ, shadeFactor, projected: faceProj, nz3: nz2 };
-    });
-
-    facesWithFragments.sort((a, b) => b.avgZ - a.avgZ);
-
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.lineJoin = "round";
-
-    for (const item of facesWithFragments) {
-      const shadedLightness = Math.max(10, Math.min(100, l * item.shadeFactor));
-      ctx.fillStyle = `hsl(${h}, ${s}%, ${shadedLightness}%)`;
-
-      const rimGlow = Math.pow(1.0 - Math.abs(item.nz3), 4.0);
-      ctx.lineWidth = 1.5 + rimGlow * 3.5;
-      ctx.strokeStyle = `hsla(${h}, ${s}%, ${Math.min(100, shadedLightness + rimGlow * 20)}%, ${0.35 + rimGlow * 0.35})`;
-
-      ctx.beginPath();
-      ctx.moveTo(item.projected[0].x, item.projected[0].y);
-      for (let i = 1; i < item.projected.length; i++) {
-        ctx.lineTo(item.projected[i].x, item.projected[i].y);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+        faces.push({ indices: frontIndices, color: "FRONT", baseNormal: { x: 0, y: 0, z: -1 } });
+        faces.push({ indices: [...backIndices].reverse(), color: "BACK", baseNormal: { x: 0, y: 0, z: 1 } });
+        
+        for (let i = 0; i < n; i++) {
+            const next = (i + 1) % n;
+            const dx = points[next].x - points[i].x;
+            const dy = points[next].y - points[i].y;
+            const angle = Math.atan2(dy, dx) + Math.PI / 2;
+            faces.push({
+                indices: [i, next, next + n, i + n],
+                color: "SIDE",
+                baseNormal: { x: Math.cos(angle), y: Math.sin(angle), z: 0 }
+            });
+        }
+        const geom = { vertices, faces };
+        this.geometryCache.set(id, geom);
+        return geom;
     }
-    ctx.restore();
-  }
+
+    public static getCorruptedBoxGeometry(id: string, corruption: number, seed: number, teeth = 0): Geometry {
+        const cacheId = `corrupt-box:${id}:${corruption.toFixed(2)}:${seed.toFixed(2)}:${teeth}`;
+        if (this.geometryCache.has(cacheId)) return this.geometryCache.get(cacheId)!;
+
+        const points: {x: number, y: number}[] = [];
+        const perSide = 4;
+        const pushPoint = (x: number, y: number, idx: number) => {
+            const wobbleX = Math.sin(seed + idx * 1.71) * 0.055 * corruption;
+            const wobbleY = Math.cos(seed * 1.3 + idx * 1.17) * 0.055 * corruption;
+            points.push({ x: x + wobbleX + y * 0.08 * corruption, y: y + wobbleY });
+        };
+
+        let idx = 0;
+        for (let i = 0; i <= perSide; i++) pushPoint(-0.5 + i / perSide, -0.5, idx++);
+        for (let i = 1; i <= perSide; i++) {
+            const y = -0.5 + i / perSide;
+            pushPoint(0.5 + (teeth > 0 && i % 2 === 1 ? 0.10 * corruption : 0), y, idx++);
+        }
+        for (let i = 1; i <= perSide; i++) pushPoint(0.5 - i / perSide, 0.5, idx++);
+        for (let i = 1; i < perSide; i++) {
+            const y = 0.5 - i / perSide;
+            pushPoint(-0.5 - (teeth > 1 && i % 2 === 1 ? 0.08 * corruption : 0), y, idx++);
+        }
+
+        const geom = this.getPrismGeometry(cacheId, points, 0.55 + corruption * 0.22);
+        this.geometryCache.set(cacheId, geom);
+        return geom;
+    }
+
+    public static getRadialGeometry(id: string, sides: number, innerRatio: number, phase = 0, depth = 0.5): Geometry {
+        const cacheId = `radial:${id}:${sides}:${innerRatio}:${phase}:${depth}`;
+        if (this.geometryCache.has(cacheId)) return this.geometryCache.get(cacheId)!;
+        const points = Array.from({ length: sides * 2 }, (_, i) => {
+            const r = i % 2 === 0 ? 0.5 : 0.5 * innerRatio;
+            const theta = phase + (i * Math.PI) / sides;
+            return { x: Math.cos(theta) * r, y: Math.sin(theta) * r };
+        });
+        const geom = this.getPrismGeometry(cacheId, points, depth);
+        this.geometryCache.set(cacheId, geom);
+        return geom;
+    }
+
+    public static drawGeometry(
+        ctx: CanvasRenderingContext2D, geometry: Geometry, posX: number, posY: number,
+        sizeW: number, sizeH: number, scaleX: number, scaleY: number,
+        yaw: number, pitch: number, roll: number, baseHslColor: string,
+        alpha: number = 1.0, pivotY: "center" | "feet" = "center"
+    ) {
+        const projected: { x: number; y: number; z: number }[] = [];
+        const hslMatch = baseHslColor.match(/hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
+        const h = hslMatch ? parseFloat(hslMatch[1]) : 142;
+        const s = hslMatch ? parseFloat(hslMatch[2]) : 71;
+        const l = hslMatch ? parseFloat(hslMatch[3]) : 58;
+        
+        const cosY = TrigLUT.cos(yaw), sinY = TrigLUT.sin(yaw);
+        const cosP = TrigLUT.cos(pitch), sinP = TrigLUT.sin(pitch);
+        const cosR = TrigLUT.cos(roll), sinR = TrigLUT.sin(roll);
+
+        for (let i = 0; i < geometry.vertices.length; i++) {
+            const v = geometry.vertices[i];
+            const lx = v.x * sizeW * scaleX;
+            const ly = pivotY === "feet" ? (v.y - 0.5) * sizeH * scaleY : v.y * sizeH * scaleY;
+            const lz = v.z * ((sizeW + sizeH) / 2);
+            
+            const x1 = lx * cosY + lz * sinY;
+            const y1 = ly;
+            const z1 = -lx * sinY + lz * cosY;
+            
+            const x2 = x1;
+            const y2 = y1 * cosP - z1 * sinP;
+            const z2 = y1 * sinP + z1 * cosP;
+            
+            const x3 = x2 * cosR - y2 * sinR;
+            const y3 = x2 * sinR + y2 * cosR;
+            
+            projected.push({ x: posX + x3, y: posY + y3, z: z2 });
+        }
+
+        const facesWithDepth = geometry.faces.map((face) => {
+            let sumZ = 0;
+            for (const idx of face.indices) sumZ += projected[idx].z;
+            const avgZ = sumZ / face.indices.length;
+            const n = face.baseNormal;
+            
+            const nx1 = n.x * cosY + n.z * sinY;
+            const ny1 = n.y;
+            const nz1 = -n.x * sinY + n.z * cosY;
+            const nx2 = nx1;
+            const ny2 = ny1 * cosP - nz1 * sinP;
+            const nz2 = ny1 * sinP + nz1 * cosP;
+            const nx3 = nx2 * cosR - ny2 * sinR;
+            const ny3 = nx2 * sinR + ny2 * cosR;
+            
+            const dot = nx3 * this.LIGHT_DIR.x + ny3 * this.LIGHT_DIR.y + nz2 * this.LIGHT_DIR.z;
+            const shadeFactor = 0.85 + dot * 0.3;
+            return { face, avgZ, shadeFactor, nz3: nz2 };
+        });
+
+        facesWithDepth.sort((a, b) => b.avgZ - a.avgZ);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.lineJoin = "round";
+
+        for (const item of facesWithDepth) {
+            const face = item.face;
+            const shadedLightness = Math.max(10, Math.min(100, l * item.shadeFactor));
+            ctx.fillStyle = `hsl(${h}, ${s}%, ${shadedLightness}%)`;
+            const rimGlow = Math.pow(1.0 - Math.abs(item.nz3), 4.0);
+            ctx.lineWidth = 1.5 + rimGlow * 1.8;
+            ctx.strokeStyle = `hsla(${h}, ${s}%, ${Math.min(100, shadedLightness + rimGlow * 20)}%, ${0.35 + rimGlow * 0.35})`;
+            
+            ctx.beginPath();
+            const firstIdx = face.indices[0];
+            ctx.moveTo(projected[firstIdx].x, projected[firstIdx].y);
+            for (let i = 1; i < face.indices.length; i++) {
+                const idx = face.indices[i];
+                ctx.lineTo(projected[idx].x, projected[idx].y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
 }
 
 
@@ -19829,6 +19524,9 @@ export class Projectile extends BaseEntity implements IPoolable {
       height: this.size.height,
       damage: this.damage,
       customColor: this.customColor,
+      kind: this.kind,
+      velX: this.velocity.x,
+      velY: this.velocity.y,
     });
 
     ctx.restore();
@@ -19841,277 +19539,125 @@ export class Projectile extends BaseEntity implements IPoolable {
 ────────────────────────────────────────────────────
 import { IWorld, IEntity, IEventPublisher, EntityStatus } from "@/core/Interfaces";
 import { TrigLUT } from "@/core/TrigLUT";
-
-export type ProjectileKind =
-  | "player-basic"
-  | "player-charged"
-  | "boss-bolt"
-  | "boss-fan"
-  | "boss-ring"
-  | "minion-shot"
-  | "shockwave";
-
-export interface ProjectileOptions {
-  kind: ProjectileKind;
-  radius: number;
-  trailLength: number;
-  trailWidth: number;
-  coreColor: string;
-  rimColor: string;
-  canClash: boolean;
-  pierce: number;
-  maxLifetime: number;
-}
-
-export interface TrailPoint {
-  x: number;
-  y: number;
-}
+import { Software3DRenderer } from "@/core/visuals/Software3DRenderer";
 
 export interface TrailDrawData {
-  drawX: number;
-  drawY: number;
-  oldestX: number;
-  oldestY: number;
-  trail: TrailPoint[];
-  trailHead: number;
-  trailCount: number;
-  trailRingSize: number;
-  damage: number;
-  customColor: string | null;
-  projWidth: number;
-  kind?: string;
+    drawX: number; drawY: number; oldestX: number; oldestY: number;
+    trail: {x: number, y: number}[]; trailHead: number; trailCount: number; trailRingSize: number;
+    damage: number; customColor: string | null; projWidth: number; kind?: string;
 }
-
 export interface BodyDrawData {
-  width: number;
-  height: number;
-  damage: number;
-  customColor: string | null;
-  kind?: string;
+    width: number; height: number; damage: number; customColor: string | null; kind?: string;
+    velX: number; velY: number;
 }
-
 export interface IProjectileStrategy {
-  updateSparks(world: IEventPublisher, posX: number, posY: number, velX: number, velY: number, damage: number): void;
-  shouldCheckClashes(): boolean;
-  getTargets(world: IWorld): IEntity[];
-  getProjIntensity(damage: number): number;
-  getBlastColor(damage: number, customColor: string | null): string;
-  getSparkCount(damage: number): number;
-  getSparkTurbulence(damage: number): number;
-  drawTrail(ctx: CanvasRenderingContext2D, data: TrailDrawData): void;
-  drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void;
+    updateSparks(world: IEventPublisher, posX: number, posY: number, velX: number, velY: number, damage: number): void;
+    shouldCheckClashes(): boolean;
+    getTargets(world: IWorld): IEntity[];
+    getProjIntensity(damage: number): number;
+    getBlastColor(damage: number, customColor: string | null): string;
+    getSparkCount(damage: number): number;
+    getSparkTurbulence(damage: number): number;
+    drawTrail(ctx: CanvasRenderingContext2D, data: TrailDrawData): void;
+    drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void;
 }
 
-function drawTrailPath(
-  ctx: CanvasRenderingContext2D,
-  startX: number, startY: number,
-  trail: TrailPoint[], trailHead: number, trailCount: number, trailRingSize: number
-) {
-  ctx.beginPath();
-  ctx.moveTo(startX, startY);
-  for (let j = 0; j < trailCount; j++) {
-    const idx = (trailHead - 1 - j + trailRingSize) % trailRingSize;
-    ctx.lineTo(trail[idx].x, trail[idx].y);
-  }
-  ctx.stroke();
+function drawTrailPath(ctx: CanvasRenderingContext2D, startX: number, startY: number, trail: {x: number, y: number}[], trailHead: number, trailCount: number, trailRingSize: number) {
+    ctx.beginPath(); ctx.moveTo(startX, startY);
+    for (let j = 0; j < trailCount; j++) {
+        const idx = (trailHead - 1 - j + trailRingSize) % trailRingSize;
+        ctx.lineTo(trail[idx].x, trail[idx].y);
+    }
+    ctx.stroke();
 }
 
 export class PlayerProjectileStrategy implements IProjectileStrategy {
-  updateSparks(world: IEventPublisher, posX: number, posY: number, velX: number, velY: number, damage: number): void {
-    const isLvl2 = damage >= 3;
-    const sparkChance = isLvl2 ? 0.35 : 0.08;
-    if (TrigLUT.random() < sparkChance) {
-      const angle = TrigLUT.atan2(velY, velX) + Math.PI + (TrigLUT.random() * 0.4 - 0.2);
-      world.publishSpark(posX, posY, angle, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line");
+    updateSparks(world: IEventPublisher, posX: number, posY: number, velX: number, velY: number, damage: number): void {
+        const isLvl2 = damage >= 3;
+        if (TrigLUT.random() < (isLvl2 ? 0.35 : 0.08)) {
+            const angle = TrigLUT.atan2(velY, velX) + Math.PI + (TrigLUT.random() * 0.4 - 0.2);
+            world.publishSpark(posX, posY, angle, isLvl2 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)", false, 1, "line");
+        }
     }
-  }
-
-  shouldCheckClashes(): boolean { return true; }
-
-  getTargets(world: IWorld): IEntity[] {
-    const targets: IEntity[] = [];
-    if (world.boss && !world.boss.isDead) {
-      targets.push(world.boss);
+    shouldCheckClashes(): boolean { return true; }
+    getTargets(world: IWorld): IEntity[] {
+        const targets: IEntity[] = [];
+        if (world.boss && !world.boss.isDead) targets.push(world.boss);
+        for (const minion of world.minions) if (minion && minion.status === EntityStatus.ACTIVE) targets.push(minion);
+        return targets;
     }
-    for (const minion of world.minions) {
-      if (minion && minion.status === EntityStatus.ACTIVE) {
-        targets.push(minion);
-      }
+    getProjIntensity(damage: number): number { return damage >= 3 ? 1.6 : 0.6; }
+    getBlastColor(damage: number, _customColor: string | null): string { return damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)"; }
+    getSparkCount(damage: number): number { return damage >= 3 ? 18 : 4; }
+    getSparkTurbulence(damage: number): number { return damage >= 3 ? 20 : 5; }
+    
+    drawTrail(ctx: CanvasRenderingContext2D, data: TrailDrawData): void {
+        const isLvl2 = data.damage >= 3;
+        ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
+        const mainColor = isLvl2 ? "rgba(234, 179, 8, " : "rgba(34, 197, 94, ";
+        const outerGrad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX, data.oldestY);
+        outerGrad.addColorStop(0.0, mainColor + "0.45)"); outerGrad.addColorStop(1.0, mainColor + "0.0)");
+        ctx.strokeStyle = outerGrad; ctx.lineWidth = data.projWidth * 1.5;
+        ctx.shadowColor = isLvl2 ? "rgba(234, 179, 8, 0.6)" : "rgba(34, 197, 94, 0.6)"; ctx.shadowBlur = 12;
+        drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
+        ctx.restore();
     }
-    return targets;
-  }
 
-  getProjIntensity(damage: number): number {
-    return damage >= 3 ? 1.6 : 0.6;
-  }
-
-  getBlastColor(damage: number, _customColor: string | null): string {
-    return damage >= 3 ? "hsl(45, 100%, 65%)" : "hsl(142, 71%, 58%)";
-  }
-
-  getSparkCount(damage: number): number {
-    return damage >= 3 ? 18 : 4;
-  }
-
-  getSparkTurbulence(damage: number): number {
-    return damage >= 3 ? 20 : 5;
-  }
-
-  drawTrail(ctx: CanvasRenderingContext2D, data: TrailDrawData): void {
-    const isLvl2 = data.damage >= 3;
-    ctx.save();
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    if (isLvl2) {
-      const outerGrad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX, data.oldestY);
-      outerGrad.addColorStop(0.0, "rgba(234, 179, 8, 0.45)");
-      outerGrad.addColorStop(0.4, "rgba(34, 197, 94, 0.35)");
-      outerGrad.addColorStop(1.0, "rgba(34, 197, 94, 0.0)");
-      ctx.strokeStyle = outerGrad;
-      ctx.lineWidth = data.projWidth * 1.5;
-      ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
-      ctx.shadowBlur = 20;
-      drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
-
-      const innerGrad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX, data.oldestY);
-      innerGrad.addColorStop(0.0, "rgba(255, 255, 255, 0.95)");
-      innerGrad.addColorStop(0.4, "rgba(234, 179, 8, 0.6)");
-      innerGrad.addColorStop(1.0, "rgba(34, 197, 94, 0.0)");
-      ctx.strokeStyle = innerGrad;
-      ctx.lineWidth = data.projWidth * 0.45;
-      ctx.shadowBlur = 0;
-      drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
-    } else {
-      const mainColor = "rgba(34, 197, 94, ";
-      const outerGrad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX, data.oldestY);
-      outerGrad.addColorStop(0.0, mainColor + "0.35)");
-      outerGrad.addColorStop(1.0, mainColor + "0.0)");
-      ctx.strokeStyle = outerGrad;
-      ctx.lineWidth = data.projWidth * 1.5;
-      ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
-      ctx.shadowBlur = 12;
-      drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
-
-      const innerGrad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX, data.oldestY);
-      innerGrad.addColorStop(0.0, "rgba(255, 255, 255, 0.95)");
-      innerGrad.addColorStop(1.0, mainColor + "0.0)");
-      ctx.strokeStyle = innerGrad;
-      ctx.lineWidth = data.projWidth * 0.45;
-      ctx.shadowBlur = 0;
-      drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
+    drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void {
+        const isLvl2 = data.damage >= 3;
+        const angle = TrigLUT.atan2(data.velY, data.velX);
+        ctx.save();
+        
+        if (isLvl2) {
+            const geom = Software3DRenderer.getPrismGeometry("proj-diamond", [{x:0,y:-0.5},{x:0.3,y:0},{x:0,y:0.5},{x:-0.3,y:0}], 0.8);
+            Software3DRenderer.drawGeometry(ctx, geom, 0, 0, data.width * 1.5, data.height * 1.5, 1, 1, 0, 0, angle + Math.PI/2, "hsl(45, 100%, 60%)", 1.0, "center");
+        } else {
+            Software3DRenderer.drawGeometry(ctx, Software3DRenderer.BOX_GEOMETRY, 0, 0, data.width, data.height, 1, 1, 0, 0, angle + Math.PI/4, "hsl(142, 72%, 56%)", 1.0, "center");
+        }
+        ctx.restore();
     }
-    ctx.restore();
-  }
-
-  drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void {
-    const isLvl2 = data.damage >= 3;
-    const radius = data.width / 2;
-    ctx.save();
-    if (isLvl2) {
-      ctx.fillStyle = "hsl(45, 100%, 60%)";
-      ctx.strokeStyle = "hsl(142, 72%, 56%)";
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(-radius, -radius);
-      ctx.quadraticCurveTo(0, -radius * 1.5, radius, -radius);
-      ctx.quadraticCurveTo(radius * 1.5, 0, radius, radius);
-      ctx.quadraticCurveTo(0, radius * 1.5, -radius, radius);
-      ctx.quadraticCurveTo(-radius * 1.5, 0, -radius, -radius);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(-radius * 0.45, -radius * 0.45, radius * 0.9, radius * 0.9);
-    } else {
-      ctx.fillStyle = "hsl(142, 72%, 56%)";
-      ctx.strokeStyle = "hsl(142, 100%, 80%)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.rect(-radius, -radius, data.width, data.height);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(-radius * 0.4, -radius * 0.4, radius * 0.8, radius * 0.8);
-    }
-    ctx.restore();
-  }
 }
 
 export class BossProjectileStrategy implements IProjectileStrategy {
-  updateSparks(_world: IEventPublisher, _posX: number, _posY: number, _velX: number, _velY: number, _damage: number): void {
-  }
+    updateSparks(): void {}
+    shouldCheckClashes(): boolean { return false; }
+    getTargets(world: IWorld): IEntity[] { return world.player && !world.player.isDead ? [world.player] : []; }
+    getProjIntensity(): number { return 1.0; }
+    getBlastColor(_damage: number, customColor: string | null): string { return customColor || "hsl(350, 80%, 60%)"; }
+    getSparkCount(): number { return 8; }
+    getSparkTurbulence(): number { return 5; }
+    
+    drawTrail(ctx: CanvasRenderingContext2D, data: TrailDrawData): void {
+        const trailColor = data.customColor || "hsl(350, 80%, 60%)";
+        const alphaColor0 = trailColor.startsWith("hsl") ? trailColor.replace("hsl", "hsla").replace(")", ", 0.45)") : "rgba(239, 68, 68, 0.45)";
+        const alphaColor1 = trailColor.startsWith("hsl") ? trailColor.replace("hsl", "hsla").replace(")", ", 0.0)") : "rgba(239, 68, 68, 0.0)";
+        const grad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX, data.oldestY);
+        grad.addColorStop(0.0, alphaColor0); grad.addColorStop(1.0, alphaColor1);
+        ctx.strokeStyle = grad; ctx.lineWidth = data.kind === "homing" ? data.projWidth * 1.6 : data.projWidth; ctx.lineCap = "round"; ctx.shadowBlur = 12;
+        ctx.shadowColor = alphaColor0;
+        drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
 
-  shouldCheckClashes(): boolean { return false; }
-
-  getTargets(world: IWorld): IEntity[] {
-    if (world.player && !world.player.isDead) {
-      return [world.player];
+        if (data.kind === "homing") {
+            ctx.setLineDash([2, 7]);
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = "rgba(255,255,255,0.45)";
+            drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
+            ctx.setLineDash([]);
+        }
     }
-    return [];
-  }
 
-  getProjIntensity(_damage: number): number {
-    return 1.0;
-  }
-
-  getBlastColor(_damage: number, customColor: string | null): string {
-    return customColor || "hsl(350, 80%, 60%)";
-  }
-
-  getSparkCount(_damage: number): number {
-    return 8;
-  }
-
-  getSparkTurbulence(_damage: number): number {
-    return 5;
-  }
-
-  drawTrail(ctx: CanvasRenderingContext2D, data: TrailDrawData): void {
-    const trailColor = data.customColor || "hsl(350, 80%, 60%)";
-    const alphaColor0 = trailColor.startsWith("hsl")
-      ? trailColor.replace("hsl", "hsla").replace(")", ", 0.45)")
-      : "rgba(239, 68, 68, 0.45)";
-    const alphaColor1 = trailColor.startsWith("hsl")
-      ? trailColor.replace("hsl", "hsla").replace(")", ", 0.0)")
-      : "rgba(239, 68, 68, 0.0)";
-    const shadowCol = trailColor.startsWith("hsl")
-      ? trailColor.replace("hsl", "hsla").replace(")", ", 0.5)")
-      : "rgba(239, 68, 68, 0.5)";
-
-    const grad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX, data.oldestY);
-    grad.addColorStop(0.0, alphaColor0);
-    grad.addColorStop(1.0, alphaColor1);
-    ctx.strokeStyle = grad;
-    ctx.shadowColor = shadowCol;
-    ctx.lineWidth = data.projWidth;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.shadowBlur = 12;
-    drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
-  }
-
-  drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void {
-    const radius = data.width / 2;
-    ctx.save();
-    const bodyColor = data.customColor || "hsl(350, 82%, 58%)";
-    ctx.fillStyle = bodyColor;
-    ctx.strokeStyle = "hsl(0, 100%, 72%)";
-    ctx.lineWidth = 1.5;
-
-    ctx.beginPath();
-    ctx.moveTo(-radius * 1.8, 0);
-    ctx.lineTo(0, -radius * 0.35);
-    ctx.lineTo(radius * 1.2, 0);
-    ctx.lineTo(0, radius * 0.35);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-  }
+    drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void {
+        const angle = TrigLUT.atan2(data.velY, data.velX);
+        const geom = data.kind === "homing"
+            ? Software3DRenderer.getRadialGeometry("proj-homing-saw", 6, 0.52, 0, 0.55)
+            : data.damage >= 2
+              ? Software3DRenderer.getPrismGeometry("proj-heavy-needle", [{x:0,y:-0.58},{x:0.34,y:0},{x:0,y:0.58},{x:-0.34,y:0}], 0.7)
+              : Software3DRenderer.getPrismGeometry("proj-needle", [{x:0,y:-0.5},{x:0.2,y:0},{x:0,y:0.5},{x:-0.2,y:0}], 0.6);
+        ctx.save();
+        const spin = data.kind === "homing" ? performance.now() * 0.006 : angle + Math.PI / 2;
+        Software3DRenderer.drawGeometry(ctx, geom, 0, 0, data.width * 2, data.height * 2, 1, 1, 0, 0, spin, data.customColor || "hsl(350, 82%, 58%)", 1.0, "center");
+        ctx.restore();
+    }
 }
 
 export const playerProjectileStrategy = new PlayerProjectileStrategy();

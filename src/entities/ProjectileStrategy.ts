@@ -68,7 +68,6 @@ export class PlayerProjectileStrategy implements IProjectileStrategy {
         const isLvl2 = data.damage >= 3;
         const angle = TrigLUT.atan2(data.velY, data.velX);
         ctx.save();
-        ctx.translate(data.width / 2, data.height / 2); // Offset to center
         
         if (isLvl2) {
             const geom = Software3DRenderer.getPrismGeometry("proj-diamond", [{x:0,y:-0.5},{x:0.3,y:0},{x:0,y:0.5},{x:-0.3,y:0}], 0.8);
@@ -95,16 +94,29 @@ export class BossProjectileStrategy implements IProjectileStrategy {
         const alphaColor1 = trailColor.startsWith("hsl") ? trailColor.replace("hsl", "hsla").replace(")", ", 0.0)") : "rgba(239, 68, 68, 0.0)";
         const grad = ctx.createLinearGradient(data.drawX, data.drawY, data.oldestX, data.oldestY);
         grad.addColorStop(0.0, alphaColor0); grad.addColorStop(1.0, alphaColor1);
-        ctx.strokeStyle = grad; ctx.lineWidth = data.projWidth; ctx.lineCap = "round"; ctx.shadowBlur = 12;
+        ctx.strokeStyle = grad; ctx.lineWidth = data.kind === "homing" ? data.projWidth * 1.6 : data.projWidth; ctx.lineCap = "round"; ctx.shadowBlur = 12;
+        ctx.shadowColor = alphaColor0;
         drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
+
+        if (data.kind === "homing") {
+            ctx.setLineDash([2, 7]);
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = "rgba(255,255,255,0.45)";
+            drawTrailPath(ctx, data.drawX, data.drawY, data.trail, data.trailHead, data.trailCount, data.trailRingSize);
+            ctx.setLineDash([]);
+        }
     }
 
     drawBody(ctx: CanvasRenderingContext2D, data: BodyDrawData): void {
         const angle = TrigLUT.atan2(data.velY, data.velX);
-        const geom = Software3DRenderer.getPrismGeometry("proj-needle", [{x:0,y:-0.5},{x:0.2,y:0},{x:0,y:0.5},{x:-0.2,y:0}], 0.6);
+        const geom = data.kind === "homing"
+            ? Software3DRenderer.getRadialGeometry("proj-homing-saw", 6, 0.52, 0, 0.55)
+            : data.damage >= 2
+              ? Software3DRenderer.getPrismGeometry("proj-heavy-needle", [{x:0,y:-0.58},{x:0.34,y:0},{x:0,y:0.58},{x:-0.34,y:0}], 0.7)
+              : Software3DRenderer.getPrismGeometry("proj-needle", [{x:0,y:-0.5},{x:0.2,y:0},{x:0,y:0.5},{x:-0.2,y:0}], 0.6);
         ctx.save();
-        ctx.translate(data.width / 2, data.height / 2);
-        Software3DRenderer.drawGeometry(ctx, geom, 0, 0, data.width * 2, data.height * 2, 1, 1, 0, 0, angle + Math.PI/2, data.customColor || "hsl(350, 82%, 58%)", 1.0, "center");
+        const spin = data.kind === "homing" ? performance.now() * 0.006 : angle + Math.PI / 2;
+        Software3DRenderer.drawGeometry(ctx, geom, 0, 0, data.width * 2, data.height * 2, 1, 1, 0, 0, spin, data.customColor || "hsl(350, 82%, 58%)", 1.0, "center");
         ctx.restore();
     }
 }

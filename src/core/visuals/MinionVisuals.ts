@@ -14,9 +14,42 @@ const getShapePoints = (family: ShapeFamily): {x: number, y: number}[] => {
         case "kite": return [{x:0,y:-0.5},{x:0.4,y:-0.1},{x:0,y:0.5},{x:-0.4,y:-0.1}];
         case "needle": return [{x:0,y:-0.5},{x:0.15,y:0},{x:0,y:0.5},{x:-0.15,y:0}];
         case "hex": return Array.from({length: 6}, (_, i) => ({ x: Math.cos(i * Math.PI / 3) * 0.5, y: Math.sin(i * Math.PI / 3) * 0.5 }));
-        case "blister": return Array.from({length: 8}, (_, i) => ({ x: Math.cos(i * Math.PI / 4) * 0.45, y: Math.sin(i * Math.PI / 4) * 0.45 }));
+        case "saw": return Array.from({length: 16}, (_, i) => {
+            const r = i % 2 === 0 ? 0.52 : 0.33;
+            return { x: Math.cos(i * Math.PI / 8) * r, y: Math.sin(i * Math.PI / 8) * r };
+        });
+        case "orb":
+        case "blister": return Array.from({length: 10}, (_, i) => {
+            const wobble = family === "blister" ? 1 + Math.sin(i * 2.1) * 0.09 : 1;
+            return { x: Math.cos(i * Math.PI / 5) * 0.45 * wobble, y: Math.sin(i * Math.PI / 5) * 0.45 * wobble };
+        });
         default: return [{x:-0.5,y:-0.5},{x:0.5,y:-0.5},{x:0.5,y:0.5},{x:-0.5,y:0.5}]; // corrupted-box fallback
     }
+};
+
+const drawRoleGlyph = (ctx: CanvasRenderingContext2D, family: ShapeFamily, facing: number, localY: number, width: number, height: number) => {
+    ctx.save();
+    ctx.fillStyle = "rgba(3, 5, 8, 0.78)";
+    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 1;
+    if (family === "needle" || family === "kite") {
+        ctx.beginPath();
+        ctx.moveTo(facing * 3, localY - height * 0.28);
+        ctx.lineTo(facing * 10, localY);
+        ctx.lineTo(facing * 3, localY + height * 0.28);
+        ctx.stroke();
+    } else if (family === "diamond" || family === "hex") {
+        ctx.fillRect(facing * 6 - 2, localY - 8, 4, 4);
+        ctx.fillRect(-facing * 4 - 1.5, localY + 4, 3, 3);
+    } else if (family === "blister" || family === "corrupted-box") {
+        ctx.beginPath();
+        ctx.arc(-width * 0.15, localY - 4, 4, 0, Math.PI * 2);
+        ctx.arc(width * 0.18, localY + 5, 5, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        ctx.fillRect(facing * 6.4 - 1.6, localY - 9.6, 4.8, 3.2);
+    }
+    ctx.restore();
 };
 
 export class MinionVisuals {
@@ -93,7 +126,11 @@ export class MinionVisuals {
 
         const profile = minion.getVisualProfile();
         const points = getShapePoints(profile.shapeFamily);
-        const geom = Software3DRenderer.getPrismGeometry(minion.id + "-geom", points, 0.4);
+        const geom = profile.shapeFamily === "corrupted-box"
+            ? Software3DRenderer.getCorruptedBoxGeometry(minion.id, profile.corruption, profile.phaseOffset + minion.size.width, profile.danger > 0.5 ? 1 : 0)
+            : profile.shapeFamily === "saw"
+              ? Software3DRenderer.getRadialGeometry(minion.id + "-saw", profile.spikeCount || 8, 0.62, profile.phaseOffset, 0.44)
+              : Software3DRenderer.getPrismGeometry(minion.id + "-geom-" + profile.shapeFamily, points, 0.4 + profile.weight * 0.28);
         
         const yaw = 0.15 * minion.facingDirection + (minion.velocity.x / 450) * 0.35;
         const pitch = 0.08 + (minion.velocity.y / 1000) * 0.22;
@@ -105,10 +142,10 @@ export class MinionVisuals {
         if (minion.health.isFlashing()) baseColor = "hsl(0, 0%, 100%)";
         else if (minion.attackState === "TELEGRAPH") baseColor = "hsl(45, 100%, 50%)";
 
-        Software3DRenderer.drawGeometry(ctx, geom, 0, posY, minion.size.width, minion.size.height, minion.visualScale.x, minion.visualScale.y, yaw, pitch, 0, baseColor, 1.0, pivotY);
+        const roll = profile.spinRate !== 0 ? nowTime * 0.001 * profile.spinRate : 0;
+        Software3DRenderer.drawGeometry(ctx, geom, 0, posY, minion.size.width, minion.size.height, minion.visualScale.x, minion.visualScale.y, yaw, pitch, roll, baseColor, 1.0, pivotY);
 
-        ctx.fillStyle = "black";
-        ctx.fillRect(minion.facingDirection * 6.4 - 1.6, localY - 9.6, 4.8, 3.2);
+        drawRoleGlyph(ctx, profile.shapeFamily, minion.facingDirection, localY, minion.size.width, minion.size.height);
         ctx.restore();
 
         if (minion.isSpawning) {

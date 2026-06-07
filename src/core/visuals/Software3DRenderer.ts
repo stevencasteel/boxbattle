@@ -57,6 +57,48 @@ export class Software3DRenderer {
         return geom;
     }
 
+    public static getCorruptedBoxGeometry(id: string, corruption: number, seed: number, teeth = 0): Geometry {
+        const cacheId = `corrupt-box:${id}:${corruption.toFixed(2)}:${seed.toFixed(2)}:${teeth}`;
+        if (this.geometryCache.has(cacheId)) return this.geometryCache.get(cacheId)!;
+
+        const points: {x: number, y: number}[] = [];
+        const perSide = 4;
+        const pushPoint = (x: number, y: number, idx: number) => {
+            const wobbleX = Math.sin(seed + idx * 1.71) * 0.055 * corruption;
+            const wobbleY = Math.cos(seed * 1.3 + idx * 1.17) * 0.055 * corruption;
+            points.push({ x: x + wobbleX + y * 0.08 * corruption, y: y + wobbleY });
+        };
+
+        let idx = 0;
+        for (let i = 0; i <= perSide; i++) pushPoint(-0.5 + i / perSide, -0.5, idx++);
+        for (let i = 1; i <= perSide; i++) {
+            const y = -0.5 + i / perSide;
+            pushPoint(0.5 + (teeth > 0 && i % 2 === 1 ? 0.10 * corruption : 0), y, idx++);
+        }
+        for (let i = 1; i <= perSide; i++) pushPoint(0.5 - i / perSide, 0.5, idx++);
+        for (let i = 1; i < perSide; i++) {
+            const y = 0.5 - i / perSide;
+            pushPoint(-0.5 - (teeth > 1 && i % 2 === 1 ? 0.08 * corruption : 0), y, idx++);
+        }
+
+        const geom = this.getPrismGeometry(cacheId, points, 0.55 + corruption * 0.22);
+        this.geometryCache.set(cacheId, geom);
+        return geom;
+    }
+
+    public static getRadialGeometry(id: string, sides: number, innerRatio: number, phase = 0, depth = 0.5): Geometry {
+        const cacheId = `radial:${id}:${sides}:${innerRatio}:${phase}:${depth}`;
+        if (this.geometryCache.has(cacheId)) return this.geometryCache.get(cacheId)!;
+        const points = Array.from({ length: sides * 2 }, (_, i) => {
+            const r = i % 2 === 0 ? 0.5 : 0.5 * innerRatio;
+            const theta = phase + (i * Math.PI) / sides;
+            return { x: Math.cos(theta) * r, y: Math.sin(theta) * r };
+        });
+        const geom = this.getPrismGeometry(cacheId, points, depth);
+        this.geometryCache.set(cacheId, geom);
+        return geom;
+    }
+
     public static drawGeometry(
         ctx: CanvasRenderingContext2D, geometry: Geometry, posX: number, posY: number,
         sizeW: number, sizeH: number, scaleX: number, scaleY: number,

@@ -347,6 +347,9 @@ export class Projectile extends BaseEntity implements IPoolable {
       height: this.size.height,
       damage: this.damage,
       customColor: this.customColor,
+      kind: this.kind,
+      velX: this.velocity.x,
+      velY: this.velocity.y,
     });
 
     ctx.restore();
