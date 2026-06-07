@@ -58,7 +58,7 @@ export class SimplePatrolState implements IState {
 export class PitLancerMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 32, height: 42 };
+    this.size = { width: 32, height: 44 };
     this.patrolSpeed = 120;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 6,
@@ -113,7 +113,7 @@ export class CompassWaspMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 24, height: 24 };
+    this.size = { width: 28, height: 28 };
     this.physics.gravity = 0;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 3,
@@ -205,7 +205,7 @@ export class CompassWaspMinion extends BaseMinion {
 export class ClampjawMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 44, height: 35 };
+    this.size = { width: 48, height: 36 };
     this.patrolSpeed = 70;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 10,
@@ -257,7 +257,7 @@ export class HymnNailMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 30, height: 60 };
+    this.size = { width: 32, height: 64 };
     this.physics.gravity = 0;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 4,
@@ -343,7 +343,7 @@ export class BlisterOxMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 56, height: 48 };
+    this.size = { width: 64, height: 48 };
     this.patrolSpeed = 40;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 12,
@@ -447,7 +447,7 @@ export class BellHammerMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 44, height: 44 };
+    this.size = { width: 48, height: 48 };
     this.patrolSpeed = 60;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 8,
@@ -539,7 +539,7 @@ export class ShardChoirMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 22, height: 22 };
+    this.size = { width: 24, height: 24 };
     this.physics.gravity = 0;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 2,

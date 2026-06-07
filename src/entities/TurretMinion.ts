@@ -8,7 +8,7 @@ import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 export class TurretMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 35.2, height: 35.2 };
+    this.size = { width: 36, height: 36 };
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 5,
       invincibilityDuration: 0.15,

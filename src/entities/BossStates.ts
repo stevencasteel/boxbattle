@@ -343,7 +343,7 @@ export class BossAttackState extends BossState implements IBossAttackState {
         "hsl(15, 82%, 48%)",
         "heavy-block"
       );
-      proj.size = { width: 44, height: 44 };
+      proj.size = { width: 40, height: 40 };
     }
   }
 
@@ -440,7 +440,7 @@ export class BossAttackState extends BossState implements IBossAttackState {
       color,
       "needle"
     );
-    proj.size = { width: 17.6, height: 17.6 };
+    proj.size = { width: 16, height: 16 };
   }
 
   private fireGapRing() {

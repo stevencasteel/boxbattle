@@ -8,7 +8,7 @@ import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 export class FlyerMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 28.8, height: 28.8 };
+    this.size = { width: 32, height: 32 };
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 3,
       invincibilityDuration: 0.15,

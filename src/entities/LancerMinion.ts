@@ -20,7 +20,7 @@ export class LancerMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 32, height: 40 };
+    this.size = { width: 32, height: 44 };
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 6,
       invincibilityDuration: 0.15,
