@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BEBRrkOW.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CxYJz_LM.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -2379,7 +2379,6 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
   const gameResult = useSessionStore((state) => state.gameResult);
   const isGameOver = gameResult !== "PLAYING";
   const activeBHP = isGameOver ? 0 : bossHP;
-  // Removed unused currentStageIndex
 
   const bossWidth = (activeBHP / UNITS.BOSS_MAX_HP) * 100 + "%";
 
@@ -5724,7 +5723,6 @@ import { SpawnAnchor, MinionType } from "./levelData";
 import { MinionFactory } from "@/entities/MinionFactory";
 import { TrigLUT } from "./TrigLUT";
 import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
-// Removed unused useSessionStore
 
 export class EncounterDirector {
   private world: IWorld;
@@ -5818,7 +5816,6 @@ export class EncounterDirector {
 
     // Calculate maximum threat based on active boss footprint and narrow map constraints
     const bossActive = this.world.boss && !this.world.boss.isDead;
-    // Removed unused stageIdx
     const isNarrowMap = false; // Narrow Redoubt
 
     let maxThreatBudget = bossActive ? 4 : 8;
@@ -7175,12 +7172,6 @@ export interface IRenderable {
   draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
 }
 
-export interface IAbilityUser {
-  hasDoubleJump?: boolean;
-  healingCharges?: number;
-  facingDirection?: number;
-}
-
 export interface IEntity extends ITransform {
   id: string;
   isDead: boolean;
@@ -7279,10 +7270,6 @@ export interface IWorld extends IEntityFactory {
   events: IEventBus;
   audio: IAudioManager;
   input: IInputProvider;
-}
-
-export interface IDamageRecorder {
-  registerDamageDealt(): void;
 }
 
 export interface IEventBus {
@@ -8654,7 +8641,6 @@ export class StateProjectionSystem {
 }
 `,"src/core/StaticMapRenderer.ts":`import { Rectangle } from "./Interfaces";
 import { UNITS } from "@/core/Units";
-// Removed unused useSessionStore
 import { GAUNTLET_STAGES } from "./design/GauntletStages";
 
 export class StaticMapRenderer {
@@ -9032,9 +9018,6 @@ export function zeroVec(v: Vector2D): Vector2D {
   return v;
 }
 
-export function cloneVec(src: Vector2D): Vector2D {
-  return { x: src.x, y: src.y };
-}
 `,"src/core/World.ts":`import { IWorld, IEntity, IPhysicsWorld, IProjectile, Rectangle, IEventBus, IAudioManager, IInputProvider } from "./Interfaces";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { ObjectPool } from "./ObjectPool";
@@ -10974,7 +10957,6 @@ export const GAUNTLET_STAGES: StageConfig[] = [
       { x: 720, y: 440, width: 240, height: 16 },
     ],
     hazards: [{ x: 320, y: 920, width: 360, height: 80 }],
-    spawners: [],
     spawnAnchors: [
       { id: "left-catwalk", x: 140, y: 392, tags: ["high", "left", "perch"] },
       { id: "right-catwalk", x: 860, y: 392, tags: ["high", "right", "perch"] },
@@ -11630,12 +11612,6 @@ export type MinionType =
   | "BELL_HAMMER"
   | "SHARD_CHOIR";
 
-export interface SpawnerConfig {
-  type: MinionType;
-  x: number;
-  y: number;
-}
-
 export interface SpawnAnchor {
   id: string;
   x: number;
@@ -11664,7 +11640,6 @@ export interface LevelConfig {
   solids: Rectangle[];
   onewayPlatforms: Rectangle[];
   hazards: Rectangle[];
-  spawners: SpawnerConfig[];
   spawnAnchors: SpawnAnchor[];
   encounterWaves: EncounterWave[];
   playerStart: { x: number; y: number };
@@ -11686,7 +11661,6 @@ export const defaultLevelConfig: LevelConfig = {
     { x: 720, y: 440, width: 240, height: 16 },
   ],
   hazards: [{ x: 320, y: 920, width: 360, height: 80 }],
-  spawners: [],
   spawnAnchors: [
     { id: "left-catwalk", x: 140, y: 392, tags: ["high", "left", "perch"] },
     { id: "right-catwalk", x: 860, y: 392, tags: ["high", "right", "perch"] },
@@ -11760,31 +11734,6 @@ export const defaultLevelConfig: LevelConfig = {
   playerStart: { x: 120, y: 800 },
   bossStart: { x: 840, y: 800 },
 };
-
-export class LevelLoader {
-  public static parse(jsonString: string): LevelConfig {
-    try {
-      const parsed = JSON.parse(jsonString);
-      if (
-        parsed &&
-        Array.isArray(parsed.solids) &&
-        Array.isArray(parsed.onewayPlatforms) &&
-        Array.isArray(parsed.hazards) &&
-        parsed.playerStart &&
-        parsed.bossStart
-      ) {
-        return parsed as LevelConfig;
-      }
-    } catch (e) {
-      console.error("Failed to parse dynamic LevelConfig:", e);
-    }
-    return defaultLevelConfig;
-  }
-
-  public static stringify(config: LevelConfig): string {
-    return JSON.stringify(config, null, 2);
-  }
-}
 `,"src/core/menuNavigation.ts":`import { settingsManager } from "./SettingsManager";
 
 export function getKeyMap() {
@@ -13048,76 +12997,6 @@ export class Software3DRenderer {
         };
     }
 
-    public static drawSacredGeometry(
-        ctx: CanvasRenderingContext2D,
-        _stageIdx: number,
-        time: number,
-        glowColor: string,
-        project: (u: number, v: number) => { x: number; y: number }
-    ) {
-        ctx.save();
-        ctx.strokeStyle = glowColor;
-        ctx.lineWidth = 1.5;
-        ctx.lineJoin = "round";
-        ctx.lineCap = "round";
-
-        const drawCircle = (r: number) => {
-            ctx.beginPath();
-            const steps = 32;
-            for (let i = 0; i <= steps; i++) {
-                const theta = (i * Math.PI * 2) / steps;
-                const p = project(r * Math.cos(theta), r * Math.sin(theta));
-                if (i === 0) ctx.moveTo(p.x, p.y);
-                else ctx.lineTo(p.x, p.y);
-            }
-            ctx.stroke();
-        };
-
-        const spacing = 0.22;
-        const scroll = (time * 0.4) % spacing;
-
-        for (let r = scroll; r < 0.9; r += spacing) {
-            if (r > 0.01) {
-                drawCircle(r);
-            }
-        }
-
-        for (let offset = -1.2; offset < 1.2; offset += spacing) {
-            ctx.beginPath();
-            let started = false;
-            for (let u = -0.6; u <= 0.6; u += 0.05) {
-                const v = offset + scroll + u;
-                if (v >= -0.6 && v <= 0.6) {
-                    const p = project(u, v);
-                    if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                    else ctx.lineTo(p.x, p.y);
-                }
-            }
-            ctx.stroke();
-        }
-
-        const zigCount = 16;
-        for (let offset = -1.2; offset < 1.2; offset += spacing) {
-            ctx.beginPath();
-            let started = false;
-            for (let i = 0; i <= zigCount; i++) {
-                const t = i / zigCount;
-                const u = -0.6 + 1.2 * t;
-                const baseV = offset - scroll + u;
-                if (baseV >= -0.6 && baseV <= 0.6) {
-                    const amp = 0.045;
-                    const zigzag = (i % 2 === 0 ? 1 : -1) * amp;
-                    const p = project(u + zigzag, baseV - zigzag);
-                    if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                    else ctx.lineTo(p.x, p.y);
-                }
-            }
-            ctx.stroke();
-        }
-
-        ctx.restore();
-    }
-
     public static drawGeometry(
         ctx: CanvasRenderingContext2D, geometry: Geometry, posX: number, posY: number,
         sizeW: number, sizeH: number, scaleX: number, scaleY: number,
@@ -13830,7 +13709,6 @@ export class Boss extends BaseEntity {
   }
 }
 `,"src/entities/BossAttackPatterns.ts":`import { Boss } from "./Boss";
-// Removed unused useSessionStore
 
 export type AttackTag = "projectile-heavy" | "melee" | "arena-denial" | "reposition";
 
@@ -17322,66 +17200,6 @@ export class ShielderMinion extends BaseMinion {
     }
   }
 }
-`,"src/entities/Spawner.ts":`import { BaseMinion, MinionType } from "./BaseMinion";
-import { MinionFactory } from "./MinionFactory";
-import { IWorld } from "@/core/Interfaces";
-
-export class Spawner {
-  public position: { x: number; y: number };
-  public spawnType: MinionType;
-  public world: IWorld;
-
-  private activeMinion: BaseMinion | null = null;
-  private respawnTimer: number = 0;
-  private readonly respawnDelay: number = 5.0;
-
-  constructor(type: MinionType, x: number, y: number, world: IWorld) {
-    this.spawnType = type;
-    this.position = { x, y };
-    this.world = world;
-    this.spawnMinion();
-  }
-
-  public update(dt: number) {
-    if (this.activeMinion) {
-      if (this.activeMinion.isDead) {
-        const idx = this.world.minions.indexOf(this.activeMinion);
-        if (idx !== -1) {
-          const last = this.world.minions[this.world.minions.length - 1];
-          this.world.minions[idx] = last;
-          this.world.minions.pop();
-        }
-        this.activeMinion = null;
-        this.respawnTimer = this.respawnDelay;
-      }
-    } else {
-      this.respawnTimer -= dt;
-      if (this.respawnTimer <= 0) {
-        this.spawnMinion();
-      }
-    }
-  }
-
-  private spawnMinion() {
-    const minionId = \`minion-\${this.spawnType}-\${Date.now()}-\${Math.floor(Math.random() * 1000000)}\`;
-    const minion = MinionFactory.createMinion(this.spawnType, minionId, this.position, this.world);
-    this.activeMinion = minion;
-    this.world.minions.push(minion);
-  }
-
-  public cleanup() {
-    if (this.activeMinion) {
-      this.activeMinion.teardown();
-      const idx = this.world.minions.indexOf(this.activeMinion);
-      if (idx !== -1) {
-        const last = this.world.minions[this.world.minions.length - 1];
-        this.world.minions[idx] = last;
-        this.world.minions.pop();
-      }
-      this.activeMinion = null;
-    }
-  }
-}
 `,"src/entities/TurretMinion.ts":`import { BaseMinion } from "./BaseMinion";
 import { HealthComponent, DamagePayload } from "@/entities/components/HealthComponent";
 import { IWorld } from "@/core/Interfaces";
@@ -19245,47 +19063,6 @@ export function useBootSequence() {
   }, []);
 
   return bootStage;
-}
-`,"src/hooks/useButtonHandlers.ts":`import { useCursorStore, CursorType } from "@/store/useCursorStore";
-import { useRef } from "react";
-
-interface ButtonHandlerOptions {
-  cursor?: CursorType;
-  onClick?: (e: React.MouseEvent) => void;
-}
-
-export function useButtonHandlers(options: ButtonHandlerOptions = {}) {
-  const setCursorType = useCursorStore((state) => state.setCursorType);
-  const timeoutRef = useRef<number | null>(null);
-
-  const onMouseEnter = () => {
-    if (timeoutRef.current !== null) {
-      window.clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    setCursorType(options.cursor || "button");
-  };
-
-  const onMouseLeave = () => {
-    if (timeoutRef.current !== null) {
-      window.clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = window.setTimeout(() => {
-      setCursorType("default");
-    }, 150);
-  };
-
-  const onClick = (e: React.MouseEvent) => {
-    if (options.onClick) {
-      options.onClick(e);
-    }
-  };
-
-  return {
-    onMouseEnter,
-    onMouseLeave,
-    onClick,
-  };
 }
 `,"src/hooks/useEngineSubscriptions.ts":`import { useEffect, useRef } from "react";
 import { eventBroker } from "@/core/eventBroker";
