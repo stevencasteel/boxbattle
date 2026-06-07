@@ -24,29 +24,22 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
                 const colors = ["hsl(350, 82%, 58%)", "hsl(4, 88%, 54%)", "hsl(338, 76%, 55%)", "hsl(356, 94%, 62%)", "hsl(82, 38%, 44%)", "hsl(15, 82%, 48%)", "hsl(345, 58%, 46%)"];
                 const baseColor = colors[stageIdx] || colors[0];
                 
-                ctx.fillStyle = "hsl(220, 12%, 10%)";
+                // Totally fill the boss dialogue square with the stage's core color
+                ctx.fillStyle = baseColor;
                 ctx.fillRect(0, 0, w, h);
 
-                ctx.save();
-                ctx.fillStyle = baseColor;
-                ctx.translate(w / 2, h / 2);
+                const strokeColor = "rgba(255, 255, 255, 0.45)";
+                const patternRadius = Math.min(w, h) / 2;
                 
-                const scale = 1.0 + Math.sin(t * 4) * 0.05;
-                ctx.scale(scale, scale);
+                // Flat projection for UI panel
+                const projectFlat = (u: number, v: number) => {
+                    return {
+                        x: w / 2 + u * patternRadius * 2.0,
+                        y: h / 2 + v * patternRadius * 2.0
+                    };
+                };
                 
-                let boxW = w * 0.7;
-                let boxH = h * 0.7;
-                if (stageIdx === 1) { boxW = w * 0.42; boxH = h * 0.85; }
-                else if (stageIdx === 2) { boxW = w * 0.85; boxH = h * 0.35; }
-                else if (stageIdx === 3) { boxW = w * 0.55; boxH = h * 0.80; }
-                else if (stageIdx === 4) { boxW = w * 0.80; boxH = h * 0.55; }
-                
-                ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
-                ctx.restore();
-
-                const strokeColor = "#ffffff";
-                const patternRadius = Math.min(boxW, boxH) * 0.52;
-                Software3DRenderer.drawSacredGeometry(ctx, stageIdx, w / 2, h / 2, patternRadius, t, strokeColor);
+                Software3DRenderer.drawSacredGeometry(ctx, stageIdx, t, strokeColor, projectFlat);
             }
             frameId = requestAnimationFrame(render);
         };

@@ -186,172 +186,273 @@ export class Software3DRenderer {
     public static drawSacredGeometry(
         ctx: CanvasRenderingContext2D,
         stageIdx: number,
-        cx: number,
-        cy: number,
-        radius: number,
         time: number,
-        glowColor: string
+        glowColor: string,
+        project: (u: number, v: number) => { x: number; y: number }
     ) {
         ctx.save();
         ctx.strokeStyle = glowColor;
-        ctx.lineWidth = Math.max(1.5, radius * 0.06);
+        ctx.lineWidth = 1.5;
         ctx.lineJoin = "round";
         ctx.lineCap = "round";
-        
-        ctx.shadowColor = glowColor;
-        ctx.shadowBlur = radius * 0.45;
+
+        const drawCircle = (r: number) => {
+            ctx.beginPath();
+            const steps = 32;
+            for (let i = 0; i <= steps; i++) {
+                const theta = (i * Math.PI * 2) / steps;
+                const p = project(r * Math.cos(theta), r * Math.sin(theta));
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            }
+            ctx.stroke();
+        };
 
         if (stageIdx === 0) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            
-            const offset = Math.sin(time * 6) * (radius * 0.1);
-            ctx.beginPath();
-            ctx.moveTo(-radius + offset, -radius);
-            ctx.lineTo(radius + offset, radius);
-            ctx.stroke();
+            // Prime Wound: Scrolling zigzag diagonal wave grid
+            const spacing = 0.22;
+            const scroll = (time * 0.4) % spacing;
 
-            const squares = 3;
-            for (let i = 1; i <= squares; i++) {
-                ctx.save();
-                const r = radius * (i / squares);
-                ctx.rotate(time * 0.8 * (i % 2 === 0 ? 1 : -1));
-                ctx.strokeRect(-r, -r, r * 2, r * 2);
-                ctx.restore();
+            for (let offset = -1.2; offset < 1.2; offset += spacing) {
+                ctx.beginPath();
+                let started = false;
+                for (let u = -0.6; u <= 0.6; u += 0.05) {
+                    const v = offset + scroll + u;
+                    if (v >= -0.6 && v <= 0.6) {
+                        const p = project(u, v);
+                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+                        else ctx.lineTo(p.x, p.y);
+                    }
+                }
+                ctx.stroke();
             }
-            ctx.restore();
+
+            const zigCount = 16;
+            for (let offset = -1.2; offset < 1.2; offset += spacing) {
+                ctx.beginPath();
+                let started = false;
+                for (let i = 0; i <= zigCount; i++) {
+                    const t = i / zigCount;
+                    const u = -0.6 + 1.2 * t;
+                    const baseV = offset - scroll + u;
+                    if (baseV >= -0.6 && baseV <= 0.6) {
+                        const amp = 0.045;
+                        const zigzag = (i % 2 === 0 ? 1 : -1) * amp;
+                        const p = project(u + zigzag, baseV - zigzag);
+                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+                        else ctx.lineTo(p.x, p.y);
+                    }
+                }
+                ctx.stroke();
+            }
         } else if (stageIdx === 1) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            const gridCount = 3;
-            const wave = Math.sin(time * 4) * 0.5 + 0.5;
-            for (let i = 0; i < gridCount; i++) {
-                const offset = (i - 1) * (radius * 0.45) * (0.8 + wave * 0.4);
-                ctx.beginPath();
-                ctx.moveTo(offset, -radius);
-                ctx.lineTo(offset, radius);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(-radius, offset);
-                ctx.lineTo(radius, offset);
-                ctx.stroke();
-            }
-            ctx.beginPath();
-            ctx.arc(0, 0, radius * 0.3 * (1 + wave * 0.2), 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
-        } else if (stageIdx === 2) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            const orbits = 4;
-            const rot = time * 0.5;
-            ctx.beginPath();
-            ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            for (let i = 1; i <= orbits; i++) {
-                const r = radius * (i / orbits);
-                ctx.beginPath();
-                ctx.arc(0, 0, r, 0, Math.PI * 2);
-                ctx.stroke();
+            // Scarlet Lock: Interlocking horizontal and vertical scrolling grids
+            const spacing = 0.22;
+            const scrollH = (time * 0.35) % spacing;
+            const scrollV = (time * 0.22) % spacing;
 
-                const nodeAngle = rot + (i * Math.PI / 2);
-                const nx = Math.cos(nodeAngle) * r;
-                const ny = Math.sin(nodeAngle) * r;
+            for (let v = -0.8; v <= 0.8; v += spacing) {
                 ctx.beginPath();
-                ctx.arc(nx, ny, Math.max(2.5, radius * 0.08), 0, Math.PI * 2);
-                ctx.fillStyle = glowColor;
-                ctx.fill();
+                const p1 = project(-0.6, v + scrollH);
+                const p2 = project(0.6, v + scrollH);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
                 ctx.stroke();
             }
-            ctx.restore();
+
+            for (let u = -0.8; u <= 0.8; u += spacing) {
+                ctx.beginPath();
+                const p1 = project(u + scrollV, -0.6);
+                const p2 = project(u + scrollV, 0.6);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+            }
+
+            drawCircle(0.16);
+            drawCircle(0.36);
+        } else if (stageIdx === 2) {
+            // Carminal Orbit: Rippling Concentric Circles & Radial Zigzag Rays
+            const spacing = 0.18;
+            const scroll = (time * 0.3) % spacing;
+
+            for (let r = scroll; r < 0.9; r += spacing) {
+                if (r <= 0.01) continue;
+                drawCircle(r);
+            }
+
+            const rays = 8;
+            const baseAngle = time * 1.5;
+            const segments = 10;
+            for (let i = 0; i < rays; i++) {
+                const angle = baseAngle + (i * Math.PI * 2) / rays;
+                ctx.beginPath();
+                let started = false;
+                for (let j = 0; j <= segments; j++) {
+                    const r = 0.8 * (j / segments);
+                    const theta = angle + 0.15 * Math.sin(j * 1.8 + time * 8) * (j % 2 === 0 ? 1 : -1);
+                    const p = project(r * Math.cos(theta), r * Math.sin(theta));
+                    if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+            }
         } else if (stageIdx === 3) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            const spikes = 12;
-            const wave = Math.sin(time * 10) * 0.15;
-            ctx.beginPath();
-            for (let i = 0; i < spikes * 2; i++) {
-                const theta = (i * Math.PI) / spikes;
-                const r = radius * (i % 2 === 0 ? 0.9 : 0.4 - wave);
-                const px = Math.cos(theta) * r;
-                const py = Math.sin(theta) * r;
-                if (i === 0) ctx.moveTo(px, py);
-                else ctx.lineTo(px, py);
+            // Vermilion Needle: Columns of nested sharp chevron patterns
+            const spacingX = 0.18;
+            const spacingY = 0.22;
+            const scrollY = (time * 0.5) % spacingY;
+
+            for (let x = -0.8; x <= 0.8; x += spacingX) {
+                ctx.beginPath();
+                const p1 = project(x, -0.6);
+                const p2 = project(x, 0.6);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
             }
-            ctx.closePath();
-            ctx.stroke();
-            ctx.restore();
+
+            const colCount = 6;
+            for (let col = -colCount; col <= colCount; col++) {
+                const lx = col * spacingX;
+                for (let y = -0.8; y <= 0.8; y += spacingY) {
+                    const curY = y + scrollY;
+                    if (curY >= -0.6 && curY <= 0.6) {
+                        ctx.beginPath();
+                        const pLeft = project(lx - spacingX * 0.5, curY - spacingY * 0.3);
+                        const pMid = project(lx, curY + spacingY * 0.3);
+                        const pRight = project(lx + spacingX * 0.5, curY - spacingY * 0.3);
+                        ctx.moveTo(pLeft.x, pLeft.y);
+                        ctx.lineTo(pMid.x, pMid.y);
+                        ctx.lineTo(pRight.x, pRight.y);
+                        ctx.stroke();
+                    }
+                }
+            }
         } else if (stageIdx === 4) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.beginPath();
-            let theta = time * 1.5;
-            const goldenAngle = 137.5 * (Math.PI / 180);
-            for (let i = 0; i < 35; i++) {
-                const r = radius * 0.16 * Math.sqrt(i);
-                theta += goldenAngle;
-                const px = Math.cos(theta) * r;
-                const py = Math.sin(theta) * r;
-                
-                if (i === 0) ctx.moveTo(px, py);
-                else ctx.lineTo(px, py);
-                
-                if (i % 5 === 0) {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(px, py, Math.max(1.5, radius * 0.05 * (1 + Math.sin(time * 5 + i) * 0.3)), 0, Math.PI * 2);
-                    ctx.fillStyle = glowColor;
-                    ctx.fill();
-                    ctx.restore();
+            // Marrow Rot: Organic Sinuous Ribbon Waves Scrolling Across
+            const waveCount = 3;
+            const stepX = 0.05;
+            for (let w = 0; w < waveCount; w++) {
+                const phase = (w * Math.PI) / waveCount;
+                const scrollX = time * 4.0;
+                const amp = 0.14;
+
+                ctx.beginPath();
+                let first = true;
+                for (let lu = -0.6; lu <= 0.6; lu += stepX) {
+                    const lv = amp * Math.sin(lu * 7.0 + scrollX + phase) * Math.cos(lu * 2.4);
+                    const p = project(lu, lv);
+                    if (first) { ctx.moveTo(p.x, p.y); first = false; }
+                    else ctx.lineTo(p.x, p.y);
                 }
+                ctx.stroke();
             }
-            ctx.stroke();
-            ctx.restore();
+
+            for (let w = 0; w < waveCount; w++) {
+                const phase = (w * Math.PI) / waveCount + Math.PI / 2;
+                const scrollY = time * 3.0;
+                const amp = 0.12;
+
+                ctx.beginPath();
+                let first = true;
+                for (let lv = -0.6; lv <= 0.6; lv += stepX) {
+                    const lu = amp * Math.cos(lv * 7.0 + scrollY + phase) * Math.sin(lv * 2.4);
+                    const p = project(lu, lv);
+                    if (first) { ctx.moveTo(p.x, p.y); first = false; }
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+            }
         } else if (stageIdx === 5) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            const slabs = 3;
-            const step = Math.sin(time * 3) * (radius * 0.15);
-            for (let i = 1; i <= slabs; i++) {
-                const r = radius * (i / slabs) - step;
-                if (r > 0) {
-                    ctx.strokeRect(-r, -r, r * 2, r * 2);
-                    ctx.beginPath();
-                    ctx.moveTo(-r, -r); ctx.lineTo(-r + 6, -r + 6);
-                    ctx.moveTo(r, -r); ctx.lineTo(r - 6, -r + 6);
-                    ctx.moveTo(-r, r); ctx.lineTo(-r + 6, r - 6);
-                    ctx.moveTo(r, r); ctx.lineTo(r - 6, r - 6);
-                    ctx.stroke();
-                }
+            // Rust Cathedral: Isometric Columnar Wireframe Grid
+            const spacing = 0.25;
+            const scroll = (time * 0.3) % spacing;
+
+            for (let u = -0.8; u <= 0.8; u += spacing) {
+                ctx.beginPath();
+                const p1 = project(u + scroll, -0.6);
+                const p2 = project(u + scroll, 0.6);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
             }
-            ctx.restore();
-        } else if (stageIdx === 6) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            
-            const isGlitched = Math.sin(time * 15) > 0.6;
-            const glitchShearX = isGlitched ? (Math.random() - 0.5) * (radius * 0.4) : 0;
-            const glitchShearY = isGlitched ? (Math.random() - 0.5) * (radius * 0.4) : 0;
-            
-            ctx.translate(glitchShearX, glitchShearY);
-            
-            const frames = 3;
-            for (let i = 1; i <= frames; i++) {
-                const r = radius * (i / frames);
-                ctx.save();
-                if (isGlitched) {
-                    ctx.rotate((Math.random() - 0.5) * 0.2);
-                } else {
-                    ctx.rotate(time * 0.1 * i);
+
+            for (let offset = -1.2; offset <= 1.2; offset += spacing) {
+                ctx.beginPath();
+                let started = false;
+                for (let u = -0.6; u <= 0.6; u += 0.1) {
+                    const v = offset + scroll * 0.866 + u * 0.577;
+                    if (v >= -0.6 && v <= 0.6) {
+                        const p = project(u, v);
+                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+                        else ctx.lineTo(p.x, p.y);
+                    }
                 }
-                ctx.strokeRect(-r, -r, r * 2, r * 2);
-                ctx.restore();
+                ctx.stroke();
+            }
+
+            for (let offset = -1.2; offset <= 1.2; offset += spacing) {
+                ctx.beginPath();
+                let started = false;
+                for (let u = -0.6; u <= 0.6; u += 0.1) {
+                    const v = offset - scroll * 0.866 - u * 0.577;
+                    if (v >= -0.6 && v <= 0.6) {
+                        const p = project(u, v);
+                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+                        else ctx.lineTo(p.x, p.y);
+                    }
+                }
+                ctx.stroke();
+            }
+        } else {
+            // The False Square: Glitchy, morphing seamless square grid
+            const spacing = 0.22;
+            const scroll = (time * 0.4) % spacing;
+
+            const isGlitchActive = Math.sin(time * 18) > 0.8;
+            const glitchX = isGlitchActive ? Math.sin(time * 50) * 0.05 : 0;
+            const glitchY = isGlitchActive ? Math.cos(time * 40) * 0.03 : 0;
+
+            ctx.save();
+
+            for (let v = -0.8; v <= 0.8; v += spacing) {
+                ctx.beginPath();
+                const p1 = project(-0.6 + glitchX, v + scroll + glitchY);
+                const p2 = project(0.6 + glitchX, v + scroll + glitchY);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+            }
+
+            for (let u = -0.8; u <= 0.8; u += spacing) {
+                ctx.beginPath();
+                const p1 = project(u + scroll + glitchX, -0.6 + glitchY);
+                const p2 = project(u + scroll + glitchX, 0.6 + glitchY);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+            }
+
+            const sqSpacing = 0.16;
+            const sqScroll = (time * 0.25) % sqSpacing;
+            for (let r = sqScroll; r < 0.8; r += sqSpacing) {
+                if (r <= 0.01) continue;
+                ctx.beginPath();
+                const p1 = project(-r + glitchX, -r + glitchY);
+                const p2 = project(r + glitchX, -r + glitchY);
+                const p3 = project(r + glitchX, r + glitchY);
+                const p4 = project(-r + glitchX, r + glitchY);
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.lineTo(p3.x, p3.y);
+                ctx.lineTo(p4.x, p4.y);
+                ctx.closePath();
+                ctx.stroke();
             }
             ctx.restore();
         }
-        
+
         ctx.restore();
     }
 
@@ -436,16 +537,8 @@ export class Software3DRenderer {
             ctx.fill();
             ctx.stroke();
 
-            if (bossStageIdx >= 0 && face.color === "FRONT") {
-                let sumX = 0, sumY = 0;
-                for (const idx of face.indices) {
-                    sumX += projected[idx].x;
-                    sumY += projected[idx].y;
-                }
-                const fcx = sumX / face.indices.length;
-                const fcy = sumY / face.indices.length;
-                const radius = Math.min(sizeW * scaleX, sizeH * scaleY) * 0.38;
-                
+            // Projection mapping on ALL visible faces of the 3D box model!
+            if (bossStageIdx >= 0) {
                 ctx.save();
                 ctx.beginPath();
                 ctx.moveTo(projected[firstIdx].x, projected[firstIdx].y);
@@ -456,8 +549,48 @@ export class Software3DRenderer {
                 ctx.clip();
                 
                 const time = performance.now() / 1000;
-                const strokeColor = `hsl(${h}, ${s}%, ${Math.min(100, shadedLightness + 35)}%)`;
-                Software3DRenderer.drawSacredGeometry(ctx, bossStageIdx, fcx, fcy, radius, time, strokeColor);
+                // Modulate projection intensity to respect the 3D face's direct lighting
+                const strokeColor = `hsla(${h}, ${s}%, ${Math.min(100, shadedLightness + 35)}%, 0.8)`;
+                
+                // Establish a screen-space projection mapped center at the box model's origin
+                const transformLocalPoint = (lx: number, ly: number, lz: number) => {
+                    const x0 = lx * sizeW * scaleX;
+                    const lyVal = pivotY === "feet" ? (ly - 0.5) * sizeH * scaleY : ly * sizeH * scaleY;
+                    const z0 = lz * ((sizeW + sizeH) / 2);
+                    
+                    const x1 = x0 * cosY + z0 * sinY;
+                    const y1 = lyVal;
+                    const z1 = -x0 * sinY + z0 * cosY;
+                    
+                    const x2 = x1;
+                    const y2 = y1 * cosP - z1 * sinP;
+                    const z2 = y1 * sinP + z1 * cosP;
+                    
+                    const x3 = x2 * cosR - y2 * sinR;
+                    const y3 = x2 * sinR + y2 * cosR;
+                    
+                    return { x: posX + x3, y: posY + y3 };
+                };
+
+                const project3D = (u: number, v: number) => {
+                    let lx = 0, ly = 0, lz = 0;
+                    if (face.color === "FRONT") {
+                        lx = u; ly = v; lz = -0.5;
+                    } else if (face.color === "BACK") {
+                        lx = -u; ly = v; lz = 0.5;
+                    } else if (face.color === "LEFT") {
+                        lx = -0.5; ly = v; lz = u;
+                    } else if (face.color === "RIGHT") {
+                        lx = 0.5; ly = v; lz = -u;
+                    } else if (face.color === "TOP") {
+                        lx = u; ly = -0.5; lz = v;
+                    } else { // BOTTOM
+                        lx = u; ly = 0.5; lz = -v;
+                    }
+                    return transformLocalPoint(lx, ly, lz);
+                };
+                
+                Software3DRenderer.drawSacredGeometry(ctx, bossStageIdx, time, strokeColor, project3D);
                 ctx.restore();
             }
         }
