@@ -50,6 +50,8 @@ export class WorldRenderer {
   ) {
     this.staticMap.buildStaticCache(solids, hazards);
 
+    const nowTime = performance.now();
+
     this.ctx.save();
     this.ctx.translate(Camera.offsetX, Camera.offsetY);
 
@@ -62,14 +64,26 @@ export class WorldRenderer {
         this.ctx.save();
         if (dp.state === "idle") {
           this.ctx.fillStyle = "hsl(215, 10%, 12%)";
-          this.ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
+          
+          // Pulsing green boundary to convey stability [4]
+          const glow = Math.sin(nowTime * 0.008) * 3 + 6;
+          this.ctx.shadowColor = "rgba(34, 197, 94, 0.45)";
+          this.ctx.shadowBlur = glow;
+          this.ctx.strokeStyle = "rgba(34, 197, 94, 0.65)";
+          
           this.ctx.lineWidth = 2.0;
           this.ctx.fillRect(dp.rect.x, dp.rect.y, dp.rect.width, dp.rect.height);
           this.ctx.strokeRect(dp.rect.x, dp.rect.y, dp.rect.width, dp.rect.height);
         } else if (dp.state === "cracking") {
           this.ctx.fillStyle = "hsl(215, 10%, 8%)";
           this.ctx.fillRect(dp.rect.x, dp.rect.y, dp.rect.width, dp.rect.height);
+          
+          // Highly active warning pulse [4]
+          const warpGlow = 10 + Math.sin(nowTime * 0.025) * 4;
+          this.ctx.shadowColor = "hsl(45, 100%, 60%)";
+          this.ctx.shadowBlur = warpGlow;
           this.ctx.strokeStyle = "hsl(45, 100%, 60%)";
+          
           this.ctx.lineWidth = 2.5;
           this.ctx.strokeRect(dp.rect.x, dp.rect.y, dp.rect.width, dp.rect.height);
 
@@ -80,7 +94,7 @@ export class WorldRenderer {
           this.ctx.lineTo(dp.rect.x + dp.rect.width / 2, dp.rect.y + dp.rect.height / 2);
           this.ctx.stroke();
         } else if (dp.state === "respawning") {
-          this.ctx.strokeStyle = "rgba(34, 197, 94, 0.4)";
+          this.ctx.strokeStyle = "rgba(34, 197, 94, 0.45)";
           this.ctx.lineWidth = 1.5;
           this.ctx.setLineDash([4, 4]);
           this.ctx.strokeRect(dp.rect.x, dp.rect.y, dp.rect.width, dp.rect.height);
@@ -98,8 +112,13 @@ export class WorldRenderer {
         const h = post.rect.height;
 
         this.ctx.translate(cx, cy);
-        this.ctx.rotate(performance.now() * 0.001);
+        this.ctx.rotate(nowTime * 0.001);
         
+        // Active pulsing violet-neon shadow [4]
+        const postGlow = 8 + Math.sin(nowTime * 0.012) * 4;
+        this.ctx.shadowColor = "hsl(286, 85%, 62%)";
+        this.ctx.shadowBlur = postGlow;
+
         this.ctx.fillStyle = "hsl(286, 85%, 62%)";
         this.ctx.strokeStyle = "hsl(194, 62%, 52%)";
         this.ctx.lineWidth = 2.0;
@@ -131,13 +150,15 @@ export class WorldRenderer {
         const h = gate.rect.height;
 
         this.ctx.translate(cx, cy);
-        this.ctx.rotate(-performance.now() * 0.002);
+        this.ctx.rotate(-nowTime * 0.002);
 
         if (gate.active) {
+          // Vibrant pulsing glow to indicate double jump and dash reset charges [4]
+          const gateGlow = 10 + Math.sin(nowTime * 0.018) * 5;
           this.ctx.strokeStyle = "hsl(142, 72%, 56%)";
           this.ctx.lineWidth = 2.5;
-          this.ctx.shadowColor = "rgba(34, 197, 94, 0.6)";
-          this.ctx.shadowBlur = 10;
+          this.ctx.shadowColor = "rgba(34, 197, 94, 0.65)";
+          this.ctx.shadowBlur = gateGlow;
         } else {
           this.ctx.strokeStyle = "rgba(113, 128, 150, 0.4)";
           this.ctx.lineWidth = 1.5;
@@ -155,6 +176,17 @@ export class WorldRenderer {
         if (gate.active) {
           this.ctx.fillStyle = "#ffffff";
           this.ctx.fillRect(-3, -3, 6, 6);
+
+          // 3 tiny rotating green resolve sparks orbiting active gates [4]
+          const orbitTime = nowTime * 0.0035;
+          this.ctx.shadowBlur = 0; // disable heavy blur for tiny orbiting elements
+          this.ctx.fillStyle = "hsl(142, 100%, 80%)";
+          for (let i = 0; i < 3; i++) {
+            const angle = orbitTime + (i * Math.PI * 2) / 3;
+            const rx = Math.cos(angle) * (w / 2 + 5);
+            const ry = Math.sin(angle) * (h / 2 + 5);
+            this.ctx.fillRect(rx - 1.5, ry - 1.5, 3, 3);
+          }
         }
         this.ctx.restore();
       }
