@@ -57,7 +57,7 @@
   box-sizing: border-box;
   height: 100%;
   width: 100%;
-  padding: 44px 24px;
+  padding: 36px 28px;
   position: relative;
 }
 
@@ -103,7 +103,7 @@
 }
 
 .title-banner-overhauled h1 {
-  font-size: 46px;
+  font-size: 48px;
   margin: 0;
   letter-spacing: 0.25em;
   font-weight: 900;
@@ -121,7 +121,7 @@
   gap: 12px;
   width: 100%;
   margin-top: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .subtitle-line {
@@ -151,10 +151,10 @@
 
 .btn-container-overhauled {
   width: 100%;
-  max-width: 580px;
+  max-width: 560px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .neo-btn-large {
@@ -167,7 +167,7 @@
     6px 6px 15px rgba(0, 0, 0, 0.8),
     inset 1px 1px 0px rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.03);
-  padding: 24px 36px;
+  padding: 20px 32px;
   border-radius: 14px;
   cursor: pointer;
   width: 100%;
@@ -219,7 +219,7 @@
 }
 
 .btn-main-label {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 800;
   color: #a0aec0;
   letter-spacing: 0.18em;

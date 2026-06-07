@@ -1,6 +1,6 @@
 .binding-board {
   width: 100%;
-  max-width: 600px;
+  max-width: 560px;
   padding: 10px 14px;
   border-radius: 14px;
   margin: auto 0;
@@ -59,7 +59,7 @@
   text-transform: uppercase;
   text-shadow: 0 0 6px rgba(168, 85, 247, 0.35);
   width: 100%;
-  max-width: 600px;
+  max-width: 560px;
   box-sizing: border-box;
   white-space: nowrap;
 }

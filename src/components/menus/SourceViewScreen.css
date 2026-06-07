@@ -10,7 +10,7 @@
 }
 
 .directory-tree-pane {
-  width: 24%;
+  width: 30%;
   height: 100%;
   overflow-y: auto;
   border-radius: 12px;
@@ -22,7 +22,7 @@
 }
 
 .code-viewer-pane {
-  width: 76%;
+  width: 70%;
   height: 100%;
   overflow-y: auto;
   border-radius: 12px;

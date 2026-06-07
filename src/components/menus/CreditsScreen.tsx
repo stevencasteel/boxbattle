@@ -8,14 +8,14 @@ interface CreditsScreenProps {
 
 export function CreditsScreen({ onBack }: CreditsScreenProps) {
   return (
-    <MenuContainer style={{ padding: "20px 0" }}>
+    <MenuContainer>
       <MenuHeader title="SYSTEM CREDITS" subtitle="Engine Architecture & Technologies" />
 
       <div
         className="credits-block neo-pressed flex-col"
         style={{
           width: "100%",
-          maxWidth: "580px",
+          maxWidth: "560px",
           padding: "24px",
           borderRadius: "12px",
           boxSizing: "border-box",

@@ -116,7 +116,7 @@ export function AudioScreen({
         </div>
       </div>
 
-      <div className="flex-col" style={{ gap: "12px", width: "100%", maxWidth: "580px", marginTop: "24px" }}>
+      <div className="flex-col" style={{ gap: "12px", width: "100%", maxWidth: "560px", marginTop: "20px" }}>
         <MenuButton
           variant="large"
           isFocused={menuIndex === 3}

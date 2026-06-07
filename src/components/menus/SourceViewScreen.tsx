@@ -160,7 +160,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   return (
     <div
       className="flex-col h-full w-full"
-      style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "16px 12px" }}
+      style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "0 12px" }}
     >
       <div className="title-banner" style={{ marginTop: "0", paddingTop: "0" }}>
         <h2
@@ -173,7 +173,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             color: "#fff",
           }}
         >
-          SOURCE BROWSER
+          SOURCE CODE
         </h2>
         <p style={{ color: "#718096", margin: "4px 0 0", fontSize: "11px", letterSpacing: "0.15em" }}>
           {isMobile
@@ -191,7 +191,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             className="directory-tree-pane neo-pressed"
             style={{
               WebkitOverflowScrolling: "touch",
-              width: isMobile ? "100%" : "24%",
+              width: isMobile ? "100%" : "30%",
               height: isMobile ? "100%" : "",
             }}
           >
@@ -273,7 +273,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
             className="code-viewer-pane neo-pressed"
             style={{
               WebkitOverflowScrolling: "touch",
-              width: isMobile ? "100%" : "76%",
+              width: isMobile ? "100%" : "70%",
               height: isMobile ? "100%" : "",
               display: "flex",
               flexDirection: "column",

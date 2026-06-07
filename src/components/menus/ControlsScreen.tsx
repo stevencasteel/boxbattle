@@ -94,7 +94,7 @@ export function ControlsScreen({
   const backBtnIndex = isTouchDevice ? 0 : 10;
 
   return (
-    <MenuContainer style={{ padding: "20px 0" }}>
+    <MenuContainer>
       <MenuHeader title="CONTROLS" subtitle={isTouchDevice ? "Calibration Matrix" : "Change keyboard buttons"} />
 
       {isTouchDevice ? (
@@ -156,7 +156,7 @@ export function ControlsScreen({
         </div>
       ) : (
         <>
-          <div className="flex-row" style={{ gap: "16px", width: "100%", maxWidth: "580px", marginTop: "auto", marginBottom: "auto" }}>
+          <div className="flex-row" style={{ gap: "14px", width: "100%", maxWidth: "560px", marginTop: "auto", marginBottom: "auto" }}>
             <MenuButton
               variant="led"
               isFocused={menuIndex === 0}
@@ -308,7 +308,7 @@ export function ControlsScreen({
         onFocused={() => setMenuIndex(backBtnIndex)}
         playHoverTick={playHoverTick}
         onBack={onBack}
-        style={{ maxWidth: "580px", width: "100%" }}
+        style={{ maxWidth: "560px", width: "100%" }}
       />
     </MenuContainer>
   );

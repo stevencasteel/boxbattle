@@ -40,8 +40,7 @@ export default function App() {
 
   useEffect(() => {
     const handleResize = () => {
-      const isSource = useSessionStore.getState().currentScreen === "SOURCE_VIEW";
-      const cabinetWidth = isSource ? 1100 : 740;
+      const cabinetWidth = 740;
       const cabinetHeight = 862;
       const padding = 32; // Total padding around the cabinet
       
@@ -210,7 +209,7 @@ export default function App() {
         style={{
           transform: `scale(${scale})`,
           transformOrigin: "center center",
-          width: isFullHeightScreen ? "1100px" : "740px",
+          width: "740px",
           height: "862px",
           display: "flex",
           flexDirection: "column",

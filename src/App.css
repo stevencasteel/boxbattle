@@ -30,10 +30,10 @@
 }
 
 .cabinet-wide-source {
-  width: 1100px !important;
+  width: 740px !important;
   height: 862px !important;
   border-radius: 20px !important;
-  padding: 24px !important;
+  padding: 16px 16px 6px 16px !important;
 }
 
 .cabinet-wide-source .cabinet-status-panel,
@@ -45,7 +45,8 @@
   aspect-ratio: auto !important;
   flex-grow: 1 !important;
   flex-shrink: 1 !important;
-  height: 100% !important;
+  min-height: 0 !important;
+  align-self: stretch !important;
 }
 
 .screen-inner {

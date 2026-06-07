@@ -164,7 +164,7 @@ export function MenuBackButton({
 }: MenuBackButtonProps) {
   const defaultStyle: React.CSSProperties = {
     width: "100%",
-    maxWidth: "580px",
+    maxWidth: "560px",
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-start",
