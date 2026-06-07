@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/6/2026, 10:56:32 PM
+ [SYSTEM] Generated: 6/6/2026, 11:10:50 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -20515,6 +20515,7 @@ export class PhysicsComponent implements IEntityComponent {
       let normX = 0;
       let normY = 0;
       let hitFound = false;
+      let hitSolid: Rectangle | null = null;
 
       for (const solid of solidCandidates) {
         const sweep = this.sweptAABBCheck(this.owner.position, this.owner.size, vx, vy, solid, dt * timeLeft);
@@ -20523,6 +20524,7 @@ export class PhysicsComponent implements IEntityComponent {
           normX = sweep.normalX;
           normY = sweep.normalY;
           hitFound = true;
+          hitSolid = solid;
         }
       }
 
@@ -20544,6 +20546,7 @@ export class PhysicsComponent implements IEntityComponent {
               normX = sweep.normalX;
               normY = sweep.normalY;
               hitFound = true;
+              hitSolid = platform;
 
               this.owner.world.events.publish("PLATFORM_IMPACT", {
                 platform,
@@ -20563,38 +20566,18 @@ export class PhysicsComponent implements IEntityComponent {
       this.owner.position.y += vy * moveFraction * dt * timeLeft;
 
       // Handle terminal snapping against the collision face normal
-      if (earliestT < 1.0) {
+      if (earliestT < 1.0 && hitSolid) {
         if (normX !== 0) {
           const halfW = this.owner.size.width / 2;
-          const solidCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
-            this.owner.position.x + normX,
-            this.owner.position.y,
-            this.owner.size.width,
-            this.owner.size.height,
-            "solid"
-          );
-          for (const solid of solidCandidates) {
-            if (normX < 0) {
-              // Snapping to the left side of solid bounding box
-              this.owner.position.x = solid.x - halfW;
-            } else if (normX > 0) {
-              // Snapping to the right side of solid bounding box
-              this.owner.position.x = solid.x + solid.width + halfW;
-            }
+          if (normX < 0) {
+            this.owner.position.x = hitSolid.x - halfW;
+          } else if (normX > 0) {
+            this.owner.position.x = hitSolid.x + hitSolid.width + halfW;
           }
         }
         if (normY < 0) {
           const halfH = this.owner.size.height / 2;
-          const solidCandidates = this.owner.world.physicsWorld.getOverlapCandidates(
-            this.owner.position.x,
-            this.owner.position.y + normY,
-            this.owner.size.width,
-            this.owner.size.height,
-            "solid"
-          );
-          for (const solid of solidCandidates) {
-            this.owner.position.y = solid.y - halfH;
-          }
+          this.owner.position.y = hitSolid.y - halfH;
         }
       }
 
