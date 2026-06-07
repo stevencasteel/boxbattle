@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-GI0mL9Ri.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DXWRmvvW.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -219,26 +219,6 @@ export default defineConfig([
     inset 0 0 30px rgba(0, 0, 0, 0.9) !important;
   border: 1px solid rgba(255, 255, 255, 0.01) !important;
   padding: 16px 16px 6px 16px !important;
-}
-
-.cabinet-wide-source {
-  width: 740px !important;
-  height: 862px !important;
-  border-radius: 20px !important;
-  padding: 16px 16px 6px 16px !important;
-}
-
-.cabinet-wide-source .cabinet-status-panel,
-.cabinet-wide-source .dialogue-console {
-  display: none !important;
-}
-
-.cabinet-wide-source .game-viewport-container {
-  aspect-ratio: auto !important;
-  flex-grow: 1 !important;
-  flex-shrink: 1 !important;
-  min-height: 0 !important;
-  align-self: stretch !important;
 }
 
 .screen-inner {
@@ -789,7 +769,7 @@ export default defineConfig([
     filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.85));
   }
   60% {
-    transform: translate(-1.5px, -1px) rotate(-1.5deg);
+    transform: translate(-1.5px, -1.5px) rotate(-1.5deg);
   }
   80% {
     transform: translate(1.5px, 1.5px) rotate(1deg);
@@ -917,6 +897,8 @@ export default function App() {
       if (useSessionStore.getState().currentScreen === "PLAYING") {
         const pauseEvent = new KeyboardEvent("keydown", { code: "KeyP" });
         window.dispatchEvent(pauseEvent);
+        // Important: Stop crowd sounds explicitly on blur to prevent background playback in unfocused tabs
+        soundSynth.stopCrowdSounds();
       }
     };
 
@@ -937,7 +919,6 @@ export default function App() {
     };
   }, []);
 
-  const isFullHeightScreen = currentScreen === "SOURCE_VIEW";
   const isPlayingScreen = currentScreen === "PLAYING";
 
   useMusicLifecycle(isPlayingScreen);
@@ -1016,165 +997,161 @@ export default function App() {
         }}
       >
         <div
-          className={\`cabinet-outer \${isFullHeightScreen ? "cabinet-wide-source" : ""} \${isTouchDevice ? "cabinet-mobile" : ""}\`}
+          className={\`cabinet-outer \${isTouchDevice ? "cabinet-mobile" : ""}\`}
           style={{ width: "100%", height: "100%" }}
         >
-        {!isFullHeightScreen && (
           <HudPanel
             key={\`\${currentScreen}-\${retryCount}\`}
             isTouchDevice={isTouchDevice}
             isPlayingScreen={isPlayingScreen}
           />
-        )}
 
-        <div
-          className={\`game-viewport-container \${isPlayingScreen ? "viewport-playing" : "viewport-menu"} \${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} \${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""} \${isTouchDevice ? "viewport-mobile" : ""}\`}
-          ref={viewportRef}
-        >
-          <div style={{ position: "relative", flexGrow: 1, display: "flex", minHeight: 0 }}>
-            <GameArena playHoverTick={playHoverTick} />
+          <div
+            className={\`game-viewport-container \${isPlayingScreen ? "viewport-playing" : "viewport-menu"} \${transitionActive === "SHUTDOWN" ? "crt-transition-active" : ""} \${transitionActive === "POWER_ON" ? "crt-power-on-active" : ""} \${isTouchDevice ? "viewport-mobile" : ""}\`}
+            ref={viewportRef}
+          >
+            <div style={{ position: "relative", flexGrow: 1, display: "flex", minHeight: 0 }}>
+              <GameArena playHoverTick={playHoverTick} />
 
-            {!isPlayingScreen && (
-              <div className="screen-inner" style={{ position: "absolute", inset: 0, zIndex: 10 }}>
-                {currentScreen === "TITLE" && (
-                  <TitleScreen
-                    menuIndex={menuIndex}
-                    onPlay={() => {
-                      reloadSaveSlots();
-                      navTo("SAVE_SELECT");
-                    }}
-                    onSettings={() => {
-                      navTo("SETTINGS");
-                    }}
-                    onCredits={() => {
-                      navTo("CREDITS");
-                    }}
-                    onSource={() => {
-                      navTo("SOURCE_VIEW");
-                    }}
-                    playHoverTick={playHoverTick}
-                    setMenuIndex={setMenuIndex}
-                  />
-                )}
+              {!isPlayingScreen && (
+                <div className="screen-inner" style={{ position: "absolute", inset: 0, zIndex: 10 }}>
+                  {currentScreen === "TITLE" && (
+                    <TitleScreen
+                      menuIndex={menuIndex}
+                      onPlay={() => {
+                        reloadSaveSlots();
+                        navTo("SAVE_SELECT");
+                      }}
+                      onSettings={() => {
+                        navTo("SETTINGS");
+                      }}
+                      onCredits={() => {
+                        navTo("CREDITS");
+                      }}
+                      onSource={() => {
+                        navTo("SOURCE_VIEW");
+                      }}
+                      playHoverTick={playHoverTick}
+                      setMenuIndex={setMenuIndex}
+                    />
+                  )}
 
-                {currentScreen === "SAVE_SELECT" && (
-                  <SaveSelectScreen
-                    slots={slots}
-                    menuIndex={menuIndex}
-                    isCopyMode={isCopyMode}
-                    copySourceIndex={copySourceIndex}
-                    isEraseMode={isEraseMode}
-                    handleSlotSelect={(idx) => handleSlotAction(idx, () => navTo("PLAYING"))}
-                    toggleCopyMode={toggleCopyMode}
-                    toggleEraseMode={toggleEraseMode}
-                    onBack={() => {
-                      resetActions();
-                      navTo("TITLE");
-                    }}
-                    playHoverTick={playHoverTick}
-                    setMenuIndex={setMenuIndex}
-                  />
-                )}
+                  {currentScreen === "SAVE_SELECT" && (
+                    <SaveSelectScreen
+                      slots={slots}
+                      menuIndex={menuIndex}
+                      isCopyMode={isCopyMode}
+                      copySourceIndex={copySourceIndex}
+                      isEraseMode={isEraseMode}
+                      handleSlotSelect={(idx) => handleSlotAction(idx, () => navTo("PLAYING"))}
+                      toggleCopyMode={toggleCopyMode}
+                      toggleEraseMode={toggleEraseMode}
+                      onBack={() => {
+                        resetActions();
+                        navTo("TITLE");
+                      }}
+                      playHoverTick={playHoverTick}
+                      setMenuIndex={setMenuIndex}
+                    />
+                  )}
 
-                {currentScreen === "SETTINGS" && (
-                  <SettingsScreen
-                    menuIndex={menuIndex}
-                    onAudio={() => {
-                      navTo("SOUND");
-                    }}
-                    onControls={() => {
-                      navTo("CONTROLS");
-                    }}
-                    onBack={() => {
-                      navTo("TITLE");
-                      setMenuIndex(1);
-                    }}
-                    playHoverTick={playHoverTick}
-                    setMenuIndex={setMenuIndex}
-                  />
-                )}
-
-                {currentScreen === "SOUND" && (
-                  <AudioScreen
-                    audio={audio}
-                    menuIndex={menuIndex}
-                    handleVolumeChange={handleVolumeChange}
-                    resetSettings={resetSettings}
-                    onBack={() => {
-                      navTo("SETTINGS");
-                    }}
-                    playHoverTick={playHoverTick}
-                    setMenuIndex={setMenuIndex}
-                  />
-                )}
-
-                {currentScreen === "CONTROLS" && (
-                  <ControlsScreen
-                    menuIndex={menuIndex}
-                    rebindTarget={rebindTarget}
-                    onBack={() => {
-                      navTo("SETTINGS");
-                      setMenuIndex(1);
-                    }}
-                    playHoverTick={playHoverTick}
-                    setMenuIndex={setMenuIndex}
-                    setRebindTarget={setRebindTarget}
-                    reloadSaveSlots={reloadSaveSlots}
-                  />
-                )}
-
-                {currentScreen === "CREDITS" && (
-                  <CreditsScreen
-                    onBack={() => {
-                      navTo("TITLE");
-                      setMenuIndex(2);
-                    }}
-                  />
-                )}
-
-                {currentScreen === "SOURCE_VIEW" && (
-                  <Suspense
-                    fallback={
-                      <div
-                        className="flex-col-center h-full w-full"
-                        style={{ gap: "12px", background: "var(--void-bg)", justifyContent: "center" }}
-                      >
-                        <div
-                          className="led-dot led-green"
-                          style={{ width: "16px", height: "16px", animation: "crt-pulse 1s infinite alternate" }}
-                        />
-                        <span
-                          style={{
-                            color: "#718096",
-                            fontSize: "11px",
-                            letterSpacing: "0.2em",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          COMPILING SOURCE ARCHIVE...
-                        </span>
-                      </div>
-                    }
-                  >
-                    <SourceViewScreen
+                  {currentScreen === "SETTINGS" && (
+                    <SettingsScreen
+                      menuIndex={menuIndex}
+                      onAudio={() => {
+                        navTo("SOUND");
+                      }}
+                      onControls={() => {
+                        navTo("CONTROLS");
+                      }}
                       onBack={() => {
                         navTo("TITLE");
-                        setMenuIndex(3);
+                        setMenuIndex(1);
+                      }}
+                      playHoverTick={playHoverTick}
+                      setMenuIndex={setMenuIndex}
+                    />
+                  )}
+
+                  {currentScreen === "SOUND" && (
+                    <AudioScreen
+                      audio={audio}
+                      menuIndex={menuIndex}
+                      handleVolumeChange={handleVolumeChange}
+                      resetSettings={resetSettings}
+                      onBack={() => {
+                        navTo("SETTINGS");
+                      }}
+                      playHoverTick={playHoverTick}
+                      setMenuIndex={setMenuIndex}
+                    />
+                  )}
+
+                  {currentScreen === "CONTROLS" && (
+                    <ControlsScreen
+                      menuIndex={menuIndex}
+                      rebindTarget={rebindTarget}
+                      onBack={() => {
+                        navTo("SETTINGS");
+                        setMenuIndex(1);
+                      }}
+                      playHoverTick={playHoverTick}
+                      setMenuIndex={setMenuIndex}
+                      setRebindTarget={setRebindTarget}
+                      reloadSaveSlots={reloadSaveSlots}
+                    />
+                  )}
+
+                  {currentScreen === "CREDITS" && (
+                    <CreditsScreen
+                      onBack={() => {
+                        navTo("TITLE");
+                        setMenuIndex(2);
                       }}
                     />
-                  </Suspense>
-                )}
-              </div>
-            )}
+                  )}
+
+                  {currentScreen === "SOURCE_VIEW" && (
+                    <Suspense
+                      fallback={
+                        <div
+                          className="flex-col-center h-full w-full"
+                          style={{ gap: "12px", background: "var(--void-bg)", justifyContent: "center" }}
+                        >
+                          <div
+                            className="led-dot led-green"
+                            style={{ width: "16px", height: "16px", animation: "crt-pulse 1s infinite alternate" }}
+                          />
+                          <span
+                            style={{
+                              color: "#718096",
+                              fontSize: "11px",
+                              letterSpacing: "0.2em",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            COMPILING SOURCE ARCHIVE...
+                          </span>
+                        </div>
+                      }
+                    >
+                      <SourceViewScreen
+                        onBack={() => {
+                          navTo("TITLE");
+                          setMenuIndex(3);
+                        }}
+                      />
+                    </Suspense>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {!isFullHeightScreen && (
           <DialogueConsole playerDialogue={playerDialogue} bossDialogue={bossDialogue} isTouchDevice={isTouchDevice} />
-        )}
 
-        {isPlayingScreen && isTouchDevice && <TouchOverlay />}
-      </div>
+          {isPlayingScreen && isTouchDevice && <TouchOverlay />}
+        </div>
       </div>
 
       <ChromaticAberrationFilter />
