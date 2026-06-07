@@ -29,6 +29,7 @@ export interface AttackPattern {
   configure(state: IBossAttackState): void;
 }
 
+// Stage 1 (Prime Wound) patterns
 export class OmniBurstPattern implements AttackPattern {
   public id = "OMNI_BURST";
   public tags: AttackTag[] = ["projectile-heavy", "arena-denial"];
@@ -72,6 +73,192 @@ export class VolleyPattern implements AttackPattern {
   }
 }
 
+// Stage 2 (Scarlet Lock) patterns
+export class GateDropPattern implements AttackPattern {
+  public id = "GATE_DROP";
+  public tags: AttackTag[] = ["arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (ctx.phase * 10);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 3;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.5;
+  }
+}
+
+export class LockstepVolleyPattern implements AttackPattern {
+  public id = "LOCKSTEP_VOLLEY";
+  public tags: AttackTag[] = ["projectile-heavy"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 40;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (ctx.distanceToPlayer > 200 ? 15 : 0);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 4;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.4;
+  }
+}
+
+// Stage 3 (Carminal Orbit) patterns
+export class AphelionRingPattern implements AttackPattern {
+  public id = "APHELION_RING";
+  public tags: AttackTag[] = ["projectile-heavy", "arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 55;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.2;
+  }
+}
+
+export class PerihelionDivePattern implements AttackPattern {
+  public id = "PERIHELION_DIVE";
+  public tags: AttackTag[] = ["melee", "reposition"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 60;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (ctx.playerIsAirborne ? 20 : 0);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.0;
+  }
+}
+
+// Stage 4 (Vermilion Needle) patterns
+export class NeedleRainPattern implements AttackPattern {
+  public id = "NEEDLE_RAIN";
+  public tags: AttackTag[] = ["projectile-heavy"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 5;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.5;
+  }
+}
+
+export class DashThreadPattern implements AttackPattern {
+  public id = "DASH_THREAD";
+  public tags: AttackTag[] = ["melee", "reposition"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 55;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 0.9;
+  }
+}
+
+// Stage 5 (Marrow King) patterns
+export class BellyTidePattern implements AttackPattern {
+  public id = "BELLY_TIDE";
+  public tags: AttackTag[] = ["arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (!ctx.playerIsAirborne ? 20 : 0);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.0;
+  }
+}
+
+export class BlisterSpawnPattern implements AttackPattern {
+  public id = "BLISTER_SPAWN";
+  public tags: AttackTag[] = ["arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 45;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (ctx.activeMinionsCount < 2 ? 25 : 0);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 0.6;
+  }
+}
+
+// Stage 6 (Rust Cathedral) patterns
+export class CathedralTollPattern implements AttackPattern {
+  public id = "CATHEDRAL_TOLL";
+  public tags: AttackTag[] = ["arena-denial", "projectile-heavy"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 60;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority;
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 0;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.5;
+  }
+}
+
+export class FallingNavePattern implements AttackPattern {
+  public id = "FALLING_NAVE";
+  public tags: AttackTag[] = ["arena-denial"];
+  public minPhase: 1 | 2 | 3 = 1;
+  public basePriority = 50;
+
+  public score(ctx: BossAttackContext): number {
+    if (ctx.recentAttackIds.includes(this.id)) return 0;
+    return this.basePriority + (ctx.distanceToPlayer < 200 ? 15 : 0);
+  }
+
+  public configure(state: IBossAttackState): void {
+    state.volleyCount = 4;
+    state.volleyTimer = 0;
+    state.durationTimer = 1.8;
+  }
+}
+
+// Base helper patterns
 export class FanBurstPattern implements AttackPattern {
   public id = "FAN_BURST";
   public tags: AttackTag[] = ["projectile-heavy", "reposition"];
@@ -135,6 +322,16 @@ export class GapRingPattern implements AttackPattern {
 export const ALL_PATTERNS: AttackPattern[] = [
   new OmniBurstPattern(),
   new VolleyPattern(),
+  new GateDropPattern(),
+  new LockstepVolleyPattern(),
+  new AphelionRingPattern(),
+  new PerihelionDivePattern(),
+  new NeedleRainPattern(),
+  new DashThreadPattern(),
+  new BellyTidePattern(),
+  new BlisterSpawnPattern(),
+  new CathedralTollPattern(),
+  new FallingNavePattern(),
   new FanBurstPattern(),
   new PredictiveShotPattern(),
   new GapRingPattern()
@@ -143,21 +340,30 @@ export const ALL_PATTERNS: AttackPattern[] = [
 export function selectBestAttack(ctx: BossAttackContext): AttackPattern {
   const stageIdx = useSessionStore.getState().currentStageIndex;
 
-  if (stageIdx === 1) { // Scarlet Lock loves Volleys
-    return ALL_PATTERNS.find(p => p.id === "VOLLEY") || ALL_PATTERNS[0];
-  } else if (stageIdx === 2) { // Carminal Orbit loves Fan Burst
-    return ALL_PATTERNS.find(p => p.id === "FAN_BURST") || ALL_PATTERNS[0];
-  } else if (stageIdx === 3) { // Vermilion Needle loves Predictive
-    return ALL_PATTERNS.find(p => p.id === "PREDICTIVE_SHOT") || ALL_PATTERNS[0];
-  } else if (stageIdx === 6) { // False Square Glitches to Gap Ring
-    const rand = Math.random();
-    if (rand < 0.35) return ALL_PATTERNS.find(p => p.id === "GAP_RING") || ALL_PATTERNS[0];
+  // Filter patterns by what is valid for the stage to express the chromatic/geometric narrative
+  let candidates = ALL_PATTERNS;
+
+  if (stageIdx === 0) {
+    candidates = ALL_PATTERNS.filter(p => ["OMNI_BURST", "VOLLEY", "PREDICTIVE_SHOT"].includes(p.id));
+  } else if (stageIdx === 1) {
+    candidates = ALL_PATTERNS.filter(p => ["GATE_DROP", "LOCKSTEP_VOLLEY", "VOLLEY"].includes(p.id));
+  } else if (stageIdx === 2) {
+    candidates = ALL_PATTERNS.filter(p => ["APHELION_RING", "PERIHELION_DIVE", "FAN_BURST"].includes(p.id));
+  } else if (stageIdx === 3) {
+    candidates = ALL_PATTERNS.filter(p => ["NEEDLE_RAIN", "DASH_THREAD", "PREDICTIVE_SHOT"].includes(p.id));
+  } else if (stageIdx === 4) {
+    candidates = ALL_PATTERNS.filter(p => ["BELLY_TIDE", "BLISTER_SPAWN", "OMNI_BURST"].includes(p.id));
+  } else if (stageIdx === 5) {
+    candidates = ALL_PATTERNS.filter(p => ["CATHEDRAL_TOLL", "FALLING_NAVE", "GAP_RING"].includes(p.id));
+  } else if (stageIdx === 6) {
+    // Stage 7 (False Square) imitates preceding attacks randomly with glitches
+    candidates = ALL_PATTERNS.filter(p => !["BLISTER_SPAWN"].includes(p.id)); // exclude spawner to maintain boss footprint focus
   }
 
-  let bestPattern = ALL_PATTERNS[0];
+  let bestPattern = candidates[0] || ALL_PATTERNS[0];
   let highestScore = -1;
 
-  for (const p of ALL_PATTERNS) {
+  for (const p of candidates) {
     const score = p.score(ctx);
     if (score > highestScore) {
       highestScore = score;

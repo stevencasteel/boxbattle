@@ -3,6 +3,7 @@ import { SpawnAnchor, MinionType } from "./levelData";
 import { MinionFactory } from "@/entities/MinionFactory";
 import { TrigLUT } from "./TrigLUT";
 import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
+import { useSessionStore } from "@/store/useGameStore";
 
 export class EncounterDirector {
   private world: IWorld;
@@ -69,6 +70,22 @@ export class EncounterDirector {
     }
   }
 
+  private getMinionThreatValue(type: MinionType): number {
+    switch (type) {
+      case "TURRET": return 2;
+      case "LANCER": return 2;
+      case "PIT_LANCER": return 3;
+      case "FLYER": return 2;
+      case "COMPASS_WASP": return 3;
+      case "CLAMPJAW": return 4;
+      case "SHIELDER": return 3;
+      case "HYMN_NAIL": return 2;
+      case "BLISTER_OX": return 5;
+      case "BELL_HAMMER": return 4;
+      default: return 2;
+    }
+  }
+
   private triggerNextWave() {
     const waves = this.activeStageConfig.encounterWaves;
     if (waves.length === 0) return;
@@ -77,9 +94,24 @@ export class EncounterDirector {
     const wave = waves[this.currentWaveIndex % waves.length];
     this.currentWaveIndex++;
 
-    const limit = Math.min(wave.maxActiveMinions, 4);
+    // Calculate maximum threat based on active boss footprint and narrow map constraints
+    const bossActive = this.world.boss && !this.world.boss.isDead;
+    const stageIdx = useSessionStore.getState().currentStageIndex;
+    const isNarrowMap = stageIdx === 1; // Narrow Redoubt
 
-    for (let i = 0; i < limit; i++) {
+    let maxThreatBudget = bossActive ? 4 : 8;
+    if (isNarrowMap) {
+      maxThreatBudget = bossActive ? 2 : 4;
+    }
+
+    let activeThreat = 0;
+    for (const m of this.world.minions) {
+      activeThreat += this.getMinionThreatValue(m.id.split("-")[1] as MinionType);
+    }
+
+    const maxCandidates = Math.min(wave.maxActiveMinions, isNarrowMap ? 2 : 4);
+
+    for (let i = 0; i < maxCandidates; i++) {
       const entryRand = TrigLUT.randomGameplay() * 100;
       let accumulatedWeight = 0;
       let selectedEntry = wave.entries[0];
@@ -92,13 +124,19 @@ export class EncounterDirector {
         }
       }
 
+      const candidateThreat = this.getMinionThreatValue(selectedEntry.type);
+      if (activeThreat + candidateThreat > maxThreatBudget) {
+        continue; // Exceeds tactical screen footprint and threat budget bounds
+      }
+
       const anchor = this.findSafeAnchor(selectedEntry.anchorIds, selectedEntry.anchorTags);
       if (anchor) {
         this.spawnMinion(selectedEntry.type, anchor);
+        activeThreat += candidateThreat;
       }
     }
 
-    // Play colosseum rattle/confirm
+    // Play colosseum rattle/confirm feedback
     this.world.audio.playDashRecharge();
   }
 
@@ -115,40 +153,30 @@ export class EncounterDirector {
       return null;
     }
 
-    const shuffled = [...candidates];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(TrigLUT.randomGameplay() * (i + 1));
-      const temp = shuffled[i];
-      shuffled[i] = shuffled[j];
-      shuffled[j] = temp;
-    }
-
     const player = this.world.player;
     const boss = this.world.boss;
 
-    for (const anchor of shuffled) {
-      let isSafe = true;
+    let bestAnchor: SpawnAnchor | null = null;
+    let highestSafetyScore = -Infinity;
 
-      if (player) {
-        const dx = player.position.x - anchor.x;
-        const dy = player.position.y - anchor.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 208) isSafe = false;
-      }
+    for (const anchor of candidates) {
+      const dp = player ? Math.sqrt(Math.pow(player.position.x - anchor.x, 2) + Math.pow(player.position.y - anchor.y, 2)) : 500;
+      const db = boss ? Math.sqrt(Math.pow(boss.position.x - anchor.x, 2) + Math.pow(boss.position.y - anchor.y, 2)) : 500;
 
-      if (boss && isSafe) {
-        const dx = boss.position.x - anchor.x;
-        const dy = boss.position.y - anchor.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 96) isSafe = false;
-      }
+      // Safe Spawn Anchor scoring formula to calculate tactical placement
+      let safetyScore = dp * 1.0 + db * 0.45;
 
-      if (isSafe) {
-        return anchor;
+      // Penalize anchors that spawn directly on top of active hazards or exit lanes
+      if (dp < 160) safetyScore -= 300;
+      if (db < 80) safetyScore -= 150;
+
+      if (safetyScore > highestSafetyScore) {
+        highestSafetyScore = safetyScore;
+        bestAnchor = anchor;
       }
     }
 
-    return shuffled[0] || null;
+    return bestAnchor || candidates[0] || null;
   }
 
   private spawnMinion(type: MinionType, anchor: SpawnAnchor) {
