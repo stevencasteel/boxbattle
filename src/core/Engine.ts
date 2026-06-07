@@ -54,6 +54,16 @@ export class Engine {
   private onewayPlatforms: Rectangle[] = [];
   private hazards: Rectangle[] = [];
 
+  // Morph and transition states
+  private sourceSolids: Rectangle[] = [];
+  private targetSolids: Rectangle[] = [];
+  private sourceOneways: Rectangle[] = [];
+  private targetOneways: Rectangle[] = [];
+  private sourceHazards: Rectangle[] = [];
+  private targetHazards: Rectangle[] = [];
+  private morphTimer: number = 0;
+  private morphDuration: number = 0;
+
   constructor(world: World, renderer: WorldRenderer) {
     this.world = world;
     this.renderer = renderer;
@@ -64,9 +74,10 @@ export class Engine {
     const activeStageIdx = useSessionStore.getState().currentStageIndex;
     this.levelConfig = GAUNTLET_STAGES[activeStageIdx] || GAUNTLET_STAGES[0];
 
-    this.solids = this.levelConfig.solids;
-    this.onewayPlatforms = this.levelConfig.onewayPlatforms;
-    this.hazards = this.levelConfig.hazards;
+    // Create deep copies to avoid reference mutations
+    this.solids = this.levelConfig.solids.map(r => ({ ...r }));
+    this.onewayPlatforms = this.levelConfig.onewayPlatforms.map(r => ({ ...r }));
+    this.hazards = this.levelConfig.hazards.map(r => ({ ...r }));
 
     this.init();
   }
@@ -142,14 +153,60 @@ export class Engine {
     this.world.physicsWorld.rebuild(activeSolids, this.hazards, this.onewayPlatforms);
   }
 
-  public loadStage(stageIndex: number) {
+  private interpolateRects(src: Rectangle[], dest: Rectangle[], output: Rectangle[], t: number) {
+    const maxLen = Math.max(src.length, dest.length);
+    output.length = maxLen;
+    for (let i = 0; i < maxLen; i++) {
+      const s = src[i] || { x: dest[i]?.x ?? 0, y: dest[i]?.y ?? 0, width: 0, height: 0 };
+      const d = dest[i] || { x: src[i]?.x ?? 0, y: src[i]?.y ?? 0, width: 0, height: 0 };
+
+      if (!output[i]) {
+        output[i] = { x: 0, y: 0, width: 0, height: 0 };
+      }
+      output[i].x = s.x + (d.x - s.x) * t;
+      output[i].y = s.y + (d.y - s.y) * t;
+      output[i].width = s.width + (d.width - s.width) * t;
+      output[i].height = s.height + (d.height - s.height) * t;
+    }
+  }
+
+  public loadStage(stageIndex: number, forceInstant = false) {
     const stage = GAUNTLET_STAGES[stageIndex];
     if (!stage) return;
 
-    this.levelConfig = stage;
-    this.solids = stage.solids;
-    this.onewayPlatforms = stage.onewayPlatforms;
-    this.hazards = stage.hazards;
+    // Differentiate retries (same stage) from screen transitions/progressions
+    const isProgression = !forceInstant && this.levelConfig && this.levelConfig.id !== stage.id;
+
+    if (isProgression) {
+      // Begin physical morph sequence
+      this.sourceSolids = this.solids.map(r => ({ ...r }));
+      this.targetSolids = stage.solids.map(r => ({ ...r }));
+      this.sourceOneways = this.onewayPlatforms.map(r => ({ ...r }));
+      this.targetOneways = stage.onewayPlatforms.map(r => ({ ...r }));
+      this.sourceHazards = this.hazards.map(r => ({ ...r }));
+      this.targetHazards = stage.hazards.map(r => ({ ...r }));
+
+      this.morphTimer = 1.8;
+      this.morphDuration = 1.8;
+      this.levelConfig = stage;
+
+      // Spawn progression particles
+      setTimeout(() => {
+        this.world.events.publishSpark(stage.playerStart.x, stage.playerStart.y, 0, "hsl(142, 71%, 58%)", true, 35);
+        this.world.events.publishBlast(stage.playerStart.x, stage.playerStart.y, "hsl(142, 100%, 80%)");
+        this.world.events.publishSpark(stage.bossStart.x, stage.bossStart.y, 0, "hsl(350, 82%, 58%)", true, 35);
+        this.world.events.publishBlast(stage.bossStart.x, stage.bossStart.y, "hsl(350, 100%, 80%)");
+        this.world.events.publish("CAMERA_SHAKE", { amplitude: 15, duration: 0.8 });
+        this.world.audio.playDashRecharge();
+      }, 50);
+    } else {
+      // Instant reload layout
+      this.levelConfig = stage;
+      this.solids = stage.solids.map(r => ({ ...r }));
+      this.onewayPlatforms = stage.onewayPlatforms.map(r => ({ ...r }));
+      this.hazards = stage.hazards.map(r => ({ ...r }));
+      this.morphTimer = 0;
+    }
 
     this.activeDissolvePlatforms = (stage.dissolvePlatforms || []).map((r) => new DissolvePlatform(r));
     this.activePogoPosts = (stage.pogoPosts || []).map((r) => new PogoPost(r));
@@ -269,6 +326,19 @@ export class Engine {
     }
 
     Camera.update(dt);
+
+    // Apply morph interpolation during transitions
+    if (this.morphTimer > 0) {
+      this.morphTimer -= dt;
+      const progress = 1.0 - Math.max(0, this.morphTimer / this.morphDuration);
+
+      this.interpolateRects(this.sourceSolids, this.targetSolids, this.solids, progress);
+      this.interpolateRects(this.sourceOneways, this.targetOneways, this.onewayPlatforms, progress);
+      this.interpolateRects(this.sourceHazards, this.targetHazards, this.hazards, progress);
+
+      this.rebuildPhysics();
+      this.renderer.resetCache();
+    }
 
     const K = 320;
     const D = 14;

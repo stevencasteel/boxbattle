@@ -9,6 +9,7 @@ import { StaticMapRenderer } from "@/core/StaticMapRenderer";
 import { EntityRenderer } from "@/core/EntityRenderer";
 import { ParticleRenderer } from "@/core/ParticleRenderer";
 import { DissolvePlatform, PogoPost, DashResetGate } from "./systems/TraversalHazards";
+import { useGameplayStore } from "@/store/useGameStore";
 
 export class WorldRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -159,6 +160,27 @@ export class WorldRenderer {
       }
     }
 
+    // Render dynamic entities and particles with a procedural zero-latency chromatic ghosting offset when glitching
+    const isGlitching = useGameplayStore.getState().isGlitching;
+    if (isGlitching) {
+      // Left offset ghost
+      this.ctx.save();
+      this.ctx.globalAlpha = 0.35;
+      this.ctx.translate(-6, 0);
+      this.entityRenderer.renderEntities(world, projectilePool, alpha);
+      this.particleRenderer.renderParticles(particles);
+      this.ctx.restore();
+
+      // Right offset ghost
+      this.ctx.save();
+      this.ctx.globalAlpha = 0.35;
+      this.ctx.translate(6, 0);
+      this.entityRenderer.renderEntities(world, projectilePool, alpha);
+      this.particleRenderer.renderParticles(particles);
+      this.ctx.restore();
+    }
+
+    // Main sharp foreground layer rendered normally (zero-latency)
     this.entityRenderer.renderEntities(world, projectilePool, alpha);
     this.particleRenderer.renderParticles(particles);
 

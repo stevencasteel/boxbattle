@@ -7,8 +7,9 @@ import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
 export class EncounterDirector {
   private world: IWorld;
   private currentPhase = 1;
-  private elapsedFightTime = 0;
-  private spawnCooldownTimer = 12.0;
+  private currentWaveIndex = 0;
+  private waveClearTimer = 1.2;
+  private isBetweenWaves = true;
   private activeStageConfig: StageConfig = GAUNTLET_STAGES[0];
 
   private unsubs: (() => void)[] = [];
@@ -16,7 +17,7 @@ export class EncounterDirector {
   constructor(world: IWorld) {
     this.world = world;
     this.setupSubscriptions();
-    this.spawnInitialPlaytestMinions();
+    this.reset();
   }
 
   private setupSubscriptions() {
@@ -43,8 +44,7 @@ export class EncounterDirector {
       return;
     }
 
-    this.elapsedFightTime += dt;
-
+    // Clean up dead minions
     for (let i = this.world.minions.length - 1; i >= 0; i--) {
       const m = this.world.minions[i];
       if (m.isDead) {
@@ -54,41 +54,37 @@ export class EncounterDirector {
     }
 
     const activeCount = this.world.minions.length;
-    const maxBudget = this.currentPhase === 1 ? 2 : this.currentPhase === 2 ? 3 : 5;
 
-    if (this.spawnCooldownTimer > 0) {
-      this.spawnCooldownTimer -= dt;
-      return;
+    if (activeCount === 0 && !this.isBetweenWaves) {
+      this.isBetweenWaves = true;
+      this.waveClearTimer = 1.5; // colosseum-style buffer between waves
     }
 
-    if (activeCount < maxBudget) {
-      this.triggerNextWave();
+    if (this.isBetweenWaves) {
+      this.waveClearTimer -= dt;
+      if (this.waveClearTimer <= 0) {
+        this.isBetweenWaves = false;
+        this.triggerNextWave();
+      }
     }
   }
 
   private triggerNextWave() {
-    const waves = this.activeStageConfig.encounterWaves.filter(
-      (w) => w.phase === this.currentPhase && this.elapsedFightTime >= (w.earliestTime || 0)
-    );
-
+    const waves = this.activeStageConfig.encounterWaves;
     if (waves.length === 0) return;
 
-    const rand = TrigLUT.randomGameplay();
-    const waveIdx = Math.floor(rand * waves.length);
-    const selectedWave = waves[waveIdx];
+    // Cycle through waves sequentially
+    const wave = waves[this.currentWaveIndex % waves.length];
+    this.currentWaveIndex++;
 
-    const entriesToSpawn = selectedWave.maxActiveMinions;
-    const activeCount = this.world.minions.length;
-    const maxBudget = this.currentPhase === 1 ? 2 : this.currentPhase === 2 ? 3 : 5;
-    const spaceInBudget = maxBudget - activeCount;
-    const limit = Math.min(entriesToSpawn, spaceInBudget);
+    const limit = Math.min(wave.maxActiveMinions, 4);
 
     for (let i = 0; i < limit; i++) {
       const entryRand = TrigLUT.randomGameplay() * 100;
       let accumulatedWeight = 0;
-      let selectedEntry = selectedWave.entries[0];
+      let selectedEntry = wave.entries[0];
 
-      for (const entry of selectedWave.entries) {
+      for (const entry of wave.entries) {
         accumulatedWeight += entry.weight;
         if (entryRand <= accumulatedWeight) {
           selectedEntry = entry;
@@ -102,9 +98,8 @@ export class EncounterDirector {
       }
     }
 
-    const minCd = selectedWave.cooldownRange[0];
-    const maxCd = selectedWave.cooldownRange[1];
-    this.spawnCooldownTimer = minCd + TrigLUT.randomGameplay() * (maxCd - minCd);
+    // Play colosseum rattle/confirm
+    this.world.audio.playDashRecharge();
   }
 
   private findSafeAnchor(ids?: string[], tags?: string[]): SpawnAnchor | null {
@@ -162,23 +157,6 @@ export class EncounterDirector {
     this.world.minions.push(minion);
   }
 
-  private spawnInitialPlaytestMinions() {
-    const turretAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("catwalk") || a.id.includes("perch"));
-    if (turretAnchor) {
-      this.spawnMinion("TURRET", turretAnchor);
-    }
-
-    const lancerAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("bridge") || a.id.includes("mid"));
-    if (lancerAnchor) {
-      this.spawnMinion("LANCER", lancerAnchor);
-    }
-
-    const flyerAnchor = this.activeStageConfig.spawnAnchors.find(a => a.id.includes("air") || a.id.includes("ambush"));
-    if (flyerAnchor) {
-      this.spawnMinion("FLYER", flyerAnchor);
-    }
-  }
-
   private despawnAllMinions() {
     for (const m of this.world.minions) {
       m.teardown();
@@ -189,9 +167,9 @@ export class EncounterDirector {
   public reset() {
     this.despawnAllMinions();
     this.currentPhase = 1;
-    this.elapsedFightTime = 0;
-    this.spawnCooldownTimer = 12.0;
-    this.spawnInitialPlaytestMinions();
+    this.currentWaveIndex = 0;
+    this.waveClearTimer = 1.2;
+    this.isBetweenWaves = true;
   }
 
   public teardown() {

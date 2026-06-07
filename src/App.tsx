@@ -146,7 +146,7 @@ export default function App() {
 
   useMusicLifecycle(isPlayingScreen);
   useFirstGesture(reloadSaveSlots);
-  useEngineSubscriptions(viewportRef, triggerDialogue, resetDialogues);
+  useEngineSubscriptions(triggerDialogue, resetDialogues);
   useRebindCapture(rebindTarget, setRebindTarget, reloadSaveSlots);
 
   const playHoverTick = () => {

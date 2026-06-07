@@ -564,7 +564,7 @@ export class Software3DRenderer {
                     
                     const x2 = x1;
                     const y2 = y1 * cosP - z1 * sinP;
-                    const z2 = y1 * sinP + z1 * cosP;
+
                     
                     const x3 = x2 * cosR - y2 * sinR;
                     const y3 = x2 * sinR + y2 * cosR;
@@ -573,7 +573,7 @@ export class Software3DRenderer {
                 };
 
                 const project3D = (u: number, v: number) => {
-                    let lx = 0, ly = 0, lz = 0;
+                    let lx: number, ly: number, lz: number;
                     if (face.color === "FRONT") {
                         lx = u; ly = v; lz = -0.5;
                     } else if (face.color === "BACK") {

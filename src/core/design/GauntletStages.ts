@@ -1,7 +1,6 @@
 import { LevelConfig } from "../levelData";
 import { Rectangle } from "../Interfaces";
 
-
 export interface VisualShape {
     type: "organic" | "polygon" | "circle";
     points?: {x: number, y: number}[];
@@ -12,7 +11,7 @@ export interface VisualShape {
 }
 
 export interface StageConfig extends LevelConfig {
-    visualShapes?: VisualShape[];
+  visualShapes?: VisualShape[];
   id: string;
   title: string;
   subtitle: string;
@@ -106,28 +105,28 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     midBossDisplayName: "SCARLET LOCK",
     midBossMaxHp: 48,
     solids: [
-      { x: 0, y: 0, width: 220, height: 1000 },
-      { x: 780, y: 0, width: 220, height: 1000 },
-      { x: 220, y: 920, width: 560, height: 80 },
-      { x: 220, y: 0, width: 560, height: 40 },
-      { x: 220, y: 680, width: 140, height: 32 },
-      { x: 640, y: 440, width: 140, height: 32 },
-      { x: 220, y: 220, width: 140, height: 32 },
+      // Narrow walls compressing horizontal gameplay space
+      { x: 0, y: 0, width: 280, height: 1000 },
+      { x: 720, y: 0, width: 280, height: 1000 },
+      { x: 280, y: 920, width: 440, height: 80 },
+      { x: 280, y: 0, width: 440, height: 280 }, // Lowered dropped ceiling
+      { x: 280, y: 680, width: 120, height: 32 },
+      { x: 600, y: 480, width: 120, height: 32 },
     ],
     onewayPlatforms: [
-      { x: 360, y: 560, width: 280, height: 16 },
-      { x: 360, y: 320, width: 280, height: 16 },
+      { x: 400, y: 580, width: 200, height: 16 },
+      { x: 400, y: 360, width: 200, height: 16 },
     ],
     hazards: [
-      { x: 220, y: 880, width: 100, height: 40 },
-      { x: 680, y: 880, width: 100, height: 40 },
+      { x: 280, y: 880, width: 80, height: 40 },
+      { x: 640, y: 880, width: 80, height: 40 },
     ],
     spawners: [],
     spawnAnchors: [
       { id: "redoubt-floor", x: 500, y: 840, tags: ["low", "ground"] },
-      { id: "redoubt-mid-left", x: 280, y: 600, tags: ["mid", "left", "perch"] },
-      { id: "redoubt-mid-right", x: 720, y: 360, tags: ["mid", "right", "perch"] },
-      { id: "redoubt-air-center", x: 500, y: 400, tags: ["air", "center"] },
+      { id: "redoubt-mid-left", x: 340, y: 620, tags: ["mid", "left", "perch"] },
+      { id: "redoubt-mid-right", x: 660, y: 420, tags: ["mid", "right", "perch"] },
+      { id: "redoubt-air-center", x: 500, y: 440, tags: ["air", "center"] },
     ],
     encounterWaves: [
       {
@@ -137,8 +136,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [5, 8],
         maxActiveMinions: 2,
         entries: [
-          { type: "TURRET", anchorIds: ["redoubt-mid-left", "redoubt-mid-right"], weight: 60 },
-          { type: "LANCER", anchorIds: ["redoubt-floor"], weight: 40 }
+          { type: "CLAMPJAW", anchorIds: ["redoubt-floor"], weight: 70 },
+          { type: "TURRET", anchorIds: ["redoubt-mid-left"], weight: 30 }
         ]
       },
       {
@@ -148,7 +147,7 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         maxActiveMinions: 2,
         entries: [
           { type: "FLYER", anchorTags: ["air"], weight: 50 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 50 }
+          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 50 }
         ]
       },
       {
@@ -158,49 +157,49 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         maxActiveMinions: 3,
         entries: [
           { type: "FLYER", anchorTags: ["air"], weight: 40 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
+          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 30 },
           { type: "TURRET", anchorTags: ["perch"], weight: 30 }
         ]
       }
     ],
-    playerStart: { x: 300, y: 800 },
+    playerStart: { x: 360, y: 800 },
     visualShapes: [
-        { type: "polygon", points: [{x:220,y:200},{x:260,y:240},{x:230,y:300},{x:220,y:280}], colorRole: "arena-infection", infectionSeams: true },
-        { type: "polygon", points: [{x:780,y:600},{x:740,y:640},{x:770,y:700},{x:780,y:680}], colorRole: "arena-infection", infectionSeams: true }
+      { type: "polygon", points: [{x:280,y:200},{x:320,y:240},{x:290,y:300},{x:280,y:280}], colorRole: "arena-infection", infectionSeams: true },
+      { type: "polygon", points: [{x:720,y:600},{x:680,y:640},{x:710,y:700},{x:720,y:680}], colorRole: "arena-infection", infectionSeams: true }
     ],
-
-    bossStart: { x: 700, y: 800 },
+    bossStart: { x: 640, y: 800 },
   },
   {
     id: "stage-3",
     title: "THE ORBITAL GALLOWS",
-    subtitle: "STAGE 3 - ARC READING",
+    subtitle: "STAGE 3 - FLOORLESS HAZARDS",
     midBossId: "carminal-orbit",
     midBossDisplayName: "CARMINAL ORBIT",
     midBossMaxHp: 58,
     solids: [
-      { x: 0, y: 920, width: 1000, height: 80 },
+      { x: 0, y: 920, width: 40, height: 80 },
+      { x: 960, y: 920, width: 40, height: 80 },
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
       { x: 380, y: 480, width: 240, height: 32 },
     ],
     onewayPlatforms: [
-      { x: 140, y: 640, width: 180, height: 16 },
-      { x: 680, y: 640, width: 180, height: 16 },
-      { x: 140, y: 320, width: 180, height: 16 },
-      { x: 680, y: 320, width: 180, height: 16 },
+      // Tiny orbiting ledges
+      { x: 120, y: 640, width: 160, height: 16 },
+      { x: 720, y: 640, width: 160, height: 16 },
+      { x: 120, y: 320, width: 160, height: 16 },
+      { x: 720, y: 320, width: 160, height: 16 },
     ],
+    // Spike bed covering the bottom floor completely
     hazards: [
-      { x: 40, y: 880, width: 200, height: 40 },
-      { x: 760, y: 880, width: 200, height: 40 },
+      { x: 40, y: 920, width: 920, height: 80 },
     ],
     spawners: [],
     spawnAnchors: [
       { id: "orbit-center-block", x: 500, y: 420, tags: ["mid", "center", "ground"] },
-      { id: "orbit-low-mid", x: 500, y: 840, tags: ["low", "center"] },
-      { id: "orbit-left-cat", x: 230, y: 580, tags: ["mid", "left", "perch"] },
-      { id: "orbit-right-cat", x: 770, y: 580, tags: ["mid", "right", "perch"] },
+      { id: "orbit-left-cat", x: 200, y: 580, tags: ["mid", "left", "perch"] },
+      { id: "orbit-right-cat", x: 800, y: 580, tags: ["mid", "right", "perch"] },
       { id: "orbit-air-high", x: 500, y: 200, tags: ["air", "center"] },
     ],
     encounterWaves: [
@@ -211,8 +210,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [5, 8],
         maxActiveMinions: 2,
         entries: [
-          { type: "FLYER", anchorTags: ["air"], weight: 70 },
-          { type: "LANCER", anchorIds: ["orbit-center-block"], weight: 30 }
+          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 75 },
+          { type: "TURRET", anchorIds: ["orbit-left-cat"], weight: 25 }
         ]
       },
       {
@@ -221,8 +220,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [4, 7],
         maxActiveMinions: 3,
         entries: [
-          { type: "TURRET", anchorTags: ["perch"], weight: 40 },
-          { type: "SHIELDER", anchorIds: ["orbit-low-mid"], weight: 40 },
+          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 45 },
+          { type: "TURRET", anchorTags: ["perch"], weight: 35 },
           { type: "FLYER", anchorTags: ["air"], weight: 20 }
         ]
       },
@@ -232,40 +231,40 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [3, 6],
         maxActiveMinions: 4,
         entries: [
-          { type: "FLYER", anchorTags: ["air"], weight: 45 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 25 }
+          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 50 },
+          { type: "FLYER", anchorTags: ["air"], weight: 30 },
+          { type: "TURRET", anchorTags: ["perch"], weight: 20 }
         ]
       }
     ],
-    playerStart: { x: 500, y: 800 },
-    bossStart: { x: 500, y: 400 },
+    playerStart: { x: 500, y: 400 },
+    bossStart: { x: 500, y: 260 },
   },
   {
     id: "stage-4",
     title: "THE DISSOLVING CHOIR",
-    subtitle: "STAGE 4 - PLATFORM DECAY",
+    subtitle: "STAGE 4 - PATH OF PAIN MATRIX",
     midBossId: "vermilion-needle",
     midBossDisplayName: "VERMILION NEEDLE",
     midBossMaxHp: 64,
     solids: [
-      { x: 0, y: 920, width: 260, height: 80 },
-      { x: 740, y: 920, width: 260, height: 80 },
-      { x: 260, y: 960, width: 480, height: 40 },
+      { x: 0, y: 920, width: 240, height: 80 },
+      { x: 760, y: 920, width: 240, height: 80 },
+      { x: 240, y: 960, width: 520, height: 40 },
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 40, y: 400, width: 160, height: 32 },
-      { x: 800, y: 400, width: 160, height: 32 },
+      { x: 40, y: 400, width: 140, height: 32 },
+      { x: 820, y: 400, width: 140, height: 32 },
     ],
     onewayPlatforms: [],
-    hazards: [{ x: 260, y: 920, width: 480, height: 80 }],
+    hazards: [{ x: 240, y: 920, width: 520, height: 80 }],
     spawners: [],
     spawnAnchors: [
-      { id: "choir-left-solid", x: 130, y: 340, tags: ["high", "left", "perch"] },
-      { id: "choir-right-solid", x: 870, y: 340, tags: ["high", "right", "perch"] },
-      { id: "choir-mid-ledge-l", x: 350, y: 590, tags: ["mid", "left"] },
-      { id: "choir-mid-ledge-r", x: 650, y: 590, tags: ["mid", "right"] },
+      { id: "choir-left-solid", x: 110, y: 340, tags: ["high", "left", "perch"] },
+      { id: "choir-right-solid", x: 890, y: 340, tags: ["high", "right", "perch"] },
+      { id: "choir-mid-ledge-l", x: 330, y: 590, tags: ["mid", "left"] },
+      { id: "choir-mid-ledge-r", x: 670, y: 590, tags: ["mid", "right"] },
       { id: "choir-air-mid", x: 500, y: 280, tags: ["air", "center"] },
     ],
     encounterWaves: [
@@ -276,7 +275,7 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [5, 8],
         maxActiveMinions: 2,
         entries: [
-          { type: "TURRET", anchorIds: ["choir-left-solid", "choir-right-solid"], weight: 70 },
+          { type: "HYMN_NAIL", anchorIds: ["choir-mid-ledge-l"], weight: 70 },
           { type: "FLYER", anchorTags: ["air"], weight: 30 }
         ]
       },
@@ -286,8 +285,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [4, 7],
         maxActiveMinions: 3,
         entries: [
-          { type: "LANCER", anchorIds: ["choir-mid-ledge-l", "choir-mid-ledge-r"], weight: 50 },
-          { type: "SHIELDER", anchorTags: ["high"], weight: 50 }
+          { type: "HYMN_NAIL", anchorIds: ["choir-mid-ledge-l", "choir-mid-ledge-r"], weight: 50 },
+          { type: "TURRET", anchorTags: ["high"], weight: 50 }
         ]
       },
       {
@@ -296,17 +295,17 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [3, 6],
         maxActiveMinions: 4,
         entries: [
-          { type: "FLYER", anchorTags: ["air"], weight: 40 },
-          { type: "TURRET", anchorTags: ["high"], weight: 30 },
-          { type: "LANCER", anchorTags: ["mid"], weight: 30 }
+          { type: "HYMN_NAIL", anchorTags: ["mid"], weight: 45 },
+          { type: "FLYER", anchorTags: ["air"], weight: 35 },
+          { type: "TURRET", anchorTags: ["high"], weight: 20 }
         ]
       }
     ],
-    playerStart: { x: 120, y: 800 },
-    bossStart: { x: 880, y: 800 },
+    playerStart: { x: 100, y: 800 },
+    bossStart: { x: 900, y: 800 },
     dissolvePlatforms: [
-      { x: 260, y: 640, width: 140, height: 16 },
-      { x: 600, y: 640, width: 140, height: 16 },
+      { x: 240, y: 640, width: 140, height: 16 },
+      { x: 620, y: 640, width: 140, height: 16 },
     ],
     pogoPosts: [
       { x: 470, y: 720, width: 60, height: 32 },
@@ -318,31 +317,31 @@ export const GAUNTLET_STAGES: StageConfig[] = [
   {
     id: "stage-5",
     title: "THE MARROW ROT",
-    subtitle: "STAGE 5 - GEOMETRIC CONTAMINATION",
+    subtitle: "STAGE 5 - ORGANIC CYSTS",
     midBossId: "marrow-king",
     midBossDisplayName: "MARROW KING",
     midBossMaxHp: 74,
     solids: [
-      { x: 0, y: 920, width: 340, height: 80 },
-      { x: 660, y: 920, width: 340, height: 80 },
-      { x: 340, y: 960, width: 320, height: 40 },
+      { x: 0, y: 920, width: 300, height: 80 },
+      { x: 700, y: 920, width: 300, height: 80 },
+      { x: 300, y: 960, width: 400, height: 40 },
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 260, y: 580, width: 480, height: 32 },
+      { x: 280, y: 580, width: 440, height: 32 },
     ],
     onewayPlatforms: [
-      { x: 40, y: 380, width: 220, height: 16 },
-      { x: 740, y: 380, width: 220, height: 16 },
+      { x: 40, y: 380, width: 200, height: 16 },
+      { x: 760, y: 380, width: 200, height: 16 },
     ],
-    hazards: [{ x: 340, y: 920, width: 320, height: 80 }],
+    hazards: [{ x: 300, y: 920, width: 400, height: 80 }],
     spawners: [],
     spawnAnchors: [
-      { id: "marrow-high-left", x: 150, y: 320, tags: ["high", "left", "perch"] },
-      { id: "marrow-high-right", x: 850, y: 320, tags: ["high", "right", "perch"] },
+      { id: "marrow-high-left", x: 140, y: 320, tags: ["high", "left", "perch"] },
+      { id: "marrow-high-right", x: 860, y: 320, tags: ["high", "right", "perch"] },
       { id: "marrow-center-growth", x: 500, y: 520, tags: ["mid", "center", "ground"] },
-      { id: "marrow-low-l", x: 180, y: 860, tags: ["low", "left", "ground"] },
-      { id: "marrow-low-r", x: 820, y: 860, tags: ["low", "right", "ground"] },
+      { id: "marrow-low-l", x: 160, y: 860, tags: ["low", "left", "ground"] },
+      { id: "marrow-low-r", x: 840, y: 860, tags: ["low", "right", "ground"] },
       { id: "marrow-air", x: 500, y: 220, tags: ["air", "center"] },
     ],
     encounterWaves: [
@@ -353,8 +352,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [5, 8],
         maxActiveMinions: 2,
         entries: [
-          { type: "LANCER", anchorIds: ["marrow-center-growth"], weight: 60 },
-          { type: "FLYER", anchorTags: ["air"], weight: 40 }
+          { type: "BLISTER_OX", anchorIds: ["marrow-center-growth"], weight: 65 },
+          { type: "FLYER", anchorTags: ["air"], weight: 35 }
         ]
       },
       {
@@ -363,8 +362,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [4, 7],
         maxActiveMinions: 3,
         entries: [
-          { type: "SHIELDER", anchorTags: ["low"], weight: 40 },
-          { type: "TURRET", anchorTags: ["high"], weight: 40 },
+          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 45 },
+          { type: "TURRET", anchorTags: ["high"], weight: 35 },
           { type: "FLYER", anchorTags: ["air"], weight: 20 }
         ]
       },
@@ -374,26 +373,24 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [3, 6],
         maxActiveMinions: 4,
         entries: [
+          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 40 },
           { type: "FLYER", anchorTags: ["air"], weight: 30 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 20 },
-          { type: "TURRET", anchorTags: ["high"], weight: 20 }
+          { type: "TURRET", anchorTags: ["high"], weight: 30 }
         ]
       }
     ],
     playerStart: { x: 120, y: 800 },
     visualShapes: [
-        { type: "circle", center: {x: 150, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeams: true },
-        { type: "circle", center: {x: 850, y: 500}, radius: 80, colorRole: "arena-infection", infectionSeams: true },
-        { type: "circle", center: {x: 500, y: 800}, radius: 120, colorRole: "arena-stone", infectionSeams: false }
+      { type: "circle", center: {x: 120, y: 480}, radius: 90, colorRole: "arena-infection", infectionSeams: true },
+      { type: "circle", center: {x: 880, y: 480}, radius: 90, colorRole: "arena-infection", infectionSeams: true },
+      { type: "circle", center: {x: 500, y: 820}, radius: 130, colorRole: "arena-stone", infectionSeams: false }
     ],
-
     bossStart: { x: 880, y: 800 },
   },
   {
     id: "stage-6",
     title: "THE RUST CATHEDRAL",
-    subtitle: "STAGE 6 - SLAB COMPRESSION",
+    subtitle: "STAGE 6 - SLAB COMPRESSORS",
     midBossId: "rust-cathedral",
     midBossDisplayName: "RUST CATHEDRAL",
     midBossMaxHp: 88,
@@ -402,8 +399,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
       { x: 0, y: 0, width: 1000, height: 40 },
       { x: 0, y: 0, width: 40, height: 1000 },
       { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 120, y: 440, width: 180, height: 120 },
-      { x: 700, y: 440, width: 180, height: 120 },
+      { x: 100, y: 440, width: 200, height: 140 },
+      { x: 700, y: 440, width: 200, height: 140 },
       { x: 400, y: 550, width: 200, height: 40 },
     ],
     onewayPlatforms: [
@@ -413,11 +410,11 @@ export const GAUNTLET_STAGES: StageConfig[] = [
     hazards: [],
     spawners: [],
     spawnAnchors: [
-      { id: "cath-high-left", x: 210, y: 380, tags: ["high", "left", "perch"] },
-      { id: "cath-high-right", x: 790, y: 380, tags: ["high", "right", "perch"] },
+      { id: "cath-high-left", x: 200, y: 380, tags: ["high", "left", "perch"] },
+      { id: "cath-high-right", x: 800, y: 380, tags: ["high", "right", "perch"] },
       { id: "cath-center-slab", x: 500, y: 490, tags: ["mid", "center", "ground"] },
-      { id: "cath-low-l", x: 350, y: 840, tags: ["low", "left", "ground"] },
-      { id: "cath-low-r", x: 650, y: 840, tags: ["low", "right", "ground"] },
+      { id: "cath-low-l", x: 330, y: 840, tags: ["low", "left", "ground"] },
+      { id: "cath-low-r", x: 670, y: 840, tags: ["low", "right", "ground"] },
     ],
     encounterWaves: [
       {
@@ -427,8 +424,8 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [5, 8],
         maxActiveMinions: 2,
         entries: [
-          { type: "SHIELDER", anchorIds: ["cath-center-slab"], weight: 60 },
-          { type: "TURRET", anchorTags: ["high"], weight: 40 }
+          { type: "BELL_HAMMER", anchorIds: ["cath-center-slab"], weight: 65 },
+          { type: "TURRET", anchorTags: ["high"], weight: 35 }
         ]
       },
       {
@@ -437,9 +434,9 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [4, 7],
         maxActiveMinions: 3,
         entries: [
-          { type: "LANCER", anchorTags: ["low"], weight: 45 },
-          { type: "FLYER", anchorIds: ["cath-high-left", "cath-high-right"], weight: 40 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 15 }
+          { type: "BELL_HAMMER", anchorTags: ["low"], weight: 50 },
+          { type: "FLYER", anchorIds: ["cath-high-left", "cath-high-right"], weight: 30 },
+          { type: "TURRET", anchorTags: ["high"], weight: 20 }
         ]
       },
       {
@@ -448,10 +445,9 @@ export const GAUNTLET_STAGES: StageConfig[] = [
         cooldownRange: [3, 6],
         maxActiveMinions: 4,
         entries: [
-          { type: "LANCER", anchorTags: ["ground"], weight: 35 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 30 },
-          { type: "TURRET", anchorTags: ["high"], weight: 20 },
-          { type: "FLYER", anchorTags: ["high"], weight: 15 }
+          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 45 },
+          { type: "TURRET", anchorTags: ["high"], weight: 35 },
+          { type: "FLYER", anchorTags: ["high"], weight: 20 }
         ]
       }
     ],
@@ -461,7 +457,7 @@ export const GAUNTLET_STAGES: StageConfig[] = [
   {
     id: "stage-7",
     title: "THE PANTHEON BOX",
-    subtitle: "STAGE 7 - FINAL SYNTHESIS",
+    subtitle: "STAGE 7 - THE FINAL CRUCIBLE",
     midBossId: "false-square",
     midBossDisplayName: "THE FALSE SQUARE",
     midBossMaxHp: 110,
