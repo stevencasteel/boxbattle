@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-DcqgdQ9K.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-CTx7yS_B.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -14524,7 +14524,7 @@ export class BossAttackState extends BossState implements IBossAttackState {
         "hsl(15, 82%, 48%)",
         "heavy-block"
       );
-      proj.size = { width: 44, height: 44 };
+      proj.size = { width: 40, height: 40 };
     }
   }
 
@@ -14621,7 +14621,7 @@ export class BossAttackState extends BossState implements IBossAttackState {
       color,
       "needle"
     );
-    proj.size = { width: 17.6, height: 17.6 };
+    proj.size = { width: 16, height: 16 };
   }
 
   private fireGapRing() {
@@ -15022,7 +15022,7 @@ import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 export class FlyerMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 28.8, height: 28.8 };
+    this.size = { width: 32, height: 32 };
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 3,
       invincibilityDuration: 0.15,
@@ -15096,7 +15096,7 @@ export class LancerMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 32, height: 40 };
+    this.size = { width: 32, height: 44 };
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 6,
       invincibilityDuration: 0.15,
@@ -15700,7 +15700,7 @@ export class SimplePatrolState implements IState {
 export class PitLancerMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 32, height: 42 };
+    this.size = { width: 32, height: 44 };
     this.patrolSpeed = 120;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 6,
@@ -15755,7 +15755,7 @@ export class CompassWaspMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 24, height: 24 };
+    this.size = { width: 28, height: 28 };
     this.physics.gravity = 0;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 3,
@@ -15847,7 +15847,7 @@ export class CompassWaspMinion extends BaseMinion {
 export class ClampjawMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 44, height: 35 };
+    this.size = { width: 48, height: 36 };
     this.patrolSpeed = 70;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 10,
@@ -15899,7 +15899,7 @@ export class HymnNailMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 30, height: 60 };
+    this.size = { width: 32, height: 64 };
     this.physics.gravity = 0;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 4,
@@ -15985,7 +15985,7 @@ export class BlisterOxMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 56, height: 48 };
+    this.size = { width: 64, height: 48 };
     this.patrolSpeed = 40;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 12,
@@ -16089,7 +16089,7 @@ export class BellHammerMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 44, height: 44 };
+    this.size = { width: 48, height: 48 };
     this.patrolSpeed = 60;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 8,
@@ -16181,7 +16181,7 @@ export class ShardChoirMinion extends BaseMinion {
 
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 22, height: 22 };
+    this.size = { width: 24, height: 24 };
     this.physics.gravity = 0;
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 2,
@@ -16584,7 +16584,7 @@ export class Projectile extends BaseEntity implements IPoolable {
 
   constructor() {
     super("projectile", null as unknown as IWorld);
-    this.size = { width: 11.2, height: 11.2 };
+    this.size = { width: 12, height: 12 };
     this.trailRing = Array.from({ length: TRAIL_RING_SIZE }, () => ({ x: 0, y: 0 }));
   }
 
@@ -17147,7 +17147,7 @@ export class ShielderPatrolState implements IState {
 export class ShielderMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 35.2, height: 40 };
+    this.size = { width: 36, height: 40 };
     this.patrolSpeed = 80;
 
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
@@ -17237,7 +17237,7 @@ import { VisualProfile } from "@/core/visuals/ShapeRenderer";
 export class TurretMinion extends BaseMinion {
   constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
     super(id, startPos, world);
-    this.size = { width: 35.2, height: 35.2 };
+    this.size = { width: 36, height: 36 };
     this.health = this.addComponent(HealthComponent, new HealthComponent(), {
       maxHealth: 5,
       invincibilityDuration: 0.15,
@@ -17536,9 +17536,9 @@ export class FireballComponent implements IEntityComponent {
     );
 
     if (isLvl2) {
-      proj.size = { width: 38.4, height: 38.4 };
+      proj.size = { width: 36, height: 36 };
     } else {
-      proj.size = { width: 17.6, height: 17.6 };
+      proj.size = { width: 16, height: 16 };
     }
   }
 }
