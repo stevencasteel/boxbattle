@@ -45,7 +45,6 @@ export const GAUNTLET_STAGES: StageConfig[] = [
       { x: 720, y: 440, width: 240, height: 16 },
     ],
     hazards: [{ x: 320, y: 920, width: 360, height: 80 }],
-    spawners: [],
     spawnAnchors: [
       { id: "left-catwalk", x: 140, y: 392, tags: ["high", "left", "perch"] },
       { id: "right-catwalk", x: 860, y: 392, tags: ["high", "right", "perch"] },

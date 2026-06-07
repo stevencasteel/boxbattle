@@ -1,6 +1,5 @@
 import { Rectangle } from "./Interfaces";
 import { UNITS } from "@/core/Units";
-// Removed unused useSessionStore
 import { GAUNTLET_STAGES } from "./design/GauntletStages";
 
 export class StaticMapRenderer {

@@ -3,7 +3,6 @@ import { SpawnAnchor, MinionType } from "./levelData";
 import { MinionFactory } from "@/entities/MinionFactory";
 import { TrigLUT } from "./TrigLUT";
 import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
-// Removed unused useSessionStore
 
 export class EncounterDirector {
   private world: IWorld;
@@ -97,7 +96,6 @@ export class EncounterDirector {
 
     // Calculate maximum threat based on active boss footprint and narrow map constraints
     const bossActive = this.world.boss && !this.world.boss.isDead;
-    // Removed unused stageIdx
     const isNarrowMap = false; // Narrow Redoubt
 
     let maxThreatBudget = bossActive ? 4 : 8;

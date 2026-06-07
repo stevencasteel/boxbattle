@@ -18,6 +18,3 @@ export function zeroVec(v: Vector2D): Vector2D {
   return v;
 }
 
-export function cloneVec(src: Vector2D): Vector2D {
-  return { x: src.x, y: src.y };
-}

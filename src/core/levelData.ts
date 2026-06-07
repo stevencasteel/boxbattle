@@ -13,12 +13,6 @@ export type MinionType =
   | "BELL_HAMMER"
   | "SHARD_CHOIR";
 
-export interface SpawnerConfig {
-  type: MinionType;
-  x: number;
-  y: number;
-}
-
 export interface SpawnAnchor {
   id: string;
   x: number;
@@ -47,7 +41,6 @@ export interface LevelConfig {
   solids: Rectangle[];
   onewayPlatforms: Rectangle[];
   hazards: Rectangle[];
-  spawners: SpawnerConfig[];
   spawnAnchors: SpawnAnchor[];
   encounterWaves: EncounterWave[];
   playerStart: { x: number; y: number };
@@ -69,7 +62,6 @@ export const defaultLevelConfig: LevelConfig = {
     { x: 720, y: 440, width: 240, height: 16 },
   ],
   hazards: [{ x: 320, y: 920, width: 360, height: 80 }],
-  spawners: [],
   spawnAnchors: [
     { id: "left-catwalk", x: 140, y: 392, tags: ["high", "left", "perch"] },
     { id: "right-catwalk", x: 860, y: 392, tags: ["high", "right", "perch"] },
@@ -143,28 +135,3 @@ export const defaultLevelConfig: LevelConfig = {
   playerStart: { x: 120, y: 800 },
   bossStart: { x: 840, y: 800 },
 };
-
-export class LevelLoader {
-  public static parse(jsonString: string): LevelConfig {
-    try {
-      const parsed = JSON.parse(jsonString);
-      if (
-        parsed &&
-        Array.isArray(parsed.solids) &&
-        Array.isArray(parsed.onewayPlatforms) &&
-        Array.isArray(parsed.hazards) &&
-        parsed.playerStart &&
-        parsed.bossStart
-      ) {
-        return parsed as LevelConfig;
-      }
-    } catch (e) {
-      console.error("Failed to parse dynamic LevelConfig:", e);
-    }
-    return defaultLevelConfig;
-  }
-
-  public static stringify(config: LevelConfig): string {
-    return JSON.stringify(config, null, 2);
-  }
-}

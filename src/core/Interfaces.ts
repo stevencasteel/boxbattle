@@ -108,12 +108,6 @@ export interface IRenderable {
   draw(ctx: CanvasRenderingContext2D, alpha?: number): void;
 }
 
-export interface IAbilityUser {
-  hasDoubleJump?: boolean;
-  healingCharges?: number;
-  facingDirection?: number;
-}
-
 export interface IEntity extends ITransform {
   id: string;
   isDead: boolean;
@@ -212,10 +206,6 @@ export interface IWorld extends IEntityFactory {
   events: IEventBus;
   audio: IAudioManager;
   input: IInputProvider;
-}
-
-export interface IDamageRecorder {
-  registerDamageDealt(): void;
 }
 
 export interface IEventBus {
