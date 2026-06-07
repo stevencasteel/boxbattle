@@ -15,7 +15,13 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
             ctx.clearRect(0, 0, w, h);
             if (speaker === "player") {
                 ctx.fillStyle = "hsl(142, 72%, 56%)"; ctx.fillRect(0, 0, w, h);
-                if (typing) { ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(w / 2, h / 2, 4 + Math.sin(t * 12) * 2, 0, Math.PI * 2); ctx.fill(); }
+                if (typing) {
+                    const size = 12 + Math.sin(t * (Math.PI * 2 / 0.045)) * 4;
+                    ctx.fillStyle = "#ffffff";
+                    ctx.beginPath();
+                    ctx.roundRect(w / 2 - size / 2, h / 2 - size / 2, size, size, 3);
+                    ctx.fill();
+                }
             } else {
                 const baseColor = "hsl(350, 82%, 58%)";
                 ctx.fillStyle = baseColor;
