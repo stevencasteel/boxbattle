@@ -53,7 +53,7 @@ export class WorldRenderer {
     const nowTime = performance.now();
 
     this.ctx.save();
-    this.ctx.translate(Camera.offsetX, Camera.offsetY);
+    this.ctx.translate(Math.round(Camera.offsetX), Math.round(Camera.offsetY));
 
     this.staticMap.renderBackground();
     this.staticMap.renderOnewayPlatforms(onewayPlatforms, springPlatforms);
@@ -200,7 +200,7 @@ export class WorldRenderer {
       this.ctx.globalAlpha = 0.35;
       this.ctx.translate(-6, 0);
       this.entityRenderer.renderEntities(world, projectilePool, alpha);
-      this.particleRenderer.renderParticles(particles);
+      this.particleRenderer.renderParticles(particles, alpha);
       this.ctx.restore();
 
       // Right offset ghost
@@ -208,16 +208,16 @@ export class WorldRenderer {
       this.ctx.globalAlpha = 0.35;
       this.ctx.translate(6, 0);
       this.entityRenderer.renderEntities(world, projectilePool, alpha);
-      this.particleRenderer.renderParticles(particles);
+      this.particleRenderer.renderParticles(particles, alpha);
       this.ctx.restore();
     }
 
     // Main sharp foreground layer rendered normally (zero-latency)
     this.entityRenderer.renderEntities(world, projectilePool, alpha);
-    this.particleRenderer.renderParticles(particles);
+    this.particleRenderer.renderParticles(particles, alpha);
 
     if (bossDeathTimer >= 0 && bossDeathPos) {
-      CinematicDeathRenderer.render(this.ctx, world, bossDeathTimer, bossDeathPos);
+      CinematicDeathRenderer.render(this.ctx, world, bossDeathTimer, bossDeathPos, alpha);
     }
 
     if (isPaused) {

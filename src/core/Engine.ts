@@ -288,9 +288,12 @@ export class Engine {
   }
 
   private cachePreIntegrationPositions() {
+    this.player.previousRotation = this.player.rotation;
     copyVec(this.player.previousPosition, this.player.position);
+    this.boss.previousRotation = this.boss.rotation;
     copyVec(this.boss.previousPosition, this.boss.position);
     for (const minion of this.world.minions) {
+      (minion as BaseEntity).previousRotation = (minion as BaseEntity).rotation;
       copyVec((minion as BaseEntity).previousPosition, minion.position);
     }
     for (const proj of this.pool.getActive()) {

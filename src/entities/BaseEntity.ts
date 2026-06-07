@@ -22,6 +22,7 @@ export class BaseEntity implements IEntity, ISpringVisuals {
 
   public rotation = 0;
   public rotationVelocity = 0;
+  public previousRotation = 0;
   public targetRotation = 0;
   public springStiffnessRot = 240;
   public springDampingRot = 16;

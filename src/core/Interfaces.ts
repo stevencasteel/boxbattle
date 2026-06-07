@@ -101,6 +101,7 @@ export interface ISpringVisuals {
   rotation: number;
   targetRotation: number;
   rotationVelocity: number;
+  previousRotation: number;
   squashPivot: "center" | "feet";
 }
 

@@ -105,7 +105,7 @@ export class MinionVisuals {
 
         const feetY = drawY + minion.size.height / 2;
         ctx.translate(drawX, feetY);
-        ctx.rotate(minion.rotation);
+        ctx.rotate(minion.previousRotation + (minion.rotation - minion.previousRotation) * alphaVal);
 
         if (minion.isSpawning) {
             ctx.save();

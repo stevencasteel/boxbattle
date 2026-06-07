@@ -124,7 +124,7 @@ export class PlayerVisuals {
 
     ctx.save();
     ctx.translate(drawX, feetY);
-    ctx.rotate(this.player.rotation);
+    ctx.rotate(this.player.previousRotation + (this.player.rotation - this.player.previousRotation) * alphaVal);
 
     if (this.player.isHealing) {
       ctx.save();

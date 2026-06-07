@@ -10,9 +10,10 @@ export class CinematicDeathRenderer {
     ctx: CanvasRenderingContext2D,
     world: World,
     bossDeathTimer: number,
-    bossDeathPos: { x: number; y: number }
+    bossDeathPos: { x: number; y: number },
+    alpha: number = 0
   ): void {
-    const t = bossDeathTimer;
+    const t = bossDeathTimer + alpha * (1/60);
     const px = bossDeathPos.x;
     const py = bossDeathPos.y;
 

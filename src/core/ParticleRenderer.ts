@@ -5,53 +5,34 @@ const colorCache = new Map<string, { h: number; s: number; l: number } | null>()
 const lerpCache = new Map<string, string>();
 
 function parseHsl(str: string): { h: number; s: number; l: number } | null {
-  if (colorCache.has(str)) {
-    return colorCache.get(str)!;
-  }
-  const regex = /hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/;
-  const match = str.match(regex);
-  if (!match) {
-    colorCache.set(str, null);
-    return null;
-  }
-  const result = {
-    h: parseFloat(match[1]),
-    s: parseFloat(match[2]),
-    l: parseFloat(match[3]),
-  };
+  if (colorCache.has(str)) return colorCache.get(str)!;
+  const match = str.match(/hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
+  if (!match) { colorCache.set(str, null); return null; }
+  const result = { h: parseFloat(match[1]), s: parseFloat(match[2]), l: parseFloat(match[3]) };
   colorCache.set(str, result);
   return result;
 }
 
 function lerpHsl(startStr: string, endStr: string, pct: number): string {
   if (!startStr || !endStr) return startStr;
-
   const step = Math.round(pct * 20);
   const cacheKey = `${startStr}_${endStr}_${step}`;
-
   const cached = lerpCache.get(cacheKey);
   if (cached) return cached;
-
-  const c1 = parseHsl(startStr);
-  const c2 = parseHsl(endStr);
+  const c1 = parseHsl(startStr); const c2 = parseHsl(endStr);
   if (!c1 || !c2) return startStr;
-
   const factor = 1 - step / 20;
   const h = c1.h + (c2.h - c1.h) * factor;
   const s = c1.s + (c2.s - c1.s) * factor;
   const l = c1.l + (c2.l - c1.l) * factor;
-
   const result = `hsl(${h}, ${s}%, ${l}%)`;
-  lerpCache.set(cacheKey, result);
-  colorCache.set(result, { h, s, l });
+  lerpCache.set(cacheKey, result); colorCache.set(result, { h, s, l });
   return result;
 }
 
 function getHslaColor(colorStr: string, alpha: number): string {
   const parsed = parseHsl(colorStr);
-  if (parsed) {
-    return `hsla(${parsed.h}, ${parsed.s}%, ${parsed.l}%, ${alpha})`;
-  }
+  if (parsed) return `hsla(${parsed.h}, ${parsed.s}%, ${parsed.l}%, ${alpha})`;
   return colorStr;
 }
 
@@ -62,7 +43,7 @@ export class ParticleRenderer {
     this.ctx = ctx;
   }
 
-  public renderParticles(particles: readonly Particle[]): void {
+  public renderParticles(particles: readonly Particle[], alpha: number = 0): void {
     const ctx = this.ctx;
     const len = particles.length;
     if (len === 0) return;
@@ -73,6 +54,7 @@ export class ParticleRenderer {
     const dustBuckets = new Map<string, Particle[]>();
     const lines: Particle[] = [];
     const rings: Particle[] = [];
+    const timeStep = 1 / 60; // Base engine fixed tick rate
 
     for (let i = 0; i < len; i++) {
       const p = particles[i];
@@ -82,17 +64,11 @@ export class ParticleRenderer {
         const sparkColor = p.startColor && p.endColor ? lerpHsl(p.startColor, p.endColor, pct) : p.color;
         const colorKey = p.startColor && p.endColor ? sparkColor : `${p.color}_${Math.round(pct * 20)}`;
         let bucket = sparkBuckets.get(colorKey);
-        if (!bucket) {
-          bucket = [];
-          sparkBuckets.set(colorKey, bucket);
-        }
+        if (!bucket) { bucket = []; sparkBuckets.set(colorKey, bucket); }
         bucket.push(p);
       } else if (p.shape === "dust") {
         let bucket = dustBuckets.get(p.color);
-        if (!bucket) {
-          bucket = [];
-          dustBuckets.set(p.color, bucket);
-        }
+        if (!bucket) { bucket = []; dustBuckets.set(p.color, bucket); }
         bucket.push(p);
       } else if (p.shape === "line") {
         lines.push(p);
@@ -109,8 +85,10 @@ export class ParticleRenderer {
       ctx.globalAlpha = 1.0;
       for (let j = 0; j < bucket.length; j++) {
         const sp = bucket[j];
+        const renderX = sp.x + (sp.vx * alpha * timeStep);
+        const renderY = sp.y + (sp.vy * alpha * timeStep);
         ctx.beginPath();
-        ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+        ctx.arc(renderX, renderY, sp.size, 0, Math.PI * 2);
         ctx.fill();
       }
     }
@@ -121,7 +99,9 @@ export class ParticleRenderer {
         const dp = bucket[j];
         const pct = dp.life / dp.maxLife;
         ctx.globalAlpha = pct;
-        ctx.fillRect(dp.x - dp.size / 2, dp.y - dp.size / 2, dp.size, dp.size * 0.7);
+        const renderX = dp.x + (dp.vx * alpha * timeStep);
+        const renderY = dp.y + (dp.vy * alpha * timeStep);
+        ctx.fillRect(renderX - dp.size / 2, renderY - dp.size / 2, dp.size, dp.size * 0.7);
       }
     }
 
@@ -129,16 +109,16 @@ export class ParticleRenderer {
       const p = lines[i];
       const pct = p.life / p.maxLife;
       const speed = TrigLUT.fastSqrt(p.vx * p.vx + p.vy * p.vy);
-      let ux = 1;
-      let uy = 0;
-      if (speed > 0) {
-        ux = p.vx / speed;
-        uy = p.vy / speed;
-      }
-      const x1 = p.x - ux * p.size * 8;
-      const y1 = p.y - uy * p.size * 8;
-      const x2 = p.x + ux * p.size * 6;
-      const y2 = p.y + uy * p.size * 6;
+      let ux = 1; let uy = 0;
+      if (speed > 0) { ux = p.vx / speed; uy = p.vy / speed; }
+      
+      const renderX = p.x + (p.vx * alpha * timeStep);
+      const renderY = p.y + (p.vy * alpha * timeStep);
+      
+      const x1 = renderX - ux * p.size * 8;
+      const y1 = renderY - uy * p.size * 8;
+      const x2 = renderX + ux * p.size * 6;
+      const y2 = renderY + uy * p.size * 6;
 
       const lineGrad = ctx.createLinearGradient(x1, y1, x2, y2);
       lineGrad.addColorStop(0.0, getHslaColor(p.color, 0));
@@ -160,8 +140,10 @@ export class ParticleRenderer {
       const p = rings[i];
       const pct = p.life / p.maxLife;
       const radius = p.size + (1.0 - pct) * 44;
+      const renderX = p.x + (p.vx * alpha * timeStep);
+      const renderY = p.y + (p.vy * alpha * timeStep);
       ctx.beginPath();
-      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+      ctx.arc(renderX, renderY, radius, 0, Math.PI * 2);
       ctx.strokeStyle = p.color;
       ctx.globalAlpha = pct;
       ctx.lineWidth = 2.5;

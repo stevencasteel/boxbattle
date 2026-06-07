@@ -7,6 +7,10 @@ export interface Geometry { vertices: Vector3D[]; faces: Face[]; }
 export class Software3DRenderer {
     private static readonly LIGHT_DIR = { x: 0.577, y: -0.577, z: 0.577 };
     private static geometryCache = new Map<string, Geometry>();
+    
+    // PRE-ALLOCATED STATIC POOLS (Eliminates GC stutter during high entity counts)
+    private static vertexPool: Vector3D[] = Array.from({length: 512}, () => ({x:0, y:0, z:0}));
+    private static facePool: {face: Face, avgZ: number, shadeFactor: number, nz3: number}[] = Array.from({length: 256}, () => ({face: null as unknown as Face, avgZ: 0, shadeFactor: 0, nz3: 0}));
 
     public static readonly BOX_GEOMETRY: Geometry = {
         vertices: [
@@ -106,13 +110,8 @@ export class Software3DRenderer {
             { x: -0.5, y: -0.5, z: 0.5 }, { x: 0.5, y: -0.5, z: 0.5 },
             { x: 0.5, y: 0.5, z: 0.5 }, { x: -0.5, y: 0.5, z: 0.5 },
         ];
-
         const vertices = baseBox.map((v) => ({ x: v.x, y: v.y, z: v.z * 0.9 }));
-
-        return {
-            vertices,
-            faces: Software3DRenderer.BOX_GEOMETRY.faces
-        };
+        return { vertices, faces: Software3DRenderer.BOX_GEOMETRY.faces };
     }
 
     public static drawGeometry(
@@ -122,7 +121,7 @@ export class Software3DRenderer {
         alpha: number = 1.0, pivotY: "center" | "feet" = "center",
         _bossStageIdx: number = -1
     ) {
-        const projected: { x: number; y: number; z: number }[] = [];
+        const projected = this.vertexPool;
         const hslMatch = baseHslColor.match(/hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
         const h = hslMatch ? parseFloat(hslMatch[1]) : 142;
         const s = hslMatch ? parseFloat(hslMatch[2]) : 71;
@@ -149,12 +148,20 @@ export class Software3DRenderer {
             const x3 = x2 * cosR - y2 * sinR;
             const y3 = x2 * sinR + y2 * cosR;
             
-            projected.push({ x: posX + x3, y: posY + y3, z: z2 });
+            projected[i].x = posX + x3;
+            projected[i].y = posY + y3;
+            projected[i].z = z2;
         }
 
-        const facesWithDepth = geometry.faces.map((face) => {
+        const facesWithDepth = this.facePool;
+        let faceCount = 0;
+
+        for (let i = 0; i < geometry.faces.length; i++) {
+            const face = geometry.faces[i];
             let sumZ = 0;
-            for (const idx of face.indices) sumZ += projected[idx].z;
+            for (let j = 0; j < face.indices.length; j++) {
+                sumZ += projected[face.indices[j]].z;
+            }
             const avgZ = sumZ / face.indices.length;
             const n = face.baseNormal;
             
@@ -169,15 +176,23 @@ export class Software3DRenderer {
             
             const dot = nx3 * this.LIGHT_DIR.x + ny3 * this.LIGHT_DIR.y + nz2 * this.LIGHT_DIR.z;
             const shadeFactor = 0.85 + dot * 0.3;
-            return { face, avgZ, shadeFactor, nz3: nz2 };
-        });
+            
+            facesWithDepth[i].face = face;
+            facesWithDepth[i].avgZ = avgZ;
+            facesWithDepth[i].shadeFactor = shadeFactor;
+            facesWithDepth[i].nz3 = nz2;
+            faceCount++;
+        }
 
-        facesWithDepth.sort((a, b) => b.avgZ - a.avgZ);
+        const activeFaces = facesWithDepth.slice(0, faceCount);
+        activeFaces.sort((a, b) => b.avgZ - a.avgZ);
+
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.lineJoin = "round";
 
-        for (const item of facesWithDepth) {
+        for (let i = 0; i < faceCount; i++) {
+            const item = activeFaces[i];
             const face = item.face;
             const shadedLightness = Math.max(10, Math.min(100, l * item.shadeFactor));
             ctx.fillStyle = `hsl(${h}, ${s}%, ${shadedLightness}%)`;
@@ -188,15 +203,13 @@ export class Software3DRenderer {
             ctx.beginPath();
             const firstIdx = face.indices[0];
             ctx.moveTo(projected[firstIdx].x, projected[firstIdx].y);
-            for (let i = 1; i < face.indices.length; i++) {
-                const idx = face.indices[i];
+            for (let j = 1; j < face.indices.length; j++) {
+                const idx = face.indices[j];
                 ctx.lineTo(projected[idx].x, projected[idx].y);
             }
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
-
-            
         }
         ctx.restore();
     }

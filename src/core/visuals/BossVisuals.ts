@@ -23,7 +23,7 @@ export class BossVisuals {
     const feetY = drawY + boss.size.height / 2;
 
     ctx.translate(drawX, feetY);
-    ctx.rotate(boss.rotation);
+    ctx.rotate(boss.previousRotation + (boss.rotation - boss.previousRotation) * alphaVal);
 
     const nowTime = performance.now();
     const time = nowTime / 1000;
