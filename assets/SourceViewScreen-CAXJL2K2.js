@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BP0kNoPQ.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-BEBRrkOW.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -1212,9 +1212,6 @@ export default function App() {
 `,"src/components/DialogueConsole.tsx":`import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { DialogueState } from "@/hooks/useGameDialogue";
-import { useSessionStore } from "@/store/useGameStore";
-import { GAUNTLET_STAGES } from "@/core/design/GauntletStages";
-
 
 interface DialogueConsoleProps { playerDialogue: DialogueState; bossDialogue: DialogueState; isTouchDevice: boolean; }
 
@@ -1231,15 +1228,9 @@ function PortraitCanvas({ speaker, typing }: { speaker: "player" | "boss"; typin
                 ctx.fillStyle = "hsl(142, 72%, 56%)"; ctx.fillRect(0, 0, w, h);
                 if (typing) { ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(w / 2, h / 2, 4 + Math.sin(t * 12) * 2, 0, Math.PI * 2); ctx.fill(); }
             } else {
-                const stageIdx = useSessionStore.getState().currentStageIndex;
-                const colors = ["hsl(350, 82%, 58%)", "hsl(4, 88%, 54%)", "hsl(338, 76%, 55%)", "hsl(356, 94%, 62%)", "hsl(82, 38%, 44%)", "hsl(15, 82%, 48%)", "hsl(345, 58%, 46%)"];
-                const baseColor = colors[stageIdx] || colors[0];
-                
-                // Totally fill the boss dialogue square with the stage's core color
+                const baseColor = "hsl(350, 82%, 58%)";
                 ctx.fillStyle = baseColor;
                 ctx.fillRect(0, 0, w, h);
-
-                
             }
             frameId = requestAnimationFrame(render);
         };
@@ -1253,9 +1244,7 @@ export function DialogueConsole({ playerDialogue, bossDialogue, isTouchDevice }:
     const mobileClass = isTouchDevice ? "is-mobile" : "";
     const leftState = playerDialogue.active ? "active" : bossDialogue.active ? "inactive" : "idle";
     const rightState = bossDialogue.active ? "active" : playerDialogue.active ? "inactive" : "idle";
-    const currentStageIndex = useSessionStore((state) => state.currentStageIndex);
-    const activeStage = GAUNTLET_STAGES[currentStageIndex];
-    const bossName = activeStage ? activeStage.midBossDisplayName : "BOSS";
+    const bossName = "PRIME APHELION";
 
     const getVariants = (speaker: "player" | "boss") => ({
         active: { scale: 1.02, opacity: 1, borderColor: speaker === "player" ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)", boxShadow: speaker === "player" ? "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(34, 197, 94, 0.15)" : "inset -2px -2px 6px rgba(255, 255, 255, 0.01), inset 3px 3px 10px rgba(0, 0, 0, 0.9), 0 0 16px rgba(239, 68, 68, 0.15)" },
@@ -2116,72 +2105,6 @@ interface HudPanelProps {
   isPlayingScreen: boolean;
 }
 
-// Subcomponent: Custom Svg Boss Sigil based on Mathematical stage identity [4]
-function SvgBossSigil({ stageIndex }: { stageIndex: number }) {
-  switch (stageIndex) {
-    case 0: // Prime Wound: Red square with a diagonal crack [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="var(--signal-red)" />
-          <line x1="1" y1="15" x2="15" y2="1" stroke="#000000" strokeWidth="2" />
-        </svg>
-      );
-    case 1: // Scarlet Lock: Red square with vertical prison bars [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="var(--signal-red)" />
-          <line x1="4" y1="1" x2="4" y2="15" stroke="#000000" strokeWidth="1.5" />
-          <line x1="8" y1="1" x2="8" y2="15" stroke="#000000" strokeWidth="1.5" />
-          <line x1="12" y1="1" x2="12" y2="15" stroke="#000000" strokeWidth="1.5" />
-        </svg>
-      );
-    case 2: // Carminal Orbit: Concentric polar circular cuts [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(338, 76%, 55%)" />
-          <circle cx="8" cy="8" r="5.5" fill="none" stroke="#000000" strokeWidth="1.5" />
-          <circle cx="8" cy="8" r="2.5" fill="none" stroke="#000000" strokeWidth="1" />
-        </svg>
-      );
-    case 3: // Vermilion Needle: Spiky needle-sharp teeth edges [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(356, 94%, 62%)" />
-          <polygon points="1,8 4,5 4,11" fill="#000000" />
-          <polygon points="15,8 12,5 12,11" fill="#000000" />
-          <polygon points="8,1 5,4 11,4" fill="#000000" />
-          <polygon points="8,15 5,12 11,12" fill="#000000" />
-        </svg>
-      );
-    case 4: // Marrow King: Bruised organic blister spots [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(82, 38%, 44%)" />
-          <circle cx="5" cy="5" r="2" fill="#000000" />
-          <circle cx="11" cy="6" r="2.5" fill="#000000" />
-          <circle cx="6" cy="11" r="1.5" fill="#000000" />
-        </svg>
-      );
-    case 5: // Rust Cathedral: Heavy columnar block structure [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(15, 82%, 48%)" />
-          <rect x="4" y="4" width="8" height="8" fill="#000000" />
-        </svg>
-      );
-    case 6: // False Square: Glitching, shifting block segments [4]
-      return (
-        <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0 animate-pulse" style={{ filter: "drop-shadow(0 0 3px var(--signal-red-glow))" }}>
-          <rect x="1" y="1" width="14" height="14" rx="2" fill="hsl(330, 82%, 64%)" />
-          <rect x="3" y="3" width="5" height="5" fill="none" stroke="#000000" strokeWidth="1" />
-          <rect x="8" y="8" width="5" height="5" fill="none" stroke="#000000" strokeWidth="1" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
-
 // Subcomponent: Player HP Display (LED Dots)
 function PlayerHpDisplay({ isTouchDevice }: { isTouchDevice: boolean }) {
   const playerHP = useGameplayStore((state) => state.playerHP);
@@ -2456,7 +2379,7 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
   const gameResult = useSessionStore((state) => state.gameResult);
   const isGameOver = gameResult !== "PLAYING";
   const activeBHP = isGameOver ? 0 : bossHP;
-  const currentStageIndex = useSessionStore((state) => state.currentStageIndex);
+  // Removed unused currentStageIndex
 
   const bossWidth = (activeBHP / UNITS.BOSS_MAX_HP) * 100 + "%";
 
@@ -2464,7 +2387,7 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <span style={{ fontSize: "10px", color: "var(--signal-red)", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-          <SvgBossSigil stageIndex={currentStageIndex} /> BOSS
+          BOSS
         </span>
         <div
           id="hud-m-boss-container"
@@ -2497,7 +2420,7 @@ function BossHpBar({ isTouchDevice }: { isTouchDevice: boolean }) {
     <div className="hud-panel-block" style={{ alignItems: "flex-end" }}>
       <span className="hud-panel-title hud-panel-title-red" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <Skull size={14} style={{ color: "var(--signal-red)", flexShrink: 0 }} />
-        <SvgBossSigil stageIndex={currentStageIndex} />
+        
         BOSS HP
       </span>
       <div
@@ -5518,7 +5441,11 @@ import type { IEventBus, IAudioManager } from "@/core/Interfaces";
 import { HealthComponent } from "@/entities/components/HealthComponent";
 import { UNITS } from "@/core/Units";
 import { CinematicSystem } from "@/core/CinematicSystem";
-import { useSessionStore } from "@/store/useGameStore";
+
+interface DialogueLine {
+    speaker: "player" | "boss";
+    text: string;
+}
 
 export class BattleDirector {
     private events: IEventBus;
@@ -5529,6 +5456,9 @@ export class BattleDirector {
     private cinematic: CinematicSystem;
     private onBattleEnd: () => void;
 
+    private dialogueQueue: DialogueLine[] = [];
+    private dialogueTimer = 0;
+
     constructor(events: IEventBus, audio: IAudioManager, onBattleEnd: () => void) {
         this.events = events; this.audio = audio; this.onBattleEnd = onBattleEnd;
         this.cinematic = new CinematicSystem(events, audio);
@@ -5536,88 +5466,94 @@ export class BattleDirector {
     public isCinematicActive(): boolean { return this.cinematic.isActive(); }
     public getDeathVisuals() { return { timer: this.cinematic.getDeathTimer(), pos: this.cinematic.getDeathPos() }; }
 
+    private queueDialogues(lines: DialogueLine[]) {
+        this.dialogueQueue.push(...lines);
+        if (this.dialogueTimer <= 0) {
+            this.triggerNextDialogue();
+        }
+    }
+
+    private triggerNextDialogue() {
+        if (this.dialogueQueue.length === 0) return;
+        const line = this.dialogueQueue.shift()!;
+        this.events.publish("DIALOGUE_TRIGGERED", { speaker: line.speaker, text: line.text });
+        this.dialogueTimer = 5.5;
+    }
+
     public update(dt: number, player: Player, boss: Boss) {
         this.cinematic.update(dt);
+        if (this.dialogueTimer > 0) {
+            this.dialogueTimer -= dt;
+            if (this.dialogueTimer <= 0) {
+                this.triggerNextDialogue();
+            }
+        }
+
         if (this.cinematic.isActive()) return;
         const bHealth = boss.getComponent(HealthComponent);
         if (bHealth) {
             const maxHp = bHealth.maxHealth;
             const phase2Threshold = Math.floor(maxHp * UNITS.BOSS_PHASE_2_HP_PCT);
             const phase3Threshold = Math.floor(maxHp * UNITS.BOSS_PHASE_3_HP_PCT);
-            const stageIdx = useSessionStore.getState().currentStageIndex;
 
             if (bHealth.currentHealth < maxHp && !this.hasTriggeredFirstHit) {
                 this.hasTriggeredFirstHit = true;
-                const intros = [
-                    "A perfect square returns to the crucible. Let us see if your edges still hold.",
-                    "The Redoubt is sealed. Your chaotic movement ends here, anomaly.",
-                    "Your trajectory is predictable. My orbital math is absolute.",
-                    "Jump. Cut. Bleed. The floor will not remember you.",
-                    "Feel the weight of the infection. The marrow deforms all it touches.",
-                    "The Cathedral tolls for the square. Bow beneath the falling nave.",
-                    "I can be you. I can be perfect. Give me your outline."
-                ];
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: intros[stageIdx] || intros[0] });
+                this.queueDialogues([
+                    { speaker: "boss", text: "A perfect square returns to the Sovereign Crucible. Let us see if your edges still hold." },
+                    { speaker: "player", text: "They're sharp enough to slice right through your equations." }
+                ]);
             }
             if (bHealth.currentHealth <= phase2Threshold && !this.hasTriggeredPhase2) {
                 this.hasTriggeredPhase2 = true;
-                const p2s = [
-                    "You cling to your shape, but the virus demands fluidity! Bend or break!",
-                    "Modulo columns engage! There is no escape from the grid!",
-                    "Aphelion ring contracting. You cannot outrun the event horizon.",
-                    "Sine-wave splines activated! I will thread you through the needle's eye!",
-                    "Pulsing blister cells! Mutate and consume the pure!",
-                    "Compression march! The architecture demands your sacrifice!",
-                    "Glitches fracture! I will replicate your previous forms!"
-                ];
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: p2s[stageIdx] || p2s[0] });
+                this.queueDialogues([
+                    { speaker: "boss", text: "You cling to your rigid symmetry, but the Aphelion demands fluidity! Bend or break!" },
+                    { speaker: "player", text: "Fluidity is just another word for lacking a foundation." }
+                ]);
                 this.events.publish("BOSS_PHASE_SHIFT", undefined);
             }
             if (bHealth.currentHealth <= phase3Threshold && !this.hasTriggeredPhase3) {
                 this.hasTriggeredPhase3 = true;
-                const p3s = [
-                    "My geometry... fractures... the purity... burns!",
-                    "The locks... are broken...",
-                    "My orbit... decays...",
-                    "The thread... snaps...",
-                    "The rot... recedes...",
-                    "The pillars... crumble...",
-                    "I only... copy... the truth..."
-                ];
-                this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: p3s[stageIdx] || p3s[0] });
+                this.queueDialogues([
+                    { speaker: "boss", text: "My geometry... fractures! The purity of the constant... burns!" },
+                    { speaker: "player", text: "Your variables are collapsing. I am the absolute value." }
+                ]);
                 this.events.publish("BOSS_PHASE_SHIFT", undefined);
             }
         }
 
         if (player.isDead && !this.cinematic.isActive()) {
+            this.dialogueQueue = [];
+            this.dialogueTimer = 0;
             this.cinematic.startSequence(player.position, () => { this.audio.playPlayerExplosion(); }, [
                 { triggerTime: 2.0, action: () => { this.events.publish("RECORD_LOSS", undefined); } },
                 { triggerTime: 2.5, action: () => { this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "My shape... is breaking..." }); } },
-                { triggerTime: 3.8, action: () => { this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "The virus reclaims its geometry. Purity is a myth." }); } },
+                { triggerTime: 3.8, action: () => { this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Purity is a myth. The Crucible remains sovereign." }); } },
                 { triggerTime: 7.2, action: () => { this.events.publish("CLEAR_DIALOGUES", undefined); this.events.publish("GAME_OVER", undefined); this.onBattleEnd(); } },
             ]);
         } else if (boss.isDead && !this.cinematic.isActive()) {
-            const stageIdx = useSessionStore.getState().currentStageIndex;
+            this.dialogueQueue = [];
+            this.dialogueTimer = 0;
             this.cinematic.startSequence(boss.position, () => { this.audio.playBossExplosion(); }, [
                 { triggerTime: 2.0, action: () => { this.events.publish("RECORD_WIN", undefined); } },
                 { triggerTime: 2.5, action: () => { 
-                    const defeats = ["Impossible... my geometry...", "The locks... shatter...", "My orbit... decays...", "The thread... snaps...", "The rot... recedes...", "The pillars... crumble...", "I only... copy... the truth..."];
-                    this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: defeats[stageIdx] || defeats[0] }); 
+                    this.events.publish("DIALOGUE_TRIGGERED", { speaker: "boss", text: "Impossible... my chancel architecture..." }); 
                 } },
                 { triggerTime: 4.8, action: () => { 
-                    const wins = ["Your corruption is just a flawed equation. I am the constant.", "A cage is just a shape waiting to be shattered.", "Your math forgot one variable: my will.", "I am the eye of the storm. You are just the wind.", "Sickness is just a temporary state. Purity is eternal.", "Your cathedral is built on rust. Mine is built on resolve.", "You can copy the shape, but you'll never hold the soul."];
-                    this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: wins[stageIdx] || wins[0] }); 
+                    this.events.publish("DIALOGUE_TRIGGERED", { speaker: "player", text: "Your corruption is just a flawed equation. I am the constant." }); 
                 } },
                 { triggerTime: 7.2, action: () => { 
                     this.events.publish("CLEAR_DIALOGUES", undefined);
-                    const currentStageIdx = useSessionStore.getState().currentStageIndex;
-                    if (currentStageIdx === 6) { this.events.publish("VICTORY", undefined); this.onBattleEnd(); } 
-                    else { useSessionStore.getState().setCurrentStageIndex(currentStageIdx + 1); this.events.publish("LOAD_STAGE", { stageIndex: currentStageIdx + 1 }); }
+                    this.events.publish("VICTORY", undefined);
+                    this.onBattleEnd();
                 } },
             ]);
         }
     }
-    public cleanup() { this.cinematic.cleanup(); }
+    public cleanup() { 
+        this.cinematic.cleanup(); 
+        this.dialogueQueue = [];
+        this.dialogueTimer = 0;
+    }
 }
 `,"src/core/Camera.ts":`export class Camera {
   public static offsetX = 0;
@@ -5788,7 +5724,7 @@ import { SpawnAnchor, MinionType } from "./levelData";
 import { MinionFactory } from "@/entities/MinionFactory";
 import { TrigLUT } from "./TrigLUT";
 import { GAUNTLET_STAGES, StageConfig } from "./design/GauntletStages";
-import { useSessionStore } from "@/store/useGameStore";
+// Removed unused useSessionStore
 
 export class EncounterDirector {
   private world: IWorld;
@@ -5867,6 +5803,7 @@ export class EncounterDirector {
       case "HYMN_NAIL": return 2;
       case "BLISTER_OX": return 5;
       case "BELL_HAMMER": return 4;
+      case "SHARD_CHOIR": return 1;
       default: return 2;
     }
   }
@@ -5881,8 +5818,8 @@ export class EncounterDirector {
 
     // Calculate maximum threat based on active boss footprint and narrow map constraints
     const bossActive = this.world.boss && !this.world.boss.isDead;
-    const stageIdx = useSessionStore.getState().currentStageIndex;
-    const isNarrowMap = stageIdx === 1; // Narrow Redoubt
+    // Removed unused stageIdx
+    const isNarrowMap = false; // Narrow Redoubt
 
     let maxThreatBudget = bossActive ? 4 : 8;
     if (isNarrowMap) {
@@ -5965,9 +5902,22 @@ export class EncounterDirector {
   }
 
   private spawnMinion(type: MinionType, anchor: SpawnAnchor) {
-    const minionId = \`minion-\${type}-\${Date.now()}-\${Math.floor(TrigLUT.randomGameplay() * 1000000)}\`;
-    const minion = MinionFactory.createMinion(type, minionId, { x: anchor.x, y: anchor.y }, this.world);
-    this.world.minions.push(minion);
+    if (type === "SHARD_CHOIR") {
+      const offsets = [
+        { dx: 0, dy: -30 },
+        { dx: -35, dy: 15 },
+        { dx: 35, dy: 15 }
+      ];
+      offsets.forEach((offset, idx) => {
+        const minionId = \`minion-SHARD_CHOIR-\${Date.now()}-\${idx}-\${Math.floor(TrigLUT.randomGameplay() * 1000000)}\`;
+        const minion = MinionFactory.createMinion("SHARD_CHOIR", minionId, { x: anchor.x + offset.dx, y: anchor.y + offset.dy }, this.world);
+        this.world.minions.push(minion);
+      });
+    } else {
+      const minionId = \`minion-\${type}-\${Date.now()}-\${Math.floor(TrigLUT.randomGameplay() * 1000000)}\`;
+      const minion = MinionFactory.createMinion(type, minionId, { x: anchor.x, y: anchor.y }, this.world);
+      this.world.minions.push(minion);
+    }
   }
 
   private despawnAllMinions() {
@@ -6657,16 +6607,7 @@ export class GauntletDirector {
     GauntletDirector.initialized = true;
 
     if (typeof window !== "undefined") {
-      window.addEventListener("keydown", (e) => {
-        const code = e.code;
-        if (code.startsWith("Digit")) {
-          const num = parseInt(code.replace("Digit", ""));
-          if (num >= 1 && num <= 7) {
-            e.preventDefault();
-            GauntletDirector.warpToStage(num - 1);
-          }
-        }
-      });
+      // Removed stage warping hotkeys for streamlined production single-stage chancel
     }
   }
 
@@ -8713,7 +8654,7 @@ export class StateProjectionSystem {
 }
 `,"src/core/StaticMapRenderer.ts":`import { Rectangle } from "./Interfaces";
 import { UNITS } from "@/core/Units";
-import { useSessionStore } from "@/store/useGameStore";
+// Removed unused useSessionStore
 import { GAUNTLET_STAGES } from "./design/GauntletStages";
 
 export class StaticMapRenderer {
@@ -8733,11 +8674,11 @@ export class StaticMapRenderer {
     public buildStaticCache(solids: Rectangle[], hazards: Rectangle[]): void {
         if (this.staticCacheBuilt) return;
         const sctx = this.staticCtx;
-        const stageIdx = useSessionStore.getState().currentStageIndex;
+        const stageIdx = 0;
         const stageConfig = GAUNTLET_STAGES[stageIdx];
         const bg = sctx.createLinearGradient(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
         bg.addColorStop(0, "hsl(230, 12%, 5%)");
-        bg.addColorStop(0.45, stageIdx === 4 ? "hsl(82, 18%, 8%)" : "hsl(220, 10%, 8%)");
+        bg.addColorStop(0.45, "hsl(220, 10%, 8%)");
         bg.addColorStop(1, "hsl(322, 30%, 9%)");
         sctx.fillStyle = bg;
         sctx.fillRect(0, 0, UNITS.WORLD_SIZE, UNITS.WORLD_SIZE);
@@ -8824,14 +8765,13 @@ export class StaticMapRenderer {
         this.staticCacheBuilt = true;
     }
 
-    private drawBackgroundArchitecture(ctx: CanvasRenderingContext2D, stageIdx: number) {
+    private drawBackgroundArchitecture(ctx: CanvasRenderingContext2D, _stageIdx: number) {
         ctx.save();
         ctx.globalAlpha = 0.45;
         ctx.strokeStyle = "hsla(215, 12%, 22%, 0.55)";
         ctx.lineWidth = 2;
-        const offset = (stageIdx * 73) % 180;
         for (let i = 0; i < 8; i++) {
-            const x = 80 + i * 130 - offset;
+            const x = 80 + i * 130 - 73;
             ctx.beginPath();
             ctx.moveTo(x, 80);
             ctx.lineTo(x + 70, 220);
@@ -8842,12 +8782,12 @@ export class StaticMapRenderer {
         }
 
         ctx.globalAlpha = 0.36;
-        ctx.fillStyle = stageIdx === 2 ? "hsla(338, 76%, 25%, 0.18)" : "hsla(330, 28%, 25%, 0.22)";
+        ctx.fillStyle = "hsla(330, 28%, 25%, 0.22)";
         for (let i = 0; i < 5; i++) {
-            const cx = 160 + ((i * 221 + stageIdx * 89) % 720);
-            const cy = 150 + ((i * 157 + stageIdx * 51) % 650);
+            const cx = 160 + ((i * 221 + 89) % 720);
+            const cy = 150 + ((i * 157 + 51) % 650);
             ctx.beginPath();
-            ctx.ellipse(cx, cy, 46 + i * 9, 18 + (i % 3) * 10, (i + stageIdx) * 0.7, 0, Math.PI * 2);
+            ctx.ellipse(cx, cy, 46 + i * 9, 18 + (i % 3) * 10, i * 0.7, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.restore();
@@ -8861,43 +8801,16 @@ export class StaticMapRenderer {
         ctx.lineTo(x, y + rad); ctx.quadraticCurveTo(x, y, x + rad, y);
     }
 
-    private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number, stageIdx: number) {
-        if (stageIdx === 1) { 
-            ctx.moveTo(220 - inset, 40 - inset); 
-            ctx.lineTo(780 + inset, 40 - inset);
-            ctx.lineTo(780 + inset, 920 + inset); 
-            ctx.lineTo(220 - inset, 920 + inset); 
-            ctx.closePath();
-        } else { 
-            ctx.moveTo(40 - inset, 40 - inset); 
-            ctx.lineTo(960 + inset, 40 - inset);
-            
-            if (stageIdx === 5) {
-                ctx.lineTo(960 + inset, 900 + inset);
-            } else {
-                ctx.lineTo(960 + inset, 920 + inset);
-            }
-            
-            if (stageIdx === 0 || stageIdx === 6) {
-                ctx.lineTo(680 + inset, 920 + inset);
-                ctx.lineTo(680 + inset, 960 + inset);
-                ctx.lineTo(320 - inset, 960 + inset);
-                ctx.lineTo(320 - inset, 920 + inset);
-            } else if (stageIdx === 3) {
-                ctx.lineTo(740 + inset, 920 + inset);
-                ctx.lineTo(740 + inset, 960 + inset);
-                ctx.lineTo(260 - inset, 960 + inset);
-                ctx.lineTo(260 - inset, 920 + inset);
-            } else if (stageIdx === 4) {
-                ctx.lineTo(660 + inset, 920 + inset);
-                ctx.lineTo(660 + inset, 960 + inset);
-                ctx.lineTo(340 - inset, 960 + inset);
-                ctx.lineTo(340 - inset, 920 + inset);
-            }
-            
-            ctx.lineTo(40 - inset, stageIdx === 5 ? 900 + inset : 920 + inset);
-            ctx.closePath();
-        }
+    private drawInnerPerimeterPath(ctx: CanvasRenderingContext2D, inset: number, _stageIdx: number) {
+        ctx.moveTo(40 - inset, 40 - inset); 
+        ctx.lineTo(960 + inset, 40 - inset);
+        ctx.lineTo(960 + inset, 920 + inset);
+        ctx.lineTo(680 + inset, 920 + inset);
+        ctx.lineTo(680 + inset, 960 + inset);
+        ctx.lineTo(320 - inset, 960 + inset);
+        ctx.lineTo(320 - inset, 920 + inset);
+        ctx.lineTo(40 - inset, 920 + inset);
+        ctx.closePath();
     }
 
     public renderBackground(): void { this.ctx.drawImage(this.staticCanvas, 0, 0); }
@@ -11042,11 +10955,11 @@ export interface StageConfig extends LevelConfig {
 export const GAUNTLET_STAGES: StageConfig[] = [
   {
     id: "stage-1",
-    title: "THE OLD PIT",
-    subtitle: "STAGE 1 - TRADITIONAL COMBAT",
-    midBossId: "prime-wound",
-    midBossDisplayName: "PRIME WOUND",
-    midBossMaxHp: 38,
+    title: "THE SOVEREIGN CRUCIBLE",
+    subtitle: "THE APHELION CHANCEL",
+    midBossId: "prime-aphelion",
+    midBossDisplayName: "PRIME APHELION",
+    midBossMaxHp: 80,
     solids: [
       { x: 0, y: 920, width: 320, height: 80 },
       { x: 680, y: 920, width: 320, height: 80 },
@@ -11078,465 +10991,65 @@ export const GAUNTLET_STAGES: StageConfig[] = [
       {
         id: "s1-w1",
         phase: 1,
-        earliestTime: 2,
-        cooldownRange: [6, 9],
-        maxActiveMinions: 2,
+        earliestTime: 1,
+        cooldownRange: [3, 5],
+        maxActiveMinions: 4,
         entries: [
-          { type: "TURRET", anchorIds: ["left-catwalk", "right-catwalk"], weight: 70 },
-          { type: "LANCER", anchorIds: ["center-bridge"], weight: 30 }
+          { type: "TURRET", anchorIds: ["left-catwalk", "right-catwalk"], weight: 20 },
+          { type: "LANCER", anchorIds: ["center-bridge"], weight: 20 },
+          { type: "FLYER", anchorTags: ["air"], weight: 20 },
+          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 40 }
         ]
       },
       {
         id: "s1-w2",
         phase: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 3,
+        cooldownRange: [3, 5],
+        maxActiveMinions: 6,
         entries: [
-          { type: "TURRET", anchorTags: ["perch"], weight: 40 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 40 },
-          { type: "SHIELDER", anchorIds: ["center-bridge"], weight: 20 }
+          { type: "SHIELDER", anchorTags: ["ground"], weight: 20 },
+          { type: "PIT_LANCER", anchorTags: ["ground"], weight: 20 },
+          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 20 },
+          { type: "SHARD_CHOIR", anchorTags: ["air", "perch"], weight: 40 }
         ]
       },
       {
         id: "s1-w3",
         phase: 3,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 4,
+        cooldownRange: [2, 4],
+        maxActiveMinions: 8,
         entries: [
-          { type: "FLYER", anchorTags: ["air"], weight: 30 },
-          { type: "LANCER", anchorTags: ["ground"], weight: 30 },
-          { type: "TURRET", anchorTags: ["perch"], weight: 20 },
-          { type: "SHIELDER", anchorTags: ["ground"], weight: 20 }
+          { type: "HYMN_NAIL", anchorTags: ["perch"], weight: 25 },
+          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 25 },
+          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 25 },
+          { type: "SHARD_CHOIR", anchorTags: ["air"], weight: 25 }
         ]
       }
     ],
     playerStart: { x: 120, y: 800 },
     bossStart: { x: 840, y: 800 },
-  },
-  {
-    id: "stage-2",
-    title: "THE NARROW REDOUBT",
-    subtitle: "STAGE 2 - VERTICAL COMPRESSION",
-    midBossId: "scarlet-lock",
-    midBossDisplayName: "SCARLET LOCK",
-    midBossMaxHp: 70,
-    solids: [
-      { x: 0, y: 0, width: 280, height: 1000 },
-      { x: 720, y: 0, width: 280, height: 1000 },
-      { x: 280, y: 920, width: 440, height: 80 },
-      { x: 280, y: 0, width: 440, height: 280 },
-      { x: 400, y: 820, width: 200, height: 32 },
-      { x: 280, y: 600, width: 140, height: 32 },
-      { x: 580, y: 440, width: 140, height: 32 },
-    ],
-    onewayPlatforms: [
-      { x: 420, y: 720, width: 160, height: 16 },
-      { x: 420, y: 520, width: 160, height: 16 },
-      { x: 420, y: 320, width: 160, height: 16 },
-    ],
-    hazards: [
-      { x: 280, y: 880, width: 120, height: 40 },
-      { x: 600, y: 880, width: 120, height: 40 },
-    ],
-    spawners: [],
-    spawnAnchors: [
-      { id: "redoubt-floor", x: 500, y: 740, tags: ["low", "ground"] },
-      { id: "redoubt-mid-left", x: 340, y: 550, tags: ["mid", "left", "perch"] },
-      { id: "redoubt-mid-right", x: 660, y: 390, tags: ["mid", "right", "perch"] },
-      { id: "redoubt-air-center", x: 500, y: 300, tags: ["air", "center"] },
-    ],
-    encounterWaves: [
-      {
-        id: "s2-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "CLAMPJAW", anchorIds: ["redoubt-floor"], weight: 70 },
-          { type: "TURRET", anchorIds: ["redoubt-mid-left"], weight: 30 }
-        ]
-      },
-      {
-        id: "s2-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "FLYER", anchorTags: ["air"], weight: 50 },
-          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 50 }
-        ]
-      },
-      {
-        id: "s2-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "FLYER", anchorTags: ["air"], weight: 40 },
-          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 30 },
-          { type: "TURRET", anchorTags: ["perch"], weight: 30 }
-        ]
-      }
-    ],
-    playerStart: { x: 360, y: 740 },
-    visualShapes: [
-      { type: "polygon", points: [{x:280,y:200},{x:320,y:240},{x:290,y:300},{x:280,y:280}], colorRole: "arena-infection", infectionSeams: true },
-      { type: "polygon", points: [{x:720,y:600},{x:680,y:640},{x:710,y:700},{x:720,y:680}], colorRole: "arena-infection", infectionSeams: true }
-    ],
-    bossStart: { x: 640, y: 740 },
-  },
-  {
-    id: "stage-3",
-    title: "THE ORBITAL GALLOWS",
-    subtitle: "STAGE 3 - FLOORLESS HAZARDS",
-    midBossId: "carminal-orbit",
-    midBossDisplayName: "CARMINAL ORBIT",
-    midBossMaxHp: 85,
-    solids: [
-      { x: 0, y: 920, width: 40, height: 80 },
-      { x: 960, y: 920, width: 40, height: 80 },
-      { x: 0, y: 0, width: 1000, height: 40 },
-      { x: 0, y: 0, width: 40, height: 1000 },
-      { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 400, y: 500, width: 200, height: 32 },
-    ],
-    onewayPlatforms: [
-      { x: 160, y: 640, width: 140, height: 16 },
-      { x: 700, y: 640, width: 140, height: 16 },
-      { x: 160, y: 340, width: 140, height: 16 },
-      { x: 700, y: 340, width: 140, height: 16 },
-    ],
-    hazards: [
-      { x: 40, y: 920, width: 920, height: 80 },
-    ],
-    spawners: [],
-    spawnAnchors: [
-      { id: "orbit-center-block", x: 500, y: 440, tags: ["mid", "center", "ground"] },
-      { id: "orbit-left-cat", x: 230, y: 580, tags: ["mid", "left", "perch"] },
-      { id: "orbit-right-cat", x: 770, y: 580, tags: ["mid", "right", "perch"] },
-      { id: "orbit-air-high", x: 500, y: 220, tags: ["air", "center"] },
-    ],
-    encounterWaves: [
-      {
-        id: "s3-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 75 },
-          { type: "TURRET", anchorIds: ["orbit-left-cat"], weight: 25 }
-        ]
-      },
-      {
-        id: "s3-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 45 },
-          { type: "TURRET", anchorTags: ["perch"], weight: 35 },
-          { type: "FLYER", anchorTags: ["air"], weight: 20 }
-        ]
-      },
-      {
-        id: "s3-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 4,
-        entries: [
-          { type: "COMPASS_WASP", anchorTags: ["air"], weight: 50 },
-          { type: "FLYER", anchorTags: ["air"], weight: 30 },
-          { type: "TURRET", anchorTags: ["perch"], weight: 20 }
-        ]
-      }
-    ],
-    playerStart: { x: 500, y: 400 },
-    bossStart: { x: 500, y: 260 },
-  },
-  {
-    id: "stage-4",
-    title: "THE DISSOLVING CHOIR",
-    subtitle: "STAGE 4 - PATH OF PAIN MATRIX",
-    midBossId: "vermilion-needle",
-    midBossDisplayName: "VERMILION NEEDLE",
-    midBossMaxHp: 90,
-    solids: [
-      { x: 0, y: 920, width: 220, height: 80 },
-      { x: 780, y: 920, width: 220, height: 80 },
-      { x: 220, y: 960, width: 560, height: 40 },
-      { x: 0, y: 0, width: 1000, height: 40 },
-      { x: 0, y: 0, width: 40, height: 1000 },
-      { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 40, y: 360, width: 160, height: 32 },
-      { x: 800, y: 360, width: 160, height: 32 },
-    ],
-    onewayPlatforms: [],
-    hazards: [{ x: 220, y: 920, width: 560, height: 80 }],
-    spawners: [],
-    spawnAnchors: [
-      { id: "choir-left-solid", x: 120, y: 300, tags: ["high", "left", "perch"] },
-      { id: "choir-right-solid", x: 880, y: 300, tags: ["high", "right", "perch"] },
-      { id: "choir-mid-ledge-l", x: 340, y: 580, tags: ["mid", "left"] },
-      { id: "choir-mid-ledge-r", x: 660, y: 580, tags: ["mid", "right"] },
-      { id: "choir-air-mid", x: 500, y: 280, tags: ["air", "center"] },
-    ],
-    encounterWaves: [
-      {
-        id: "s4-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "HYMN_NAIL", anchorIds: ["choir-mid-ledge-l"], weight: 70 },
-          { type: "FLYER", anchorTags: ["air"], weight: 30 }
-        ]
-      },
-      {
-        id: "s4-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "HYMN_NAIL", anchorIds: ["choir-mid-ledge-l", "choir-mid-ledge-r"], weight: 50 },
-          { type: "TURRET", anchorTags: ["high"], weight: 50 }
-        ]
-      },
-      {
-        id: "s4-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 4,
-        entries: [
-          { type: "HYMN_NAIL", anchorTags: ["mid"], weight: 45 },
-          { type: "FLYER", anchorTags: ["air"], weight: 35 },
-          { type: "TURRET", anchorTags: ["high"], weight: 20 }
-        ]
-      }
-    ],
-    playerStart: { x: 100, y: 800 },
-    bossStart: { x: 900, y: 800 },
     dissolvePlatforms: [
-      { x: 280, y: 640, width: 120, height: 16 },
-      { x: 600, y: 640, width: 120, height: 16 },
+      { x: 380, y: 440, width: 240, height: 16 }
     ],
     pogoPosts: [
-      { x: 470, y: 720, width: 60, height: 32 },
+      { x: 470, y: 720, width: 60, height: 32 }
     ],
     dashResetGates: [
-      { x: 480, y: 440, width: 40, height: 40 },
-    ]
-  },
-  {
-    id: "stage-5",
-    title: "THE MARROW ROT",
-    subtitle: "STAGE 5 - ORGANIC CYSTS",
-    midBossId: "marrow-king",
-    midBossDisplayName: "MARROW KING",
-    midBossMaxHp: 95,
-    solids: [
-      { x: 0, y: 920, width: 260, height: 80 },
-      { x: 740, y: 920, width: 260, height: 80 },
-      { x: 260, y: 960, width: 480, height: 40 },
-      { x: 0, y: 0, width: 1000, height: 40 },
-      { x: 0, y: 0, width: 40, height: 1000 },
-      { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 280, y: 560, width: 440, height: 32 },
+      { x: 480, y: 280, width: 40, height: 40 }
     ],
-    onewayPlatforms: [
-      { x: 40, y: 360, width: 220, height: 16 },
-      { x: 740, y: 360, width: 220, height: 16 },
-    ],
-    hazards: [{ x: 260, y: 920, width: 480, height: 80 }],
-    spawners: [],
-    spawnAnchors: [
-      { id: "marrow-high-left", x: 150, y: 300, tags: ["high", "left", "perch"] },
-      { id: "marrow-high-right", x: 850, y: 300, tags: ["high", "right", "perch"] },
-      { id: "marrow-center-growth", x: 500, y: 500, tags: ["mid", "center", "ground"] },
-      { id: "marrow-low-l", x: 150, y: 860, tags: ["low", "left", "ground"] },
-      { id: "marrow-low-r", x: 850, y: 860, tags: ["low", "right", "ground"] },
-      { id: "marrow-air", x: 500, y: 220, tags: ["air", "center"] },
-    ],
-    encounterWaves: [
-      {
-        id: "s5-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "BLISTER_OX", anchorIds: ["marrow-center-growth"], weight: 65 },
-          { type: "FLYER", anchorTags: ["air"], weight: 35 }
-        ]
-      },
-      {
-        id: "s5-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 45 },
-          { type: "TURRET", anchorTags: ["high"], weight: 35 },
-          { type: "FLYER", anchorTags: ["air"], weight: 20 }
-        ]
-      },
-      {
-        id: "s5-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 4,
-        entries: [
-          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 40 },
-          { type: "FLYER", anchorTags: ["air"], weight: 30 },
-          { type: "TURRET", anchorTags: ["high"], weight: 30 }
-        ]
-      }
-    ],
-    playerStart: { x: 120, y: 800 },
     visualShapes: [
-      { type: "circle", center: {x: 150, y: 460}, radius: 100, colorRole: "arena-infection", infectionSeams: true },
-      { type: "circle", center: {x: 850, y: 460}, radius: 100, colorRole: "arena-infection", infectionSeams: true },
-      { type: "circle", center: {x: 500, y: 800}, radius: 120, colorRole: "arena-stone", infectionSeams: false }
-    ],
-    bossStart: { x: 850, y: 800 },
-  },
-  {
-    id: "stage-6",
-    title: "THE RUST CATHEDRAL",
-    subtitle: "STAGE 6 - SLAB COMPRESSORS",
-    midBossId: "rust-cathedral",
-    midBossDisplayName: "RUST CATHEDRAL",
-    midBossMaxHp: 100,
-    solids: [
-      { x: 40, y: 900, width: 920, height: 100 },
-      { x: 0, y: 0, width: 1000, height: 40 },
-      { x: 0, y: 0, width: 40, height: 1000 },
-      { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 100, y: 400, width: 180, height: 200 },
-      { x: 720, y: 400, width: 180, height: 200 },
-      { x: 380, y: 540, width: 240, height: 40 },
-    ],
-    onewayPlatforms: [
-      { x: 280, y: 380, width: 120, height: 16 },
-      { x: 600, y: 380, width: 120, height: 16 },
-    ],
-    hazards: [],
-    spawners: [],
-    spawnAnchors: [
-      { id: "cath-high-left", x: 190, y: 340, tags: ["high", "left", "perch"] },
-      { id: "cath-high-right", x: 810, y: 340, tags: ["high", "right", "perch"] },
-      { id: "cath-center-slab", x: 500, y: 480, tags: ["mid", "center", "ground"] },
-      { id: "cath-low-l", x: 330, y: 840, tags: ["low", "left", "ground"] },
-      { id: "cath-low-r", x: 670, y: 840, tags: ["low", "right", "ground"] },
-    ],
-    encounterWaves: [
       {
-        id: "s6-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 2,
-        entries: [
-          { type: "BELL_HAMMER", anchorIds: ["cath-center-slab"], weight: 65 },
-          { type: "TURRET", anchorTags: ["high"], weight: 35 }
-        ]
-      },
-      {
-        id: "s6-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "BELL_HAMMER", anchorTags: ["low"], weight: 50 },
-          { type: "FLYER", anchorIds: ["cath-high-left", "cath-high-right"], weight: 30 },
-          { type: "TURRET", anchorTags: ["high"], weight: 20 }
-        ]
-      },
-      {
-        id: "s6-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 4,
-        entries: [
-          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 45 },
-          { type: "TURRET", anchorTags: ["high"], weight: 35 },
-          { type: "FLYER", anchorTags: ["high"], weight: 20 }
+        type: "organic",
+        colorRole: "arena-infection",
+        infectionSeams: true,
+        points: [
+          { x: 340, y: 640 },
+          { x: 660, y: 640 },
+          { x: 660, y: 672 },
+          { x: 340, y: 672 }
         ]
       }
-    ],
-    playerStart: { x: 300, y: 800 },
-    bossStart: { x: 700, y: 800 },
-  },
-  {
-    id: "stage-7",
-    title: "THE PANTHEON BOX",
-    subtitle: "STAGE 7 - THE FINAL CRUCIBLE",
-    midBossId: "false-square",
-    midBossDisplayName: "THE FALSE SQUARE",
-    midBossMaxHp: 120,
-    solids: [
-      { x: 0, y: 920, width: 320, height: 80 },
-      { x: 680, y: 920, width: 320, height: 80 },
-      { x: 320, y: 960, width: 360, height: 40 },
-      { x: 0, y: 0, width: 1000, height: 40 },
-      { x: 0, y: 0, width: 40, height: 1000 },
-      { x: 960, y: 0, width: 40, height: 1000 },
-      { x: 340, y: 640, width: 320, height: 32 },
-    ],
-    onewayPlatforms: [
-      { x: 40, y: 440, width: 240, height: 16 },
-      { x: 720, y: 440, width: 240, height: 16 },
-    ],
-    hazards: [{ x: 320, y: 920, width: 360, height: 80 }],
-    spawners: [],
-    spawnAnchors: [
-      { id: "pantheon-cat-l", x: 140, y: 390, tags: ["high", "left", "perch"] },
-      { id: "pantheon-cat-r", x: 860, y: 390, tags: ["high", "right", "perch"] },
-      { id: "pantheon-center-bridge", x: 500, y: 590, tags: ["mid", "center", "ground"] },
-      { id: "pantheon-low-l", x: 180, y: 860, tags: ["low", "left", "ground"] },
-      { id: "pantheon-low-r", x: 820, y: 860, tags: ["low", "right", "ground"] },
-    ],
-    encounterWaves: [
-      {
-        id: "s7-w1",
-        phase: 1,
-        earliestTime: 2,
-        cooldownRange: [5, 8],
-        maxActiveMinions: 3,
-        entries: [
-          { type: "COMPASS_WASP", anchorTags: ["high"], weight: 40 },
-          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 40 },
-          { type: "FLYER", anchorIds: ["pantheon-center-bridge"], weight: 20 }
-        ]
-      },
-      {
-        id: "s7-w2",
-        phase: 2,
-        cooldownRange: [4, 7],
-        maxActiveMinions: 4,
-        entries: [
-          { type: "HYMN_NAIL", anchorTags: ["high"], weight: 35 },
-          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 35 },
-          { type: "BELL_HAMMER", anchorTags: ["ground"], weight: 30 }
-        ]
-      },
-      {
-        id: "s7-w3",
-        phase: 3,
-        cooldownRange: [3, 6],
-        maxActiveMinions: 5,
-        entries: [
-          { type: "COMPASS_WASP", anchorTags: ["high"], weight: 30 },
-          { type: "CLAMPJAW", anchorTags: ["ground"], weight: 30 },
-          { type: "BLISTER_OX", anchorTags: ["ground"], weight: 20 },
-          { type: "BELL_HAMMER", anchorTags: ["perch"], weight: 20 }
-        ]
-      }
-    ],
-    playerStart: { x: 120, y: 800 },
-    bossStart: { x: 840, y: 800 },
+    ]
   }
 ];
 `,"src/core/effects/CinematicDeathRenderer.ts":`import { Software3DRenderer } from "../visuals/Software3DRenderer";
@@ -12114,7 +11627,8 @@ export type MinionType =
   | "CLAMPJAW"
   | "HYMN_NAIL"
   | "BLISTER_OX"
-  | "BELL_HAMMER";
+  | "BELL_HAMMER"
+  | "SHARD_CHOIR";
 
 export interface SpawnerConfig {
   type: MinionType;
@@ -12900,18 +12414,6 @@ export class DashResetGate {
 }
 `,"src/core/visuals/BossVisuals.ts":`import { Boss } from "@/entities/Boss";
 import { Software3DRenderer } from "./Software3DRenderer";
-import { useSessionStore } from "@/store/useGameStore";
-
-const getBossColor = (stageIdx: number, activeState: string, flashing: boolean): string => {
-  if (flashing) return "hsl(0, 0%, 100%)";
-  if (activeState === "TELEGRAPH") return "hsl(45, 100%, 60%)";
-  if (stageIdx === 2) return "hsl(338, 76%, 55%)";
-  if (stageIdx === 3) return "hsl(356, 94%, 62%)";
-  if (stageIdx === 4) return "hsl(82, 38%, 44%)";
-  if (stageIdx === 5) return "hsl(14, 76%, 48%)";
-  if (stageIdx === 6) return "hsl(330, 82%, 64%)";
-  return "hsl(350, 82%, 58%)";
-};
 
 export class BossVisuals {
   static draw(ctx: CanvasRenderingContext2D, boss: Boss, alpha: number): void {
@@ -12922,11 +12424,16 @@ export class BossVisuals {
     const drawY = boss.previousPosition.y + (boss.position.y - boss.previousPosition.y) * alphaVal;
 
     const activeState = boss.activeStateName;
-    const stageIdx = useSessionStore.getState().currentStageIndex;
 
     ctx.save();
 
-    const baseColor = getBossColor(stageIdx, activeState, boss.health.isFlashing());
+    let baseColor = "hsl(350, 82%, 58%)";
+    if (boss.health.isFlashing()) {
+      baseColor = "hsl(0, 0%, 100%)";
+    } else if (activeState === "TELEGRAPH") {
+      baseColor = "hsl(45, 100%, 60%)";
+    }
+
     const feetY = drawY + boss.size.height / 2;
 
     ctx.translate(drawX, feetY);
@@ -12935,9 +12442,7 @@ export class BossVisuals {
     const nowTime = performance.now();
     const time = nowTime / 1000;
 
-
-
-    const geometry = Software3DRenderer.getTransformedBossGeometry(stageIdx, boss.currentPhase, time);
+    const geometry = Software3DRenderer.getTransformedBossGeometry(boss.currentPhase, time);
 
     const yaw = 0.15 * boss.facingDirection + (boss.velocity.x / boss.lungeSpeed) * 0.45;
     const pitch = 0.08 + (boss.velocity.y / 1200) * 0.25;
@@ -12957,7 +12462,7 @@ export class BossVisuals {
       baseColor,
       1.0,
       "feet",
-      stageIdx
+      0
     );
 
     ctx.save();
@@ -12983,6 +12488,7 @@ const frontCageScratch: CageSegment[] = [];
 
 const getShapePoints = (family: ShapeFamily): {x: number, y: number}[] => {
     switch(family) {
+        case "triangle": return [{x: 0, y: -0.58}, {x: 0.5, y: 0.28}, {x: -0.5, y: 0.28}];
         case "diamond": return [{x:0,y:-0.5},{x:0.5,y:0},{x:0,y:0.5},{x:-0.5,y:0}];
         case "kite": return [{x:0,y:-0.5},{x:0.4,y:-0.1},{x:0,y:0.5},{x:-0.4,y:-0.1}];
         case "needle": return [{x:0,y:-0.5},{x:0.15,y:0},{x:0,y:0.5},{x:-0.15,y:0}];
@@ -13143,7 +12649,8 @@ export type ShapeFamily =
   | "orb"
   | "blister"
   | "cage"
-  | "organic-platform";
+  | "organic-platform"
+  | "triangle";
 
 export interface VisualProfile {
   shapeFamily: ShapeFamily;
@@ -13396,6 +12903,17 @@ export function drawVisualProfile(
       ctx.stroke();
       break;
     }
+
+    case "triangle": {
+      ctx.beginPath();
+      ctx.moveTo(0, -halfH * 1.16);
+      ctx.lineTo(halfW, halfH * 0.56);
+      ctx.lineTo(-halfW, halfH * 0.56);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
   }
 
   ctx.restore();
@@ -13501,7 +13019,7 @@ export class Software3DRenderer {
         return geom;
     }
 
-    public static getTransformedBossGeometry(stageIdx: number, _phase: number, time: number): Geometry {
+    public static getTransformedBossGeometry(_phase: number, time: number): Geometry {
         const baseBox = [
             { x: -0.5, y: -0.5, z: -0.5 }, { x: 0.5, y: -0.5, z: -0.5 },
             { x: 0.5, y: 0.5, z: -0.5 }, { x: -0.5, y: 0.5, z: -0.5 },
@@ -13509,72 +13027,17 @@ export class Software3DRenderer {
             { x: 0.5, y: 0.5, z: 0.5 }, { x: -0.5, y: 0.5, z: 0.5 },
         ];
 
-        let w = 1.0;
-        let h = 1.0;
-        let d = 1.0;
+        const w = 1.0;
+        const h = 1.0;
+        const d = 0.9;
 
-        if (stageIdx === 0) {
-            w = 1.0; h = 1.0; d = 0.9;
-        } else if (stageIdx === 1) {
-            w = 0.58; h = 1.5; d = 0.5;
-        } else if (stageIdx === 2) {
-            w = 1.33; h = 0.38; d = 1.2;
-        } else if (stageIdx === 3) {
-            w = 0.75; h = 1.25; d = 0.6;
-        } else if (stageIdx === 4) {
-            w = 1.25; h = 0.75; d = 1.5;
-        } else if (stageIdx === 5) {
-            w = 1.33; h = 1.33; d = 1.4;
-        } else if (stageIdx === 6) {
-            const isGlitched = Math.sin(time * 12) > 0.7;
-            w = isGlitched ? 1.4 : 1.0;
-            h = isGlitched ? 0.7 : 1.0;
-            d = 1.0;
-        }
-
-        const vertices = baseBox.map((v, idx) => {
+        const vertices = baseBox.map((v) => {
             let x = v.x * w;
-            let y = v.y * h;
-            let z = v.z * d;
+            const y = v.y * h;
+            const z = v.z * d;
 
-            if (stageIdx === 0) {
-                const offset = Math.sin(time * 8 + y * 2) * 0.12 * Math.sign(y);
-                x += offset;
-            } else if (stageIdx === 1) {
-                const scaleY = 1.0 + 0.15 * Math.sin(time * 12);
-                y *= scaleY;
-            } else if (stageIdx === 2) {
-                const angle = y * 0.5 * Math.sin(time * 6);
-                const cosA = Math.cos(angle);
-                const sinA = Math.sin(angle);
-                const rx = x * cosA - z * sinA;
-                const rz = x * sinA + z * cosA;
-                x = rx;
-                z = rz;
-            } else if (stageIdx === 3) {
-                const expansion = 1.0 + 0.18 * Math.pow(Math.abs(Math.sin(time * 18 + idx)), 4);
-                x *= expansion;
-                y *= expansion;
-                z *= expansion;
-            } else if (stageIdx === 4) {
-                const theta = Math.atan2(z, x);
-                const r = Math.sqrt(x * x + z * z);
-                const wave = 1.0 + 0.14 * Math.sin(theta * 4 + time * 4);
-                x = Math.cos(theta) * r * wave;
-                z = Math.sin(theta) * r * wave;
-                y += Math.sin(time * 3 + x * 2) * 0.08;
-            } else if (stageIdx === 5) {
-                const step = Math.floor(time * 2.25) % 2 === 0 ? 0.95 : 1.05;
-                x *= step;
-                y *= step;
-                z *= step;
-            } else if (stageIdx === 6) {
-                const glitch = Math.sin(time * 24) > 0.8;
-                if (glitch) {
-                    x += Math.sin(y * 10) * 0.15;
-                    y += Math.cos(x * 10) * 0.1;
-                }
-            }
+            const offset = Math.sin(time * 8 + y * 2) * 0.12 * Math.sign(y);
+            x += offset;
 
             return { x, y, z };
         });
@@ -13587,7 +13050,7 @@ export class Software3DRenderer {
 
     public static drawSacredGeometry(
         ctx: CanvasRenderingContext2D,
-        stageIdx: number,
+        _stageIdx: number,
         time: number,
         glowColor: string,
         project: (u: number, v: number) => { x: number; y: number }
@@ -13610,249 +13073,46 @@ export class Software3DRenderer {
             ctx.stroke();
         };
 
-        if (stageIdx === 0) {
-            // Prime Wound: Scrolling zigzag diagonal wave grid
-            const spacing = 0.22;
-            const scroll = (time * 0.4) % spacing;
+        const spacing = 0.22;
+        const scroll = (time * 0.4) % spacing;
 
-            for (let offset = -1.2; offset < 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let u = -0.6; u <= 0.6; u += 0.05) {
-                    const v = offset + scroll + u;
-                    if (v >= -0.6 && v <= 0.6) {
-                        const p = project(u, v);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-
-            const zigCount = 16;
-            for (let offset = -1.2; offset < 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let i = 0; i <= zigCount; i++) {
-                    const t = i / zigCount;
-                    const u = -0.6 + 1.2 * t;
-                    const baseV = offset - scroll + u;
-                    if (baseV >= -0.6 && baseV <= 0.6) {
-                        const amp = 0.045;
-                        const zigzag = (i % 2 === 0 ? 1 : -1) * amp;
-                        const p = project(u + zigzag, baseV - zigzag);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-        } else if (stageIdx === 1) {
-            // Scarlet Lock: Interlocking horizontal and vertical scrolling grids
-            const spacing = 0.22;
-            const scrollH = (time * 0.35) % spacing;
-            const scrollV = (time * 0.22) % spacing;
-
-            for (let v = -0.8; v <= 0.8; v += spacing) {
-                ctx.beginPath();
-                const p1 = project(-0.6, v + scrollH);
-                const p2 = project(0.6, v + scrollH);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            for (let u = -0.8; u <= 0.8; u += spacing) {
-                ctx.beginPath();
-                const p1 = project(u + scrollV, -0.6);
-                const p2 = project(u + scrollV, 0.6);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            drawCircle(0.16);
-            drawCircle(0.36);
-        } else if (stageIdx === 2) {
-            // Carminal Orbit: Rippling Concentric Circles & Radial Zigzag Rays
-            const spacing = 0.18;
-            const scroll = (time * 0.3) % spacing;
-
-            for (let r = scroll; r < 0.9; r += spacing) {
-                if (r <= 0.01) continue;
+        for (let r = scroll; r < 0.9; r += spacing) {
+            if (r > 0.01) {
                 drawCircle(r);
             }
+        }
 
-            const rays = 8;
-            const baseAngle = time * 1.5;
-            const segments = 10;
-            for (let i = 0; i < rays; i++) {
-                const angle = baseAngle + (i * Math.PI * 2) / rays;
-                ctx.beginPath();
-                let started = false;
-                for (let j = 0; j <= segments; j++) {
-                    const r = 0.8 * (j / segments);
-                    const theta = angle + 0.15 * Math.sin(j * 1.8 + time * 8) * (j % 2 === 0 ? 1 : -1);
-                    const p = project(r * Math.cos(theta), r * Math.sin(theta));
+        for (let offset = -1.2; offset < 1.2; offset += spacing) {
+            ctx.beginPath();
+            let started = false;
+            for (let u = -0.6; u <= 0.6; u += 0.05) {
+                const v = offset + scroll + u;
+                if (v >= -0.6 && v <= 0.6) {
+                    const p = project(u, v);
                     if (!started) { ctx.moveTo(p.x, p.y); started = true; }
                     else ctx.lineTo(p.x, p.y);
                 }
-                ctx.stroke();
             }
-        } else if (stageIdx === 3) {
-            // Vermilion Needle: Columns of nested sharp chevron patterns
-            const spacingX = 0.18;
-            const spacingY = 0.22;
-            const scrollY = (time * 0.5) % spacingY;
+            ctx.stroke();
+        }
 
-            for (let x = -0.8; x <= 0.8; x += spacingX) {
-                ctx.beginPath();
-                const p1 = project(x, -0.6);
-                const p2 = project(x, 0.6);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            const colCount = 6;
-            for (let col = -colCount; col <= colCount; col++) {
-                const lx = col * spacingX;
-                for (let y = -0.8; y <= 0.8; y += spacingY) {
-                    const curY = y + scrollY;
-                    if (curY >= -0.6 && curY <= 0.6) {
-                        ctx.beginPath();
-                        const pLeft = project(lx - spacingX * 0.5, curY - spacingY * 0.3);
-                        const pMid = project(lx, curY + spacingY * 0.3);
-                        const pRight = project(lx + spacingX * 0.5, curY - spacingY * 0.3);
-                        ctx.moveTo(pLeft.x, pLeft.y);
-                        ctx.lineTo(pMid.x, pMid.y);
-                        ctx.lineTo(pRight.x, pRight.y);
-                        ctx.stroke();
-                    }
-                }
-            }
-        } else if (stageIdx === 4) {
-            // Marrow Rot: Organic Sinuous Ribbon Waves Scrolling Across
-            const waveCount = 3;
-            const stepX = 0.05;
-            for (let w = 0; w < waveCount; w++) {
-                const phase = (w * Math.PI) / waveCount;
-                const scrollX = time * 4.0;
-                const amp = 0.14;
-
-                ctx.beginPath();
-                let first = true;
-                for (let lu = -0.6; lu <= 0.6; lu += stepX) {
-                    const lv = amp * Math.sin(lu * 7.0 + scrollX + phase) * Math.cos(lu * 2.4);
-                    const p = project(lu, lv);
-                    if (first) { ctx.moveTo(p.x, p.y); first = false; }
+        const zigCount = 16;
+        for (let offset = -1.2; offset < 1.2; offset += spacing) {
+            ctx.beginPath();
+            let started = false;
+            for (let i = 0; i <= zigCount; i++) {
+                const t = i / zigCount;
+                const u = -0.6 + 1.2 * t;
+                const baseV = offset - scroll + u;
+                if (baseV >= -0.6 && baseV <= 0.6) {
+                    const amp = 0.045;
+                    const zigzag = (i % 2 === 0 ? 1 : -1) * amp;
+                    const p = project(u + zigzag, baseV - zigzag);
+                    if (!started) { ctx.moveTo(p.x, p.y); started = true; }
                     else ctx.lineTo(p.x, p.y);
                 }
-                ctx.stroke();
             }
-
-            for (let w = 0; w < waveCount; w++) {
-                const phase = (w * Math.PI) / waveCount + Math.PI / 2;
-                const scrollY = time * 3.0;
-                const amp = 0.12;
-
-                ctx.beginPath();
-                let first = true;
-                for (let lv = -0.6; lv <= 0.6; lv += stepX) {
-                    const lu = amp * Math.cos(lv * 7.0 + scrollY + phase) * Math.sin(lv * 2.4);
-                    const p = project(lu, lv);
-                    if (first) { ctx.moveTo(p.x, p.y); first = false; }
-                    else ctx.lineTo(p.x, p.y);
-                }
-                ctx.stroke();
-            }
-        } else if (stageIdx === 5) {
-            // Rust Cathedral: Isometric Columnar Wireframe Grid
-            const spacing = 0.25;
-            const scroll = (time * 0.3) % spacing;
-
-            for (let u = -0.8; u <= 0.8; u += spacing) {
-                ctx.beginPath();
-                const p1 = project(u + scroll, -0.6);
-                const p2 = project(u + scroll, 0.6);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            for (let offset = -1.2; offset <= 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let u = -0.6; u <= 0.6; u += 0.1) {
-                    const v = offset + scroll * 0.866 + u * 0.577;
-                    if (v >= -0.6 && v <= 0.6) {
-                        const p = project(u, v);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-
-            for (let offset = -1.2; offset <= 1.2; offset += spacing) {
-                ctx.beginPath();
-                let started = false;
-                for (let u = -0.6; u <= 0.6; u += 0.1) {
-                    const v = offset - scroll * 0.866 - u * 0.577;
-                    if (v >= -0.6 && v <= 0.6) {
-                        const p = project(u, v);
-                        if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-                        else ctx.lineTo(p.x, p.y);
-                    }
-                }
-                ctx.stroke();
-            }
-        } else {
-            // The False Square: Glitchy, morphing seamless square grid
-            const spacing = 0.22;
-            const scroll = (time * 0.4) % spacing;
-
-            const isGlitchActive = Math.sin(time * 18) > 0.8;
-            const glitchX = isGlitchActive ? Math.sin(time * 50) * 0.05 : 0;
-            const glitchY = isGlitchActive ? Math.cos(time * 40) * 0.03 : 0;
-
-            ctx.save();
-
-            for (let v = -0.8; v <= 0.8; v += spacing) {
-                ctx.beginPath();
-                const p1 = project(-0.6 + glitchX, v + scroll + glitchY);
-                const p2 = project(0.6 + glitchX, v + scroll + glitchY);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            for (let u = -0.8; u <= 0.8; u += spacing) {
-                ctx.beginPath();
-                const p1 = project(u + scroll + glitchX, -0.6 + glitchY);
-                const p2 = project(u + scroll + glitchX, 0.6 + glitchY);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.stroke();
-            }
-
-            const sqSpacing = 0.16;
-            const sqScroll = (time * 0.25) % sqSpacing;
-            for (let r = sqScroll; r < 0.8; r += sqSpacing) {
-                if (r <= 0.01) continue;
-                ctx.beginPath();
-                const p1 = project(-r + glitchX, -r + glitchY);
-                const p2 = project(r + glitchX, -r + glitchY);
-                const p3 = project(r + glitchX, r + glitchY);
-                const p4 = project(-r + glitchX, r + glitchY);
-                ctx.moveTo(p1.x, p1.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.lineTo(p3.x, p3.y);
-                ctx.lineTo(p4.x, p4.y);
-                ctx.closePath();
-                ctx.stroke();
-            }
-            ctx.restore();
+            ctx.stroke();
         }
 
         ctx.restore();
@@ -14108,7 +13368,8 @@ export type MinionType =
   | "CLAMPJAW"
   | "HYMN_NAIL"
   | "BLISTER_OX"
-  | "BELL_HAMMER";
+  | "BELL_HAMMER"
+  | "SHARD_CHOIR";
 
 export abstract class BaseMinion extends BaseEntity {
   private unsubHurt!: () => void;
@@ -14569,7 +13830,7 @@ export class Boss extends BaseEntity {
   }
 }
 `,"src/entities/BossAttackPatterns.ts":`import { Boss } from "./Boss";
-import { useSessionStore } from "@/store/useGameStore";
+// Removed unused useSessionStore
 
 export type AttackTag = "projectile-heavy" | "melee" | "arena-denial" | "reposition";
 
@@ -15004,26 +14265,8 @@ export const ALL_PATTERNS: AttackPattern[] = [
 ];
 
 export function selectBestAttack(ctx: BossAttackContext): AttackPattern {
-  const stageIdx = useSessionStore.getState().currentStageIndex;
-
-  // Filter patterns by what is valid for the stage to express the chromatic/geometric narrative
-  let candidates = ALL_PATTERNS;
-
-  if (stageIdx === 0) {
-    candidates = ALL_PATTERNS.filter(p => ["OMNI_BURST", "VOLLEY", "PREDICTIVE_SHOT"].includes(p.id));
-  } else if (stageIdx === 1) {
-    candidates = ALL_PATTERNS.filter(p => ["GATE_DROP", "LOCKSTEP_VOLLEY", "COMPRESSION_MARCH"].includes(p.id));
-  } else if (stageIdx === 2) {
-    candidates = ALL_PATTERNS.filter(p => ["APHELION_RING", "PERIHELION_DIVE", "SATELLITE_TAX"].includes(p.id));
-  } else if (stageIdx === 3) {
-    candidates = ALL_PATTERNS.filter(p => ["NEEDLE_RAIN", "DASH_THREAD", "POGO_TAX"].includes(p.id));
-  } else if (stageIdx === 4) {
-    candidates = ALL_PATTERNS.filter(p => ["BELLY_TIDE", "BLISTER_SPAWN", "SICKNESS_LEAN"].includes(p.id));
-  } else if (stageIdx === 5) {
-    candidates = ALL_PATTERNS.filter(p => ["CATHEDRAL_TOLL", "FALLING_NAVE", "WEIGHT_TRANSFER"].includes(p.id));
-  } else if (stageIdx === 6) {
-    candidates = ALL_PATTERNS.filter(p => !["BLISTER_SPAWN"].includes(p.id));
-  }
+  // Allow our unified single boss to access all attack patterns
+  const candidates = ALL_PATTERNS;
 
   let bestPattern = candidates[0] || ALL_PATTERNS[0];
   let highestScore = -1;
@@ -16016,7 +15259,8 @@ import {
   ClampjawMinion,
   HymnNailMinion,
   BlisterOxMinion,
-  BellHammerMinion
+  BellHammerMinion,
+  ShardChoirMinion
 } from "./NewGauntletMinions";
 
 export class MinionFactory {
@@ -16042,6 +15286,8 @@ export class MinionFactory {
         return new BlisterOxMinion(id, position, world);
       case "BELL_HAMMER":
         return new BellHammerMinion(id, position, world);
+      case "SHARD_CHOIR":
+        return new ShardChoirMinion(id, position, world);
       default:
         throw new Error(\`Unknown minion type: \${type}\`);
     }
@@ -16614,8 +15860,8 @@ export class CompassWaspMinion extends BaseMinion {
       this.angle += 1.8 * dt;
       const targetX = this.pointA.x + Math.cos(this.angle) * this.orbitRadius;
       const targetY = this.pointA.y + Math.sin(this.angle) * this.orbitRadius * 0.6;
-      this.position.x += (targetX - this.position.x) * 4.0 * dt;
-      this.position.y += (targetY - this.position.y) * 4.0 * dt;
+      this.velocity.x = (targetX - this.position.x) * 4.0;
+      this.velocity.y = (targetY - this.position.y) * 4.0;
 
       const player = this.world.player;
       if (player && !player.isDead) {
@@ -16632,9 +15878,10 @@ export class CompassWaspMinion extends BaseMinion {
       }
     } else {
       this.diveTimer -= dt;
-      this.position.x += this.velocity.x * dt;
-      this.position.y += this.velocity.y * dt;
-      if (this.diveTimer <= 0) {
+      const physics = this.physics;
+      const hitWall = physics ? physics.isOnWallLeft || physics.isOnWallRight || physics.isGrounded : false;
+      
+      if (this.diveTimer <= 0 || hitWall) {
         this.state = "orbit";
         this.pointA = { x: this.position.x, y: this.position.y };
         zeroVec(this.velocity);
@@ -16642,6 +15889,9 @@ export class CompassWaspMinion extends BaseMinion {
     }
 
     super.update(dt);
+
+    this.position.x = Math.max(50, Math.min(950, this.position.x));
+    this.position.y = Math.max(50, Math.min(910, this.position.y));
   }
 
   protected updateExhaust(): void {
@@ -16985,6 +16235,86 @@ export class BellHammerMinion extends BaseMinion {
         2
       );
     }
+  }
+}
+
+
+export class ShardChoirMinion extends BaseMinion {
+  private hoverTimer = 0;
+
+  constructor(id: string, startPos: { x: number; y: number }, world: IWorld) {
+    super(id, startPos, world);
+    this.size = { width: 22, height: 22 };
+    this.physics.gravity = 0;
+    this.health = this.addComponent(HealthComponent, new HealthComponent(), {
+      maxHealth: 2,
+      invincibilityDuration: 0.1,
+      onDamaged: ({ amount, currentHealth, maxHealth, sourceX, sourceY, intensity }: DamagePayload) => {
+        this.world.events.publish("MINION_HURT", { id: this.id, amount, currentHealth, maxHealth, sourceX, sourceY, intensity });
+      },
+    });
+    this.squashPivot = "center";
+    this.bodyColorValue = "hsl(194, 62%, 52%)";
+    this.dissolveColorValue = "hsl(194, 70%, 40%)";
+    this.hoverTimer = TrigLUT.random() * Math.PI * 2;
+  }
+
+  get minionColor(): string { return "hsl(194, 62%, 52%)"; }
+
+  public getVisualProfile(): VisualProfile {
+    return {
+      shapeFamily: "triangle",
+      danger: 0.7,
+      weight: 0.2,
+      corruption: 0.1,
+      hueRole: "minion-logic",
+      strokePx: 2,
+      spinRate: 1.8,
+      wobbleAmp: 0.2,
+      cornerRadius: 0,
+      phaseOffset: this.hoverTimer
+    };
+  }
+
+  public update(dt: number) {
+    if (this.isSpawning || this.isDying || this.isDead) {
+      super.update(dt);
+      return;
+    }
+
+    this.hoverTimer += dt * 3.5;
+    
+    const player = this.world.player;
+    if (player && !player.isDead) {
+      const dx = player.position.x - this.position.x;
+      const dy = player.position.y - this.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist > 0) {
+        const driftSpeed = 90;
+        const targetVelX = (dx / dist) * driftSpeed;
+        const targetVelY = (dy / dist) * driftSpeed + Math.sin(this.hoverTimer) * 35;
+        this.velocity.x += (targetVelX - this.velocity.x) * 3.0 * dt;
+        this.velocity.y += (targetVelY - this.velocity.y) * 3.0 * dt;
+      }
+    }
+
+    super.update(dt);
+    
+    this.position.x = Math.max(50, Math.min(950, this.position.x));
+    this.position.y = Math.max(50, Math.min(910, this.position.y));
+  }
+
+  protected updateExhaust(): void {
+    this.exhaustTimer = 0.14;
+    this.world.events.publishSpark(
+      this.position.x,
+      this.position.y,
+      Math.PI / 2,
+      "hsl(194, 62%, 52%)",
+      false,
+      1
+    );
   }
 }
 `,"src/entities/Player.ts":`import { BaseEntity } from "./BaseEntity";
@@ -19708,6 +19038,22 @@ export class PlayerVisuals {
       1.0,
       "feet"
     );
+
+    if (this.player.healingCharges === this.player.maxHealingCharges) {
+      ctx.save();
+      const orbitTime = nowTime * 0.0028;
+      ctx.fillStyle = "hsla(280, 100%, 75%, 0.45)";
+      const numSparks = 3;
+      const radius = 28;
+      const centerLocalY = -this.player.size.height / 2;
+      for (let i = 0; i < numSparks; i++) {
+        const angle = orbitTime + (i * Math.PI * 2) / numSparks;
+        const rx = Math.cos(angle) * radius;
+        const ry = centerLocalY + Math.sin(angle) * radius * 0.35;
+        ctx.fillRect(rx - 2.5, ry - 2.5, 5, 5);
+      }
+      ctx.restore();
+    }
 
     const localCenterX = 0;
     const localCenterY = -this.player.size.height / 2;
