@@ -1,71 +1,53 @@
 import { Particle, IEventBus } from "./Interfaces";
-import { ObjectPool, IPoolable } from "./ObjectPool";
 import { TrigLUT } from "./TrigLUT";
 
-export class PoolableParticle implements Particle, IPoolable {
-  public x = 0;
-  public y = 0;
-  public vx = 0;
-  public vy = 0;
-  public color = "";
-  public size = 0;
-  public life = 0;
-  public maxLife = 0;
-  public shape: "spark" | "dust" | "ring" | "line" = "spark";
-  public drag = 1.0;
-  public startColor = "";
-  public endColor = "";
-  public isActive = false;
-  public turbulence = 0;
-
-  public activate(
-    x: number,
-    y: number,
-    vx: number,
-    vy: number,
-    color: string,
-    size: number,
-    life: number,
-    shape: "spark" | "dust" | "ring" | "line",
-    drag: number = 1.0,
-    startColor: string = "",
-    endColor: string = "",
-    turbulence: number = 0
-  ) {
-    this.turbulence = turbulence;
-    this.x = x;
-    this.y = y;
-    this.vx = vx;
-    this.vy = vy;
-    this.color = color;
-    this.size = size;
-    this.life = life;
-    this.maxLife = life;
-    this.shape = shape;
-    this.drag = drag;
-    this.startColor = startColor || color;
-    this.endColor = endColor || color;
-    this.isActive = true;
-  }
-
-  public deactivate() {
-    this.isActive = false;
-    this.drag = 1.0;
-    this.startColor = "";
-    this.endColor = "";
-    this.turbulence = 0;
-  }
-}
+const STRIDE = 9;
+const MAX_PARTICLES = 400;
 
 export class ParticleSystem {
-  private pool: ObjectPool<PoolableParticle>;
+  private worker: Worker | null = null;
+  private buffer: ArrayBuffer;
+  private view: Float32Array;
+  private isWorkerBusy: boolean = false;
   private unsubs: (() => void)[] = [];
   private events: IEventBus;
 
+  private visualMetadata: {
+    color: string;
+    size: number;
+    shape: "spark" | "dust" | "ring" | "line";
+    startColor: string;
+    endColor: string;
+  }[];
+
   constructor(events: IEventBus) {
     this.events = events;
-    this.pool = new ObjectPool(() => new PoolableParticle(), 200);
+    this.buffer = new ArrayBuffer(MAX_PARTICLES * STRIDE * Float32Array.BYTES_PER_ELEMENT);
+    this.view = new Float32Array(this.buffer);
+    this.visualMetadata = Array.from({ length: MAX_PARTICLES }, () => ({
+      color: "",
+      size: 0,
+      shape: "spark",
+      startColor: "",
+      endColor: "",
+    }));
+
+    if (typeof window !== "undefined") {
+      this.worker = new Worker("./workers/particle.worker.js");
+      this.setupWorker();
+    }
     this.setupListeners();
+  }
+
+  private setupWorker() {
+    if (!this.worker) return;
+    this.worker.onmessage = (e) => {
+      if (e.data.type === "UPDATE_COMPLETE") {
+        this.buffer = e.data.buffer;
+        this.view = new Float32Array(this.buffer);
+        this.isWorkerBusy = false;
+      }
+    };
   }
 
   private setupListeners() {
@@ -84,7 +66,6 @@ export class ParticleSystem {
           const size = 2.5 + TrigLUT.random() * 3.5;
           const life = 0.22;
 
-          const drag = 0.94;
           let sCol = pColor;
           let eCol = pColor;
           if (pColor.includes("350") || pColor.includes("red") || pColor.includes("280")) {
@@ -95,7 +76,7 @@ export class ParticleSystem {
             eCol = "hsl(142, 100%, 30%)";
           }
 
-          this.pool.get(x, y, vx, vy, pColor, size, life, shape || "spark", drag, sCol, eCol, turbulence || 0);
+          this.spawn(x, y, vx, vy, size, life, shape || "spark", 0.94, sCol, eCol, turbulence || 0);
         }
       })
     );
@@ -106,60 +87,85 @@ export class ParticleSystem {
         const isVertical = direction === "vertical";
         for (let i = 0; i < count; i++) {
           const dir = i % 2 === 0 ? 1 : -1;
-          
-          const pSpeedX = isVertical
-            ? -dir * (4 + TrigLUT.random() * 10)
-            : dir * (125 + TrigLUT.random() * 160);
-
-          const pSpeedY = isVertical
-            ? dir * (125 + TrigLUT.random() * 160)
-            : -4 - TrigLUT.random() * 10;
-
+          const pSpeedX = isVertical ? -dir * (4 + TrigLUT.random() * 10) : dir * (125 + TrigLUT.random() * 160);
+          const pSpeedY = isVertical ? dir * (125 + TrigLUT.random() * 160) : -4 - TrigLUT.random() * 10;
           const size = 3.5 + TrigLUT.random() * 3.5;
           const life = 0.35;
-          const drag = 0.88;
 
-          this.pool.get(x, y, pSpeedX, pSpeedY, "rgba(255, 255, 255, 0.35)", size, life, "dust", drag);
+          this.spawn(x, y, pSpeedX, pSpeedY, size, life, "dust", 0.88, "rgba(255, 255, 255, 0.35)", "rgba(255, 255, 255, 0.35)", 0);
         }
       })
     );
 
     this.unsubs.push(
       this.events.subscribe("SPAWN_BLAST", ({ x, y, color }) => {
-        this.pool.get(x, y, 0, 0, color, 8, 0.16, "ring");
+        this.spawn(x, y, 0, 0, 8, 0.16, "ring", 1.0, color, color, 0);
       })
     );
   }
 
-  public update(dt: number) {
-    const active = this.pool.getActive();
-    for (let i = active.length - 1; i >= 0; i--) {
-      const p = active[i];
-      p.life -= dt;
-      if (p.life <= 0) {
-        this.pool.releaseAt(i);
-        continue;
+  private spawn(
+    x: number, y: number, vx: number, vy: number,
+    size: number, life: number, shape: "spark" | "dust" | "ring" | "line",
+    drag: number, startColor: string, endColor: string, turbulence: number
+  ) {
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const idx = i * STRIDE;
+      if (this.view[idx + 8] === 0.0) {
+        this.view[idx] = x;
+        this.view[idx + 1] = y;
+        this.view[idx + 2] = vx;
+        this.view[idx + 3] = vy;
+        this.view[idx + 4] = life;
+        this.view[idx + 5] = life;
+        this.view[idx + 6] = drag;
+        this.view[idx + 7] = turbulence;
+        this.view[idx + 8] = 1.0;
+
+        this.visualMetadata[i] = { color: startColor, size, shape, startColor, endColor };
+        break;
       }
-      if (p.drag !== 1.0) {
-        p.vx *= p.drag;
-        p.vy *= p.drag;
-      }
-      if (p.turbulence > 0) {
-        const wave = TrigLUT.sin(p.life * 22 + p.x * 0.02) * p.turbulence;
-        p.x += wave * dt;
-      }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
     }
   }
 
-  public getParticles(): readonly Particle[] {
-    return this.pool.getActive();
+  public update(dt: number) {
+    if (this.isWorkerBusy || !this.worker || this.buffer.byteLength === 0) {
+      return;
+    }
+    this.isWorkerBusy = true;
+    this.worker.postMessage({ type: "UPDATE", buffer: this.buffer, dt }, [this.buffer]);
+  }
+
+  public getParticles(): Particle[] {
+    const list: Particle[] = [];
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const idx = i * STRIDE;
+      if (this.view[idx + 8] === 1.0) {
+        const meta = this.visualMetadata[i];
+        list.push({
+          x: this.view[idx],
+          y: this.view[idx + 1],
+          vx: this.view[idx + 2],
+          vy: this.view[idx + 3],
+          life: this.view[idx + 4],
+          maxLife: this.view[idx + 5],
+          drag: this.view[idx + 6],
+          color: meta.color,
+          size: meta.size,
+          shape: meta.shape,
+          startColor: meta.startColor,
+          endColor: meta.endColor,
+        });
+      }
+    }
+    return list;
   }
 
   public cleanup() {
     this.unsubs.forEach((unsub) => unsub());
     this.unsubs = [];
-    this.pool.clear();
+    if (this.worker) {
+      this.worker.terminate();
+    }
   }
 }

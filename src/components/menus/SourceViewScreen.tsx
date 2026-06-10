@@ -21,45 +21,6 @@ export interface FileNode {
   depth: number;
 }
 
-function buildTree(paths: string[]): FileNode {
-  const root: FileNode = { name: "root", path: "", isDir: true, children: [], depth: -1 };
-
-  paths.forEach((p) => {
-    const parts = p.split("/");
-    let current = root;
-
-    parts.forEach((part, i) => {
-      const isDir = i < parts.length - 1;
-      const currentPath = parts.slice(0, i + 1).join("/");
-
-      let child = current.children.find((c) => c.name === part);
-      if (!child) {
-        child = {
-          name: part,
-          path: isDir ? currentPath : p,
-          isDir,
-          children: [],
-          depth: i,
-        };
-        current.children.push(child);
-      }
-      current = child;
-    });
-  });
-
-  const sortNodes = (node: FileNode) => {
-    node.children.sort((a, b) => {
-      if (a.isDir && !b.isDir) return -1;
-      if (!a.isDir && b.isDir) return 1;
-      return a.name.localeCompare(b.name);
-    });
-    node.children.forEach(sortNodes);
-  };
-  sortNodes(root);
-
-  return root;
-}
-
 function flattenVisible(node: FileNode, expanded: Record<string, boolean>, list: FileNode[] = []): FileNode[] {
   if (node.depth === -1) {
     node.children.forEach((child) => flattenVisible(child, expanded, list));
@@ -98,13 +59,27 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   const [selectedFile, setSelectedFile] = useState<string>(sortedPaths[0] || "");
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [mobileView, setMobileView] = useState<"TOC" | "CODE">("TOC");
+  const [treeRoot, setTreeRoot] = useState<FileNode | null>(null);
+  const [isParsingTree, setIsParsingTree] = useState<boolean>(true);
 
   const listRef = useRef<HTMLDivElement>(null);
 
-  const treeRoot = useMemo(() => {
-    const paths = Object.keys(sourceCodeManifest);
-    return buildTree(paths);
-  }, []);
+  useEffect(() => {
+    const worker = new Worker("./workers/tree-parser.worker.js");
+    worker.postMessage({ paths: sortedPaths });
+
+    worker.onmessage = (e) => {
+      if (e.data.type === "TREE_BUILT") {
+        setTreeRoot(e.data.root);
+        setIsParsingTree(false);
+        worker.terminate();
+      }
+    };
+
+    return () => {
+      worker.terminate();
+    };
+  }, [sortedPaths]);
 
   const visibleNodes = useMemo(() => {
     if (!treeRoot) return [];
@@ -157,13 +132,35 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     }
   }, [activeIndex, visibleNodes.length]);
 
+  if (isParsingTree) {
+    return (
+      <div
+        className="flex-col-center h-full w-full"
+        style={{ gap: "12px", background: "var(--void-bg)", justifyContent: "center" }}
+      >
+        <div
+          className="led-dot led-green"
+          style={{ width: "16px", height: "16px", animation: "crt-pulse 1s infinite alternate" }}
+        />
+        <span
+          style={{
+            color: "#718096",
+            fontSize: "11px",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+          }}
+        >
+          COMPILING SOURCE ARCHIVE...
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div
       className="flex-col h-full w-full"
       style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "0 12px" }}
     >
-
-
       <div className="source-view-workspace">
         {(!isMobile || mobileView === "TOC") && (
           <div
