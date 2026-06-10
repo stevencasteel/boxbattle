@@ -2,7 +2,7 @@
 │              BOX BATTLE ENGINE WEB               │
 │               Vite + React Context               │
 └──────────────────────────────────────────────────┘
- [SYSTEM] Generated: 6/7/2026, 3:57:29 PM
+ [SYSTEM] Generated: 6/10/2026, 8:42:13 PM
  [BASELINE]: Pure HTML5 Canvas, responsive, procedurally synthesized Web Audio.
 
 ─── ABRIDGED DIRECTORY STRUCTURE ───────────────────
@@ -24,6 +24,9 @@
 │   ├── sfx/
 │   │   ├── crowd_defeat.mp3
 │   │   └── crowd_victory.mp3
+│   ├── workers/
+│   │   ├── particle.worker.js
+│   │   └── tree-parser.worker.js
 │   ├── boxbattle_cover.jpg
 │   ├── boxbattle_cover.png
 │   ├── boxbattle_folder_icon.png
@@ -1934,6 +1937,95 @@ const finalContent = before + replacement + after;
 
 fs.writeFileSync('src/ui/hud/HudOverlay.tsx', finalContent, 'utf8');
 console.log("Successfully patched SILK confetti effects!");
+
+
+
+● ./public/workers/particle.worker.js
+────────────────────────────────────────────────────
+const STRIDE = 9;
+
+self.onmessage = function (e) {
+  const { type, buffer, dt } = e.data;
+
+  if (type === "UPDATE") {
+    const data = new Float32Array(buffer);
+    const len = data.length;
+
+    for (let i = 0; i < len; i += STRIDE) {
+      if (data[i + 8] === 0.0) continue;
+
+      data[i + 4] -= dt;
+      if (data[i + 4] <= 0) {
+        data[i + 8] = 0.0;
+        continue;
+      }
+
+      const drag = data[i + 6];
+      if (drag !== 1.0) {
+        data[i + 2] *= drag;
+        data[i + 3] *= drag;
+      }
+
+      const turbulence = data[i + 7];
+      if (turbulence > 0) {
+        const life = data[i + 4];
+        const x = data[i];
+        const wave = Math.sin(life * 22.0 + x * 0.02) * turbulence;
+        data[i] += wave * dt;
+      }
+
+      data[i] += data[i + 2] * dt;
+      data[i + 1] += data[i + 3] * dt;
+    }
+
+    self.postMessage({ type: "UPDATE_COMPLETE", buffer }, [buffer]);
+  }
+};
+
+
+
+● ./public/workers/tree-parser.worker.js
+────────────────────────────────────────────────────
+self.onmessage = function (e) {
+  const { paths } = e.data;
+  const root = { name: "root", path: "", isDir: true, children: [], depth: -1 };
+
+  paths.forEach((p) => {
+    const parts = p.split("/");
+    let current = root;
+
+    parts.forEach((part, i) => {
+      const isDir = i < parts.length - 1;
+      const currentPath = parts.slice(0, i + 1).join("/");
+
+      let child = current.children.find((c) => c.name === part);
+      if (!child) {
+        child = {
+          name: part,
+          path: isDir ? currentPath : p,
+          isDir,
+          children: [],
+          depth: i,
+        };
+        current.children.push(child);
+      }
+      current = child;
+    });
+  });
+
+  const sortNodes = (node) => {
+    node.children.sort((a, b) => {
+      if (a.isDir && !b.isDir) return -1;
+      if (!a.isDir && b.isDir) return 1;
+      return a.name.localeCompare(b.name);
+    });
+    node.children.forEach(sortNodes);
+  };
+
+  sortNodes(root);
+
+  self.postMessage({ type: "TREE_BUILT", root });
+};
 
 
 
@@ -6899,45 +6991,6 @@ export interface FileNode {
   depth: number;
 }
 
-function buildTree(paths: string[]): FileNode {
-  const root: FileNode = { name: "root", path: "", isDir: true, children: [], depth: -1 };
-
-  paths.forEach((p) => {
-    const parts = p.split("/");
-    let current = root;
-
-    parts.forEach((part, i) => {
-      const isDir = i < parts.length - 1;
-      const currentPath = parts.slice(0, i + 1).join("/");
-
-      let child = current.children.find((c) => c.name === part);
-      if (!child) {
-        child = {
-          name: part,
-          path: isDir ? currentPath : p,
-          isDir,
-          children: [],
-          depth: i,
-        };
-        current.children.push(child);
-      }
-      current = child;
-    });
-  });
-
-  const sortNodes = (node: FileNode) => {
-    node.children.sort((a, b) => {
-      if (a.isDir && !b.isDir) return -1;
-      if (!a.isDir && b.isDir) return 1;
-      return a.name.localeCompare(b.name);
-    });
-    node.children.forEach(sortNodes);
-  };
-  sortNodes(root);
-
-  return root;
-}
-
 function flattenVisible(node: FileNode, expanded: Record<string, boolean>, list: FileNode[] = []): FileNode[] {
   if (node.depth === -1) {
     node.children.forEach((child) => flattenVisible(child, expanded, list));
@@ -6976,13 +7029,27 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
   const [selectedFile, setSelectedFile] = useState<string>(sortedPaths[0] || "");
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [mobileView, setMobileView] = useState<"TOC" | "CODE">("TOC");
+  const [treeRoot, setTreeRoot] = useState<FileNode | null>(null);
+  const [isParsingTree, setIsParsingTree] = useState<boolean>(true);
 
   const listRef = useRef<HTMLDivElement>(null);
 
-  const treeRoot = useMemo(() => {
-    const paths = Object.keys(sourceCodeManifest);
-    return buildTree(paths);
-  }, []);
+  useEffect(() => {
+    const worker = new Worker("./workers/tree-parser.worker.js");
+    worker.postMessage({ paths: sortedPaths });
+
+    worker.onmessage = (e) => {
+      if (e.data.type === "TREE_BUILT") {
+        setTreeRoot(e.data.root);
+        setIsParsingTree(false);
+        worker.terminate();
+      }
+    };
+
+    return () => {
+      worker.terminate();
+    };
+  }, [sortedPaths]);
 
   const visibleNodes = useMemo(() => {
     if (!treeRoot) return [];
@@ -7035,13 +7102,35 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     }
   }, [activeIndex, visibleNodes.length]);
 
+  if (isParsingTree) {
+    return (
+      <div
+        className="flex-col-center h-full w-full"
+        style={{ gap: "12px", background: "var(--void-bg)", justifyContent: "center" }}
+      >
+        <div
+          className="led-dot led-green"
+          style={{ width: "16px", height: "16px", animation: "crt-pulse 1s infinite alternate" }}
+        />
+        <span
+          style={{
+            color: "#718096",
+            fontSize: "11px",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+          }}
+        >
+          COMPILING SOURCE ARCHIVE...
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div
       className="flex-col h-full w-full"
       style={{ justifyContent: "space-between", boxSizing: "border-box", padding: "0 12px" }}
     >
-
-
       <div className="source-view-workspace">
         {(!isMobile || mobileView === "TOC") && (
           <div
@@ -7222,6 +7311,7 @@ export function SourceViewScreen({ onBack }: SourceViewScreenProps) {
     </div>
   );
 }
+
 
 
 ● ./src/components/menus/TitleScreen.css
@@ -9508,73 +9598,55 @@ export class ParticleRenderer {
 ● ./src/core/ParticleSystem.ts
 ────────────────────────────────────────────────────
 import { Particle, IEventBus } from "./Interfaces";
-import { ObjectPool, IPoolable } from "./ObjectPool";
 import { TrigLUT } from "./TrigLUT";
 
-export class PoolableParticle implements Particle, IPoolable {
-  public x = 0;
-  public y = 0;
-  public vx = 0;
-  public vy = 0;
-  public color = "";
-  public size = 0;
-  public life = 0;
-  public maxLife = 0;
-  public shape: "spark" | "dust" | "ring" | "line" = "spark";
-  public drag = 1.0;
-  public startColor = "";
-  public endColor = "";
-  public isActive = false;
-  public turbulence = 0;
-
-  public activate(
-    x: number,
-    y: number,
-    vx: number,
-    vy: number,
-    color: string,
-    size: number,
-    life: number,
-    shape: "spark" | "dust" | "ring" | "line",
-    drag: number = 1.0,
-    startColor: string = "",
-    endColor: string = "",
-    turbulence: number = 0
-  ) {
-    this.turbulence = turbulence;
-    this.x = x;
-    this.y = y;
-    this.vx = vx;
-    this.vy = vy;
-    this.color = color;
-    this.size = size;
-    this.life = life;
-    this.maxLife = life;
-    this.shape = shape;
-    this.drag = drag;
-    this.startColor = startColor || color;
-    this.endColor = endColor || color;
-    this.isActive = true;
-  }
-
-  public deactivate() {
-    this.isActive = false;
-    this.drag = 1.0;
-    this.startColor = "";
-    this.endColor = "";
-    this.turbulence = 0;
-  }
-}
+const STRIDE = 9;
+const MAX_PARTICLES = 400;
 
 export class ParticleSystem {
-  private pool: ObjectPool<PoolableParticle>;
+  private worker: Worker | null = null;
+  private buffer: ArrayBuffer;
+  private view: Float32Array;
+  private isWorkerBusy: boolean = false;
   private unsubs: (() => void)[] = [];
   private events: IEventBus;
 
+  private visualMetadata: {
+    color: string;
+    size: number;
+    shape: "spark" | "dust" | "ring" | "line";
+    startColor: string;
+    endColor: string;
+  }[];
+
   constructor(events: IEventBus) {
     this.events = events;
-    this.pool = new ObjectPool(() => new PoolableParticle(), 200);
+    this.buffer = new ArrayBuffer(MAX_PARTICLES * STRIDE * Float32Array.BYTES_PER_ELEMENT);
+    this.view = new Float32Array(this.buffer);
+    this.visualMetadata = Array.from({ length: MAX_PARTICLES }, () => ({
+      color: "",
+      size: 0,
+      shape: "spark",
+      startColor: "",
+      endColor: "",
+    }));
+
+    if (typeof window !== "undefined") {
+      this.worker = new Worker("./workers/particle.worker.js");
+      this.setupWorker();
+    }
     this.setupListeners();
+  }
+
+  private setupWorker() {
+    if (!this.worker) return;
+    this.worker.onmessage = (e) => {
+      if (e.data.type === "UPDATE_COMPLETE") {
+        this.buffer = e.data.buffer;
+        this.view = new Float32Array(this.buffer);
+        this.isWorkerBusy = false;
+      }
+    };
   }
 
   private setupListeners() {
@@ -9593,7 +9665,6 @@ export class ParticleSystem {
           const size = 2.5 + TrigLUT.random() * 3.5;
           const life = 0.22;
 
-          const drag = 0.94;
           let sCol = pColor;
           let eCol = pColor;
           if (pColor.includes("350") || pColor.includes("red") || pColor.includes("280")) {
@@ -9604,7 +9675,7 @@ export class ParticleSystem {
             eCol = "hsl(142, 100%, 30%)";
           }
 
-          this.pool.get(x, y, vx, vy, pColor, size, life, shape || "spark", drag, sCol, eCol, turbulence || 0);
+          this.spawn(x, y, vx, vy, size, life, shape || "spark", 0.94, sCol, eCol, turbulence || 0);
         }
       })
     );
@@ -9615,61 +9686,86 @@ export class ParticleSystem {
         const isVertical = direction === "vertical";
         for (let i = 0; i < count; i++) {
           const dir = i % 2 === 0 ? 1 : -1;
-          
-          const pSpeedX = isVertical
-            ? -dir * (4 + TrigLUT.random() * 10)
-            : dir * (125 + TrigLUT.random() * 160);
-
-          const pSpeedY = isVertical
-            ? dir * (125 + TrigLUT.random() * 160)
-            : -4 - TrigLUT.random() * 10;
-
+          const pSpeedX = isVertical ? -dir * (4 + TrigLUT.random() * 10) : dir * (125 + TrigLUT.random() * 160);
+          const pSpeedY = isVertical ? dir * (125 + TrigLUT.random() * 160) : -4 - TrigLUT.random() * 10;
           const size = 3.5 + TrigLUT.random() * 3.5;
           const life = 0.35;
-          const drag = 0.88;
 
-          this.pool.get(x, y, pSpeedX, pSpeedY, "rgba(255, 255, 255, 0.35)", size, life, "dust", drag);
+          this.spawn(x, y, pSpeedX, pSpeedY, size, life, "dust", 0.88, "rgba(255, 255, 255, 0.35)", "rgba(255, 255, 255, 0.35)", 0);
         }
       })
     );
 
     this.unsubs.push(
       this.events.subscribe("SPAWN_BLAST", ({ x, y, color }) => {
-        this.pool.get(x, y, 0, 0, color, 8, 0.16, "ring");
+        this.spawn(x, y, 0, 0, 8, 0.16, "ring", 1.0, color, color, 0);
       })
     );
   }
 
-  public update(dt: number) {
-    const active = this.pool.getActive();
-    for (let i = active.length - 1; i >= 0; i--) {
-      const p = active[i];
-      p.life -= dt;
-      if (p.life <= 0) {
-        this.pool.releaseAt(i);
-        continue;
+  private spawn(
+    x: number, y: number, vx: number, vy: number,
+    size: number, life: number, shape: "spark" | "dust" | "ring" | "line",
+    drag: number, startColor: string, endColor: string, turbulence: number
+  ) {
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const idx = i * STRIDE;
+      if (this.view[idx + 8] === 0.0) {
+        this.view[idx] = x;
+        this.view[idx + 1] = y;
+        this.view[idx + 2] = vx;
+        this.view[idx + 3] = vy;
+        this.view[idx + 4] = life;
+        this.view[idx + 5] = life;
+        this.view[idx + 6] = drag;
+        this.view[idx + 7] = turbulence;
+        this.view[idx + 8] = 1.0;
+
+        this.visualMetadata[i] = { color: startColor, size, shape, startColor, endColor };
+        break;
       }
-      if (p.drag !== 1.0) {
-        p.vx *= p.drag;
-        p.vy *= p.drag;
-      }
-      if (p.turbulence > 0) {
-        const wave = TrigLUT.sin(p.life * 22 + p.x * 0.02) * p.turbulence;
-        p.x += wave * dt;
-      }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
     }
   }
 
-  public getParticles(): readonly Particle[] {
-    return this.pool.getActive();
+  public update(dt: number) {
+    if (this.isWorkerBusy || !this.worker || this.buffer.byteLength === 0) {
+      return;
+    }
+    this.isWorkerBusy = true;
+    this.worker.postMessage({ type: "UPDATE", buffer: this.buffer, dt }, [this.buffer]);
+  }
+
+  public getParticles(): Particle[] {
+    const list: Particle[] = [];
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const idx = i * STRIDE;
+      if (this.view[idx + 8] === 1.0) {
+        const meta = this.visualMetadata[i];
+        list.push({
+          x: this.view[idx],
+          y: this.view[idx + 1],
+          vx: this.view[idx + 2],
+          vy: this.view[idx + 3],
+          life: this.view[idx + 4],
+          maxLife: this.view[idx + 5],
+          drag: this.view[idx + 6],
+          color: meta.color,
+          size: meta.size,
+          shape: meta.shape,
+          startColor: meta.startColor,
+          endColor: meta.endColor,
+        });
+      }
+    }
+    return list;
   }
 
   public cleanup() {
     this.unsubs.forEach((unsub) => unsub());
     this.unsubs = [];
-    this.pool.clear();
+    if (this.worker) {
+      this.worker.terminate();
+    }
   }
 }
 
