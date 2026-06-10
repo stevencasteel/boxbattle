@@ -1,4 +1,4 @@
-import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-eaIMBOJM.js";var g=e(n(),1),_={"index.html":`<!doctype html>
+import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}from"./vendor-highlighter-42TrrCe7.js";import{C as i,E as a,L as o,S as s,b as c,w as l}from"./vendor-react-BnGnL2XQ.js";import{i as u}from"./vendor-motion-B8aDJsV-.js";import{a as d,i as f,n as p,r as m,t as h}from"./index-C9KDk2_-.js";var g=e(n(),1),_={"index.html":`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -20,10 +20,11 @@ import{a as e}from"./rolldown-runtime-BYbx6iT9.js";import{n as t,r as n,t as r}f
     "predev": "node scripts/generate_manifest.js && node scripts/create_source_context.js",
     "dev": "vite",
     "prebuild": "node scripts/generate_manifest.js && node scripts/create_source_context.js",
-    "build": "eslint . && tsc -b && vite build",
+    "build": "npm run check && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "format": "prettier --write \\"src/**/*.{ts,tsx,css}\\" \\"*.{js,ts,html,json,md}\\""
+    "format": "prettier --write \\"src/**/*.{ts,tsx,css}\\" \\"*.{js,ts,html,json,md}\\"",
+    "check": "tsc -b && eslint ."
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
