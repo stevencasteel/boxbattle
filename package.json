@@ -7,10 +7,11 @@
     "predev": "node scripts/generate_manifest.js && node scripts/create_source_context.js",
     "dev": "vite",
     "prebuild": "node scripts/generate_manifest.js && node scripts/create_source_context.js",
-    "build": "eslint . && tsc -b && vite build",
+    "build": "npm run check && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{js,ts,html,json,md}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{js,ts,html,json,md}\"",
+    "check": "tsc -b && eslint ."
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
